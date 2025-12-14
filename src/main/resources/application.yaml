@@ -1,0 +1,10 @@
+axon:
+  axonserver:
+    servers: localhost:8124
+    standalone: true
+    devmode:
+      enabled: true
+  serializer:
+    general: jackson
+    messages: jackson
+    events: jackson
