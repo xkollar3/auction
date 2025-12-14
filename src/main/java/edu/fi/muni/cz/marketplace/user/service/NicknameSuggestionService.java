@@ -12,15 +12,15 @@ import java.util.regex.Pattern;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserIdSuggestionService {
+public class NicknameSuggestionService {
 
   private static final Pattern DISCORD_PATTERN = Pattern.compile("^(.+)#(\\d{4})$");
   private static final int MAX_DISCRIMINATOR = 9999;
 
   private final UserNicknameRepository userNicknameRepository;
 
-  public String suggestUserId(String proposedUserId) {
-    String nickname = extractNickname(proposedUserId);
+  public String suggestNickname(String proposedNickname) {
+    String nickname = extractNickname(proposedNickname);
 
     log.info("Suggesting nickname for: {}", nickname);
 
@@ -33,13 +33,13 @@ public class UserIdSuggestionService {
     throw new IllegalStateException("All discriminators exhausted for nickname: " + nickname);
   }
 
-  private String extractNickname(String proposedUserId) {
-    Matcher matcher = DISCORD_PATTERN.matcher(proposedUserId);
+  private String extractNickname(String proposedNickname) {
+    Matcher matcher = DISCORD_PATTERN.matcher(proposedNickname);
 
     if (matcher.matches()) {
       return matcher.group(1);
     }
 
-    return proposedUserId;
+    return proposedNickname;
   }
 }

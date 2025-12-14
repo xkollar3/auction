@@ -19,19 +19,12 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
-        // Disable CSRF for stateless APIs
         .csrf(csrf -> csrf.disable())
-
-        // Authorize requests
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/actuator/**", "/health/**").permitAll()
+            .requestMatchers("/actuator/**", "/health/**", "/api/users/**").permitAll()
             .anyRequest().authenticated())
-
-        // Configure OAuth2 resource server with JWT validation
         .oauth2ResourceServer(oauth2 -> oauth2
             .jwt(Customizer.withDefaults()))
-
-        // Stateless session (no cookies)
         .sessionManagement(session -> session
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 

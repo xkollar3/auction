@@ -1,5 +1,7 @@
 package edu.fi.muni.cz.marketplace.user.query;
 
+import java.util.UUID;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -17,12 +19,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UserNicknameReadModel {
 
-    @Id
-    private String id;
+  @Id
+  private UUID id;
 
-    @Column(nullable = false)
-    private String nickname;
+  @Column(nullable = false)
+  private String nickname;
 
-    @Column(nullable = false)
-    private Integer discriminator;
+  @Column(nullable = false)
+  private Integer discriminator;
 }

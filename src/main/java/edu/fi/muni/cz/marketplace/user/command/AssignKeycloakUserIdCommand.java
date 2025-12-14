@@ -9,14 +9,9 @@ import org.axonframework.modelling.command.TargetAggregateIdentifier;
 
 @Value
 @Builder
-public class RegisterUserCommand {
+public class AssignKeycloakUserIdCommand {
 
   @TargetAggregateIdentifier
   UUID id;
-  String nickname;
-  String firstName;
-  String lastName;
-  String email;
-  String phoneNumber;
-  String password;
+  String keycloakUserId;
 }
