@@ -1,15 +1,15 @@
 services:
   axonserver:
     image: axoniq/axonserver:latest
-    container_name: axonserver
-    hostname: axonserver
+    container_name: auction-axonserver
+    hostname: auction-axonserver
     ports:
       - "8024:8024"
       - "8124:8124"
     environment:
       - AXONIQ_AXONSERVER_STANDALONE=true
     networks:
-      - banking-network
+      - auction-network
     volumes:
       - axonserver-data:/axonserver/data
       - axonserver-events:/axonserver/events
@@ -20,11 +20,57 @@ services:
       timeout: 5s
       retries: 5
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.7
+    container_name: auction-keycloak
+    hostname: auction-keycloak
+    ports:
+      - "8089:8080"
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_HEALTH_ENABLED=true
+      - KC_METRICS_ENABLED=true
+    command:
+      - start-dev
+      - --import-realm
+    networks:
+      - auction-network
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  postgres:
+    image: postgres:17
+    container_name: auction-postgres
+    hostname: auction-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=auction_marketplace
+      - POSTGRES_USER=auction_user
+      - POSTGRES_PASSWORD=auction_password
+    networks:
+      - auction-network
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auction_user -d auction_marketplace"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 networks:
-  banking-network:
+  auction-network:
     driver: bridge
 
 volumes:
   axonserver-data:
   axonserver-events:
   axonserver-config:
+  keycloak-data:
+  postgres-data:
