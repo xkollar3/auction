@@ -1,8 +1,12 @@
 package edu.fi.muni.cz.marketplace.user.exception;
 
-public class NicknameTakenException extends RuntimeException {
+import org.springframework.http.HttpStatus;
 
-  public NicknameTakenException(String name) {
-    super("Nickname already taken: " + name);
+import edu.fi.muni.cz.marketplace.config.exception.HttpException;
+
+public class NicknameTakenException extends HttpException {
+
+  public NicknameTakenException(String message) {
+    super(HttpStatus.CONFLICT.value(), message);
   }
 }

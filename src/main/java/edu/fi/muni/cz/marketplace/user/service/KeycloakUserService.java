@@ -1,6 +1,7 @@
 package edu.fi.muni.cz.marketplace.user.service;
 
 import edu.fi.muni.cz.marketplace.config.KeycloakAdminProperties;
+import edu.fi.muni.cz.marketplace.user.exception.KeycloakRegistrationFailedException;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +10,7 @@ import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -51,10 +53,12 @@ public class KeycloakUserService {
       } else {
         String errorMessage = response.readEntity(String.class);
         log.error("Failed to create Keycloak user. Status: {}, Error: {}", response.getStatus(), errorMessage);
-        throw new RuntimeException("Failed to create Keycloak user: " + errorMessage);
+        throw new KeycloakRegistrationFailedException(response.getStatus(), errorMessage);
       }
+    } catch (KeycloakRegistrationFailedException e) {
+      throw e;
     } catch (Exception e) {
-      throw new RuntimeException("Error creating Keycloak user", e);
+      throw new KeycloakRegistrationFailedException(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unknown erorr");
     }
   }
 }

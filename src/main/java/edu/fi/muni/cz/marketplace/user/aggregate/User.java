@@ -4,7 +4,7 @@ import edu.fi.muni.cz.marketplace.user.command.AssignKeycloakUserIdCommand;
 import edu.fi.muni.cz.marketplace.user.command.FailUserRegistrationCommand;
 import edu.fi.muni.cz.marketplace.user.command.RegisterUserCommand;
 import edu.fi.muni.cz.marketplace.user.event.UserKeycloakIdAssignedEvent;
-import edu.fi.muni.cz.marketplace.user.event.UserRegisteredEvent;
+import edu.fi.muni.cz.marketplace.user.event.UserRegistrationInitiatedEvent;
 import edu.fi.muni.cz.marketplace.user.event.UserRegistrationFailedEvent;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,54 +30,46 @@ public class User {
 
   private UserNickname nickname;
 
-  private String firstName;
-  private String lastName;
-  private String email;
-  private String phoneNumber;
   private String keycloakUserId;
+  private RegistrationStatus registrationStatus;
 
   @CommandHandler
   public User(RegisterUserCommand command) {
-    apply(new UserRegisteredEvent(
+    apply(new UserRegistrationInitiatedEvent(
         command.getId(),
         new UserNickname(command.getNickname()),
         command.getFirstName(),
         command.getLastName(),
         command.getEmail(),
         command.getPhoneNumber(),
-        command.getPassword()
-    ));
+        command.getPassword()));
   }
 
   @EventSourcingHandler
-  public void on(UserRegisteredEvent event) {
+  public void on(UserRegistrationInitiatedEvent event) {
     this.id = event.getId();
     this.nickname = event.getNickname();
-    this.firstName = event.getFirstName();
-    this.lastName = event.getLastName();
-    this.email = event.getEmail();
-    this.phoneNumber = event.getPhoneNumber();
+    this.registrationStatus = RegistrationStatus.PENDING;
   }
 
   @CommandHandler
   public void handle(AssignKeycloakUserIdCommand command) {
-    apply(UserKeycloakIdAssignedEvent.builder()
-        .id(command.getId())
-        .keycloakUserId(command.getKeycloakUserId())
-        .build());
+    apply(new UserKeycloakIdAssignedEvent(command.getId(), command.getKeycloakUserId(), command.getNickname()));
   }
 
   @EventSourcingHandler
   public void on(UserKeycloakIdAssignedEvent event) {
     this.keycloakUserId = event.getKeycloakUserId();
+    this.registrationStatus = RegistrationStatus.COMPLETED;
   }
 
   @CommandHandler
   public void handle(FailUserRegistrationCommand command) {
-    apply(new UserRegistrationFailedEvent(command.getId(), command.getErrorMessage()));
+    apply(new UserRegistrationFailedEvent(command.getId(), command.getErrorMessage(), command.getHttpStatus()));
   }
 
   @EventSourcingHandler
   public void on(UserRegistrationFailedEvent event) {
+    this.registrationStatus = RegistrationStatus.FAILED;
   }
 }

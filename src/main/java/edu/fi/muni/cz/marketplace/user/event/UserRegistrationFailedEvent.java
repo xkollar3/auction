@@ -9,4 +9,5 @@ public class UserRegistrationFailedEvent {
 
   UUID id;
   String errorMessage;
+  Integer httpStatus;
 }

@@ -25,7 +25,7 @@ public class UserRegistrationDispatchInterceptor implements MessageDispatchInter
         final RegisterUserCommand command = (RegisterUserCommand) m.getPayload();
         UserNickname nickname = new UserNickname(command.getNickname());
         if (repository.existsByNicknameAndDiscriminator(nickname.getNickname(), nickname.getDiscriminator())) {
-          throw new NicknameTakenException(command.getNickname());
+          throw new NicknameTakenException("Nickname already taken: " + nickname.toFullString());
         }
 
       }

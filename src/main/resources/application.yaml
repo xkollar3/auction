@@ -1,0 +1,9 @@
+axon:
+  eventhandling:
+    processors:
+      user_nicknames:
+        mode: subscribing
+
+server:
+  error:
+    include-stacktrace: never

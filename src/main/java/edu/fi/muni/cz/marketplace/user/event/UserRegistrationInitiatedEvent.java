@@ -6,7 +6,7 @@ import edu.fi.muni.cz.marketplace.user.aggregate.UserNickname;
 import lombok.Value;
 
 @Value
-public class UserRegisteredEvent {
+public class UserRegistrationInitiatedEvent {
 
   UUID id;
   UserNickname nickname;

@@ -9,8 +9,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 
-import jakarta.servlet.http.HttpServletResponse;
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -21,18 +19,12 @@ public class SecurityConfig {
     http
         .csrf(csrf -> csrf.disable())
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/actuator/**", "/health/**", "/api/users/**").permitAll()
+            .requestMatchers("/actuator/**", "/health/**", "/error", "/api/users/**").permitAll()
             .anyRequest().authenticated())
         .oauth2ResourceServer(oauth2 -> oauth2
             .jwt(Customizer.withDefaults()))
         .sessionManagement(session -> session
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-        .exceptionHandling(exceptions -> exceptions
-            .authenticationEntryPoint(
-                (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
-            .accessDeniedHandler(
-                (request, response, accessDeniedException) -> response.sendError(HttpServletResponse.SC_FORBIDDEN)));
+            .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
     return http.build();
   }

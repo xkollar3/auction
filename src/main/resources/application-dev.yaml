@@ -29,7 +29,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -52,10 +52,6 @@ axon:
   eventhandling:
     processors:
       user_nicknames:
-        mode: subscribing
-      keycloak_integration:
-        mode: subscribing
-      user_registration_status:
         mode: subscribing
 
 keycloak:

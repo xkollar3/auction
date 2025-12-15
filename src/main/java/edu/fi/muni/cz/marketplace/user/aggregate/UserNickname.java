@@ -8,14 +8,14 @@ import lombok.Getter;
 @Getter
 public class UserNickname {
 
-  private static final Pattern DISCORD_PATTERN = Pattern.compile("^(.+)#(\\d{4})$");
+  private static final Pattern NICKNAME_PATTERN = Pattern.compile("^(.+)\\+(\\d{4})$");
 
   private final String nickname;
 
   private final Integer discriminator;
 
   public UserNickname(String fullNickname) {
-    Matcher matcher = DISCORD_PATTERN.matcher(fullNickname);
+    Matcher matcher = NICKNAME_PATTERN.matcher(fullNickname);
 
     if (!matcher.matches()) {
       throw new IllegalArgumentException("Invalid nickname format: " + fullNickname);

@@ -12,6 +12,8 @@ import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
+import edu.fi.muni.cz.marketplace.user.aggregate.RegistrationStatus;
+
 @Entity
 @Table(name = "user_registration_status")
 @Data
@@ -24,14 +26,11 @@ public class UserRegistrationStatusReadModel {
   private UUID id;
 
   private String nickname;
-  private String firstName;
-  private String lastName;
-  private String email;
-  private String phoneNumber;
   private String keycloakUserId;
 
   @Enumerated(EnumType.STRING)
   private RegistrationStatus status;
 
   private String errorMessage;
+  private Integer httpStatus;
 }

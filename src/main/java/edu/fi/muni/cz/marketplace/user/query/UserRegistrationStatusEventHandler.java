@@ -1,7 +1,8 @@
 package edu.fi.muni.cz.marketplace.user.query;
 
+import edu.fi.muni.cz.marketplace.user.aggregate.RegistrationStatus;
 import edu.fi.muni.cz.marketplace.user.event.UserKeycloakIdAssignedEvent;
-import edu.fi.muni.cz.marketplace.user.event.UserRegisteredEvent;
+import edu.fi.muni.cz.marketplace.user.event.UserRegistrationInitiatedEvent;
 import edu.fi.muni.cz.marketplace.user.event.UserRegistrationFailedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,16 +23,12 @@ public class UserRegistrationStatusEventHandler {
   private final QueryUpdateEmitter queryUpdateEmitter;
 
   @EventHandler
-  public void on(UserRegisteredEvent event) {
+  public void on(UserRegistrationInitiatedEvent event) {
     log.info("Creating registration status entry for user {}", event.getId());
 
     UserRegistrationStatusReadModel readModel = UserRegistrationStatusReadModel.builder()
         .id(event.getId())
         .nickname(event.getNickname().toFullString())
-        .firstName(event.getFirstName())
-        .lastName(event.getLastName())
-        .email(event.getEmail())
-        .phoneNumber(event.getPhoneNumber())
         .status(RegistrationStatus.PENDING)
         .build();
 
@@ -47,7 +44,6 @@ public class UserRegistrationStatusEventHandler {
       readModel.setStatus(RegistrationStatus.COMPLETED);
       repository.save(readModel);
 
-      // Emit update to subscription queries
       queryUpdateEmitter.emit(
           FindUserRegistrationStatusQuery.class,
           query -> query.getId().equals(event.getId()),
@@ -62,9 +58,9 @@ public class UserRegistrationStatusEventHandler {
     repository.findById(event.getId()).ifPresent(readModel -> {
       readModel.setStatus(RegistrationStatus.FAILED);
       readModel.setErrorMessage(event.getErrorMessage());
+      readModel.setHttpStatus(event.getHttpStatus());
       repository.save(readModel);
 
-      // Emit update to subscription queries
       queryUpdateEmitter.emit(
           FindUserRegistrationStatusQuery.class,
           query -> query.getId().equals(event.getId()),
