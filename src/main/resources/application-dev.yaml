@@ -49,11 +49,6 @@ axon:
     devmode:
       enabled: true
 
-  eventhandling:
-    processors:
-      user_nicknames:
-        mode: subscribing
-
 keycloak:
   admin:
     server-url: http://localhost:8089

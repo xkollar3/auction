@@ -1,7 +1,7 @@
 axon:
   eventhandling:
     processors:
-      user_nicknames:
+      keycloak_user_ids:
         mode: subscribing
 
 server:

@@ -12,5 +12,4 @@ public class RegisterUserCommand {
   @TargetAggregateIdentifier
   UUID id;
   String keycloakUserId;
-  String phoneNumber;
 }

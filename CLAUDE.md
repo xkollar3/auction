@@ -80,60 +80,57 @@ The application uses strict CQRS separation with event sourcing for the write mo
 3. Query handlers read from projections
 4. Subscription queries enable reactive updates
 
-### Key Domain: User Registration
+### Key Domain: User Management
+
+**User Registration Flow** (Keycloak-First Strategy):
+1. Frontend redirects user to Keycloak for account creation
+2. User creates account directly in Keycloak
+3. Keycloak issues JWT token containing Keycloak user ID
+4. Frontend extracts Keycloak user ID from JWT
+5. Frontend calls `/api/users/register` with Keycloak user ID
+6. Backend creates User aggregate associated with existing Keycloak user ID
 
 **Aggregates** (`user/aggregate/`):
-- `User` - Event-sourced aggregate root with lifecycle: Register → Assign Keycloak ID → Complete/Fail
-- `UserNickname` - Value object with nickname + discriminator (Discord-style)
+- `User` - Event-sourced aggregate root with simple lifecycle: Register with Keycloak ID
+  - Stores aggregate ID and Keycloak user ID
+  - No complex state machine - user already exists in Keycloak
 
 **Commands** (`user/command/`):
-- `RegisterUserCommand` - Initiate registration
-- `AssignKeycloakUserIdCommand` - Link Keycloak user after creation
-- `FailUserRegistrationCommand` - Mark registration as failed
+- `RegisterUserCommand` - Associate internal User aggregate with existing Keycloak user ID
+  - Parameters: aggregate ID, Keycloak user ID
 
 **Events** (`user/event/`):
-- `UserRegistrationInitiatedEvent` - User registration process started
-- `UserKeycloakIdAssignedEvent` - Keycloak integration successful
-- `UserRegistrationFailedEvent` - Registration process failed
+- `UserRegisteredEvent` - User aggregate created and associated with Keycloak user ID
 
-**Sagas** (`user/saga/`):
-- `UserRegistrationSaga` - Orchestrates user registration with Keycloak
-  - @StartSaga on UserRegistrationInitiatedEvent
-  - Creates user in Keycloak via KeycloakUserService
-  - Dispatches AssignKeycloakUserIdCommand on success or FailUserRegistrationCommand on error
-  - @EndSaga on UserKeycloakIdAssignedEvent or UserRegistrationFailedEvent
-  - **Critical pattern:** Sagas handle external system integration and keep aggregates pure
+**No Sagas Required:**
+- User registration is handled entirely by Keycloak frontend redirect flow
+- Backend only creates internal User aggregate for existing Keycloak users
+- No external system orchestration needed (user already exists in Keycloak)
 
-**Event Handlers** (`user/query/`):
-- `UserNicknameReadModel` + Handler (@ProcessingGroup "user_nicknames") - Maintains nickname availability projection for command-side validation
-- `UserRegistrationStatusReadModel` + Handler - Tracks registration status for subscription queries
-
-**Subscription Query Pattern:**
-Controller uses `QueryGateway.subscriptionQuery()` to wait for async registration completion:
-1. Send RegisterUserCommand
-2. Subscribe to registration status updates
-3. Block until UserKeycloakIdAssignedEvent or UserRegistrationFailedEvent
-4. Return final status to client
+**Authentication:**
+- Users authenticate directly via Keycloak (OAuth2/OpenID Connect)
+- JWT tokens contain Keycloak user ID (`sub` claim)
+- Backend associates requests with User aggregates via Keycloak user ID
 
 ### Directory Structure by Bounded Context
 
 ```
 src/main/java/edu/fi/muni/cz/marketplace/
-├── user/              # User registration context (IMPLEMENTED)
+├── user/              # User management context (IMPLEMENTED)
 │   ├── aggregate/     # Event-sourced aggregates (@Aggregate)
-│   ├── command/       # Commands and dispatch interceptors
+│   ├── command/       # Commands
 │   ├── event/         # Domain events
-│   ├── saga/          # Process managers (@Saga)
 │   ├── query/         # Read models, repositories, event handlers (@ProcessingGroup)
 │   ├── controller/    # REST endpoints
-│   ├── service/       # External integrations (Keycloak)
-│   ├── dto/           # Request/Response objects
+│   ├── dto/           # Request/Response objects (Java records)
 │   └── exception/     # Domain exceptions
 ├── auction/           # Auction context (PLACEHOLDER)
 ├── order/             # Order context (PLACEHOLDER)
 ├── winner/            # Winner selection context (PLACEHOLDER)
 └── config/            # Cross-cutting configuration
 ```
+
+**Note:** The `saga/` and `service/` subdirectories are not present in the user context because user registration is handled entirely by Keycloak. Backend only creates internal aggregates for existing Keycloak users.
 
 ### Configuration
 
@@ -145,9 +142,6 @@ src/main/java/edu/fi/muni/cz/marketplace/
 - JPA: ddl-auto=create-drop, show-sql=true
 - Telemetry: disabled in dev
 
-**Processing Groups** (Axon event handlers):
-- `user_nicknames` - subscribing mode (for command-side nickname validation lookup table)
-
 ### Security
 
 OAuth2 Resource Server with JWT validation:
@@ -155,23 +149,25 @@ OAuth2 Resource Server with JWT validation:
 - All other endpoints require JWT from Keycloak
 - Stateless sessions (no JSESSIONID)
 - CSRF disabled (REST API)
-
-Keycloak Admin Client configured for programmatic user creation.
+- JWT `sub` claim contains Keycloak user ID for backend association
 
 ## Important Patterns
 
 ### Dispatch Interceptors for Validation
-`UserRegistrationDispatchInterceptor` validates nickname uniqueness BEFORE command execution by querying read model. This prevents invalid commands from reaching aggregates.
+Dispatch interceptors validate commands BEFORE execution by querying read models. This prevents invalid commands from reaching aggregates.
+
+**Pattern:** Use `@Component` implementing `MessageDispatchInterceptor<CommandMessage<?>>` to intercept commands before they reach aggregates. Query read models to validate business rules (e.g., uniqueness constraints).
+
+**Current usage:** Not used in user context (no validation needed for simple Keycloak ID association).
 
 ### Sagas (Process Managers)
 Sagas coordinate business processes that involve external systems or span multiple aggregates. They listen to events and dispatch commands to orchestrate workflows.
 
-**UserRegistrationSaga example:**
-1. @StartSaga on UserRegistrationInitiatedEvent - begins the registration workflow
-2. Calls KeycloakUserService to create external user account
-3. On success: dispatches AssignKeycloakUserIdCommand
-4. On failure: dispatches FailUserRegistrationCommand
-5. @EndSaga on UserKeycloakIdAssignedEvent or UserRegistrationFailedEvent - completes the workflow
+**When to use Sagas:**
+- Coordinating workflows across multiple aggregates
+- Integrating with external systems (payment gateways, email services, etc.)
+- Managing long-running business processes
+- Handling compensating transactions
 
 **Key characteristics:**
 - Use @Saga annotation on the class
@@ -182,20 +178,36 @@ Sagas coordinate business processes that involve external systems or span multip
 - Sagas dispatch commands via CommandGateway to update aggregates
 - Keep aggregates pure by moving side effects (external API calls, third-party integrations) to Sagas
 
+**Current usage:** Not used in user context (Keycloak registration handled by frontend). Will be useful for auction/payment workflows.
+
 ### Subscription Queries for Async Response
-Controllers use Axon subscription queries to convert async event-driven flows into synchronous HTTP responses with timeouts.
+Subscription queries convert async event-driven flows into synchronous HTTP responses with timeouts.
+
+**Pattern:** Controller uses `QueryGateway.subscriptionQuery()` to:
+1. Send command via CommandGateway
+2. Subscribe to query updates
+3. Block until specific event occurs or timeout
+4. Return result to client
+
+**Current usage:** Not used in user context (simple synchronous registration).
 
 ### Processing Groups with Subscribing Mode
 Processing groups with subscribing mode (@ProcessingGroup + axon.eventhandling.processors.<name>.mode=subscribing) are used when you need **transactionality and consistency** between command handling and event processing.
 
 Subscribing processors create and maintain projections immediately after an event has been applied in the **same thread**, ensuring direct consistency. These projections are **lookup tables owned by the command side only** - they should NOT be exposed via Query API.
 
-**Use case:** Validating uniqueness constraints (e.g., UserNicknameReadModel checks nickname availability before RegisterUserCommand execution via dispatch interceptor).
+**Use case:** Validating uniqueness constraints (e.g., nickname availability checks before command execution via dispatch interceptor).
 
 **Default mode:** Tracking event processors are sufficient for query-side projections that don't require immediate consistency.
 
+**Current usage:** Not used in user context. Use when implementing unique constraints in other contexts.
+
 ### Value Objects for Domain Logic
-`UserNickname` encapsulates nickname parsing and formatting logic (nickname#discriminator format).
+Value objects encapsulate domain logic and validation within immutable objects.
+
+**Pattern:** Create immutable classes (using `@Value` or records) that validate input and provide domain-specific behavior. Use in aggregates and commands.
+
+**Current usage:** Not used in user context (simple string-based Keycloak ID).
 
 ## Coding Policies
 
@@ -216,20 +228,16 @@ Subscribing processors create and maintain projections immediately after an even
 ```java
 @Value
 public class RegisterUserCommand {
+    @TargetAggregateIdentifier
     UUID id;
-    String nickname;
-    String firstName;
-    String lastName;
-    String email;
-    String phoneNumber;
-    String password;
+    String keycloakUserId;
 }
 ```
 
 **Example Event:**
 ```java
 @Value
-public class UserKeycloakIdAssignedEvent {
+public class UserRegisteredEvent {
     UUID id;
     String keycloakUserId;
 }
@@ -244,27 +252,14 @@ public class UserKeycloakIdAssignedEvent {
 **Example Request DTO:**
 ```java
 public record RegisterUserRequest(
-    String nickname,
-    String firstName,
-    String lastName,
-    String email,
-    String phoneNumber,
-    String password
+    String keycloakUserId
 ) {}
 ```
 
 **Example Response DTO:**
 ```java
 public record UserRegistrationResponse(
-    UUID id,
-    String nickname,
-    String firstName,
-    String lastName,
-    String email,
-    String phoneNumber,
-    String keycloakUserId,
-    RegistrationStatus status,
-    String errorMessage
+    UUID id
 ) {}
 ```
 
@@ -292,13 +287,19 @@ Records provide compile-time safety by requiring all fields in the constructor, 
 
 When implementing auction/order/winner contexts:
 
-1. Create package structure: `{context}/{aggregate,command,event,saga,query,controller,service,dto,exception}`
+1. Create package structure: `{context}/{aggregate,command,event,query,controller,dto,exception}` (add `saga/` and `service/` only if needed)
 2. Define aggregates with @Aggregate, @AggregateIdentifier, @CommandHandler, @EventSourcingHandler
 3. Create commands (use Java classes with @Value - see Coding Policies)
 4. Create events (use Java classes with @Value - include aggregate ID)
 5. Create DTOs (use Java records for requests/responses - see Coding Policies)
-6. Create Sagas (@Saga) for workflows involving external systems or multiple aggregates (see Sagas pattern)
-7. Implement read model projections with @EventHandler
-8. Add @ProcessingGroup with subscribing mode ONLY if you need command-side lookup tables (e.g., uniqueness validation)
-9. Add query handlers for read operations
-10. Use CommandGateway and QueryGateway in controllers, never call aggregates directly
+6. Implement read model projections with @EventHandler
+7. Add query handlers for read operations
+8. Use CommandGateway and QueryGateway in controllers, never call aggregates directly
+
+**Optional (add only when needed):**
+- Create Sagas (@Saga) for workflows involving external systems or multiple aggregates (see Sagas pattern)
+- Add Dispatch Interceptors for command validation
+- Add @ProcessingGroup with subscribing mode ONLY if you need command-side lookup tables (e.g., uniqueness validation)
+- Add service layer for external system integrations
+
+**User Context Example:** The user context demonstrates a minimal implementation with no sagas, no dispatch interceptors, and no value objects. The aggregate simply associates an internal ID with a Keycloak user ID.

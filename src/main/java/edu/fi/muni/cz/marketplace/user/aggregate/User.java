@@ -10,7 +10,7 @@ import org.axonframework.modelling.command.AggregateIdentifier;
 import org.axonframework.spring.stereotype.Aggregate;
 
 import edu.fi.muni.cz.marketplace.user.command.RegisterUserCommand;
-import edu.fi.muni.cz.marketplace.user.event.UserRegistrationInitiatedEvent;
+import edu.fi.muni.cz.marketplace.user.event.UserRegisteredEvent;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -28,13 +28,14 @@ public class User {
 
   @CommandHandler
   public User(RegisterUserCommand command) {
-    apply(new UserRegistrationInitiatedEvent(
-        command.getId(), command.getKeycloakUserId(), command.getPhoneNumber()));
+    apply(new UserRegisteredEvent(
+        command.getId(), command.getKeycloakUserId()));
   }
 
   @EventSourcingHandler
-  public void on(UserRegistrationInitiatedEvent event) {
+  public void on(UserRegisteredEvent event) {
     this.id = event.getId();
+    this.keycloakUserId = event.getKeycloakUserId();
   }
 
 }

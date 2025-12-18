@@ -5,9 +5,8 @@ import java.util.UUID;
 import lombok.Value;
 
 @Value
-public class UserRegistrationInitiatedEvent {
+public class UserRegisteredEvent {
 
   UUID id;
   String keycloakUserId;
-  String phoneNumber;
 }
