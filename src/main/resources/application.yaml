@@ -1,0 +1,9 @@
+axon:
+  eventhandling:
+    processors:
+      keycloak_user_ids:
+        mode: subscribing
+
+server:
+  error:
+    include-stacktrace: never

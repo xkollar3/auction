@@ -1,0 +1,61 @@
+management:
+  metrics:
+    export:
+      otlp:
+        enabled: false
+  tracing:
+    enabled: false
+  otlp:
+    metrics:
+      export:
+        enabled: false
+    tracing:
+      export:
+        enabled: false
+    logging:
+      export:
+        enabled: false
+
+server:
+  port: 8081
+
+spring:
+  application:
+    name: auction-marketplace
+  datasource:
+    url: jdbc:postgresql://localhost:5432/auction_marketplace
+    username: auction_user
+    password: auction_password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8089/realms/auction-marketplace
+          jwk-set-uri: http://localhost:8089/realms/auction-marketplace/protocol/openid-connect/certs
+
+axon:
+  axonserver:
+    servers: localhost:8124
+    standalone: true
+    devmode:
+      enabled: true
+
+keycloak:
+  admin:
+    server-url: http://localhost:8089
+    realm: auction-marketplace
+    client-id: admin-cli
+    username: admin
+    password: admin
+
+stripe:
+  api-key: ${STRIPE_API_KEY:sk_test_your_stripe_test_key_here}
