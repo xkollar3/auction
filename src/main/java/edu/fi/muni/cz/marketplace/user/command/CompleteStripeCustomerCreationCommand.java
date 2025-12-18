@@ -4,16 +4,12 @@ import java.util.UUID;
 
 import org.axonframework.modelling.command.TargetAggregateIdentifier;
 
-import edu.fi.muni.cz.marketplace.user.aggregate.Address;
 import lombok.Value;
 
 @Value
-public class CreateStripeCustomerCommand {
+public class CompleteStripeCustomerCreationCommand {
 
   @TargetAggregateIdentifier
   UUID id;
-  String email;
-  String name;
-  String phone;
-  Address shippingAddress;
+  String stripeCustomerId;
 }

@@ -1,16 +1,13 @@
-package edu.fi.muni.cz.marketplace.user.command;
+package edu.fi.muni.cz.marketplace.user.event;
 
 import java.util.UUID;
-
-import org.axonframework.modelling.command.TargetAggregateIdentifier;
 
 import edu.fi.muni.cz.marketplace.user.aggregate.Address;
 import lombok.Value;
 
 @Value
-public class CreateStripeCustomerCommand {
+public class StripeCustomerCreationInitiatedEvent {
 
-  @TargetAggregateIdentifier
   UUID id;
   String email;
   String name;

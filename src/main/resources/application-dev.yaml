@@ -56,3 +56,6 @@ keycloak:
     client-id: admin-cli
     username: admin
     password: admin
+
+stripe:
+  api-key: ${STRIPE_API_KEY:sk_test_your_stripe_test_key_here}

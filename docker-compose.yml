@@ -38,6 +38,7 @@ services:
       - auction-network
     volumes:
       - keycloak-data:/opt/keycloak/data
+      - ./.keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
       interval: 10s
