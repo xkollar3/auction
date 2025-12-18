@@ -19,7 +19,7 @@ public class SecurityConfig {
     http
         .csrf(csrf -> csrf.disable())
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/actuator/**", "/health/**", "/error", "/api/users/**").permitAll()
+            .requestMatchers("/actuator/**", "/health/**", "/error").permitAll()
             .anyRequest().authenticated())
         .oauth2ResourceServer(oauth2 -> oauth2
             .jwt(Customizer.withDefaults()))

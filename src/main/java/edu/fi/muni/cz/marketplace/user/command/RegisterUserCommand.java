@@ -11,10 +11,6 @@ public class RegisterUserCommand {
 
   @TargetAggregateIdentifier
   UUID id;
-  String nickname;
-  String firstName;
-  String lastName;
-  String email;
+  String keycloakUserId;
   String phoneNumber;
-  String password;
 }
