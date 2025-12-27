@@ -51,6 +51,8 @@ public class UserController {
       @RequestBody CreateStripeCustomerRequest request,
       @AuthenticationPrincipal Jwt jwt) {
 
+    validateJwtClaims(jwt, "email", "name", "phone_number");
+
     String email = jwt.getClaimAsString("email");
     String name = jwt.getClaimAsString("name");
     String phone = jwt.getClaimAsString("phone_number");
@@ -73,5 +75,15 @@ public class UserController {
         shippingAddress));
 
     return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+  }
+
+  private void validateJwtClaims(Jwt jwt, String... requiredClaims) {
+    for (String claim : requiredClaims) {
+      String value = jwt.getClaimAsString(claim);
+      if (value == null || value.isBlank()) {
+        log.warn("Missing or empty required claim '{}' in JWT", claim);
+        throw new HttpException(401, "Missing required claim in token: " + claim);
+      }
+    }
   }
 }
