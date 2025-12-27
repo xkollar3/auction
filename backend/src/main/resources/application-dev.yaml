@@ -58,5 +58,4 @@ keycloak:
     password: admin
 
 stripe:
-  api-key: ${STRIPE_API_KEY:sk_test_your_stripe_test_key_here}
-  platform-account-id: acct_1ScNwkCvL7lAvScr
+  api-key: ${STRIPE_SECRET_KEY}

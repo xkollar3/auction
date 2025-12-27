@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import org.axonframework.modelling.command.TargetAggregateIdentifier;
 
-import edu.fi.muni.cz.marketplace.user.aggregate.Address;
+import edu.fi.muni.cz.marketplace.user.dto.Address;
 import lombok.Value;
 
 @Value

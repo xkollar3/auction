@@ -7,9 +7,10 @@ import org.axonframework.modelling.command.TargetAggregateIdentifier;
 import lombok.Value;
 
 @Value
-public class CompleteStripeCustomerCreationCommand {
+public class AssignStripeCustomerIdCommand {
 
   @TargetAggregateIdentifier
-  UUID id;
-  String stripeCustomerId;
+  private UUID id;
+  private String stripeCustomerId;
+
 }

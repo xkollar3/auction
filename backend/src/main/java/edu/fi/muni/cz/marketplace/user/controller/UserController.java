@@ -1,5 +1,6 @@
 package edu.fi.muni.cz.marketplace.user.controller;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.axonframework.commandhandling.gateway.CommandGateway;
@@ -13,13 +14,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import edu.fi.muni.cz.marketplace.user.aggregate.Address;
+import edu.fi.muni.cz.marketplace.config.exception.HttpException;
 import edu.fi.muni.cz.marketplace.user.command.CreateStripeCustomerCommand;
 import edu.fi.muni.cz.marketplace.user.command.RegisterUserCommand;
 import edu.fi.muni.cz.marketplace.user.dto.CreateStripeCustomerRequest;
 import edu.fi.muni.cz.marketplace.user.dto.UserRegistrationResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import edu.fi.muni.cz.marketplace.user.dto.Address;
 
 @Slf4j
 @RestController
@@ -31,7 +34,9 @@ public class UserController {
 
   @PostMapping("/register")
   public ResponseEntity<UserRegistrationResponse> registerUser(@AuthenticationPrincipal Jwt jwt) {
-    String keycloakUserId = jwt.getSubject();
+    String keycloakUserId = Optional.ofNullable(jwt.getSubject())
+        .orElseThrow(() -> new HttpException(401, "No subject in token"));
+
     log.info("Registering new user with Keycloak user ID from JWT: {}", keycloakUserId);
 
     UUID aggregateId = UUID.randomUUID();
@@ -58,16 +63,14 @@ public class UserController {
         request.city(),
         request.state(),
         request.postalCode(),
-        request.country()
-    );
+        request.country());
 
-    commandGateway.sendAndWait(new CreateStripeCustomerCommand(
+    commandGateway.send(new CreateStripeCustomerCommand(
         id,
         email,
         name,
         phone,
-        shippingAddress
-    ));
+        shippingAddress));
 
     return ResponseEntity.status(HttpStatus.ACCEPTED).build();
   }

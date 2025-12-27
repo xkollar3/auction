@@ -6,5 +6,5 @@ public record CreateStripeCustomerRequest(
     String city,
     String state,
     String postalCode,
-    String country
-) {}
+    String country) {
+}

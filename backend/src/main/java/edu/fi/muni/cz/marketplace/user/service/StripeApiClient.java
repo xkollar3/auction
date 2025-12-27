@@ -11,14 +11,14 @@ import com.stripe.model.Customer;
 import com.stripe.net.RequestOptions;
 import com.stripe.param.CustomerCreateParams;
 
-import edu.fi.muni.cz.marketplace.user.aggregate.Address;
+import edu.fi.muni.cz.marketplace.user.dto.Address;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class StripeClient {
+public class StripeApiClient {
 
-  public StripeClient(@Value("${stripe.api-key}") String stripeApiKey) {
+  public StripeApiClient(@Value("${stripe.api-key}") String stripeApiKey) {
     Stripe.apiKey = stripeApiKey;
     log.info("Stripe client initialized with API key");
   }

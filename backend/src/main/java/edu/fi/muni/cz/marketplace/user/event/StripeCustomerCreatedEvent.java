@@ -5,8 +5,8 @@ import java.util.UUID;
 import lombok.Value;
 
 @Value
-public class StripeCustomerCreationFailedEvent {
+public class StripeCustomerCreatedEvent {
 
   UUID id;
-  String errorMessage;
+  String stripeCustomerId;
 }

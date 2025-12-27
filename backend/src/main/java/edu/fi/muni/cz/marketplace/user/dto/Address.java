@@ -1,4 +1,4 @@
-package edu.fi.muni.cz.marketplace.user.aggregate;
+package edu.fi.muni.cz.marketplace.user.dto;
 
 import lombok.Value;
 
