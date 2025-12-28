@@ -28,7 +28,39 @@ public class User {
 
   private String keycloakUserId;
 
+  /**
+   * String identifier, format cus_xxxx
+   *
+   * Used to add payment methods that can be charged
+   *
+   * Has to be defined if user wants to add a payment method and bid
+   *
+   * Added by flow from CreateStripeCustomerCommnad
+   **/
   private String stripeCustomerId;
+
+  /**
+   * String identifier, format pi_xxxx
+   *
+   * Refers to a payment method, in this case always expect it to be active and
+   * usable
+   *
+   * Has to be defined after customerId, user who has both can bid
+   *
+   * Added directly by AddPaymentInformationCommand
+   **/
+  private String stripePaymentMethodId;
+
+  /**
+   * String identifier, format acc_xxxx
+   *
+   * Used as destination to which funds can be transferred
+   *
+   * Has to be defined if user wants to sell on the platform
+   *
+   * Added by flow from CreateStripeConnectedAccountCommand
+   **/
+  private String stripeSellerAccountId;
 
   @CommandHandler
   public User(RegisterUserCommand command) {
@@ -44,6 +76,10 @@ public class User {
 
   @CommandHandler
   public void on(AssignStripeCustomerIdCommand command) {
+    if (stripeCustomerId != null) {
+      throw new IllegalStateException(
+          String.format("User with id: %s, already has a customer account", command.getId()));
+    }
     apply(new StripeCustomerCreatedEvent(command.getId(), command.getStripeCustomerId()));
   }
 
