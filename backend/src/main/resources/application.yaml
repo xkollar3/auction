@@ -7,3 +7,6 @@ axon:
 server:
   error:
     include-stacktrace: never
+
+policy:
+  refund-deadline-days: 30
