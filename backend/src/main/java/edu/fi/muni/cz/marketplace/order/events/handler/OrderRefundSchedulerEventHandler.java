@@ -19,6 +19,6 @@ public class OrderRefundSchedulerEventHandler {
   @EventHandler
   public void on(OrderRefundScheduledEvent event) {
     log.info("Refund scheduled for order: {}", event.getOrderId());
-    commandGateway.send(new RefundOrderCommand(event.getOrderId(), event.getPaymentId()));
+    commandGateway.send(new RefundOrderCommand(event.getOrderId(), event.getPaymentIntentId()));
   }
 }

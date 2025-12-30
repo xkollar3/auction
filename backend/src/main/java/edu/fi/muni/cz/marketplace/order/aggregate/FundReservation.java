@@ -10,6 +10,7 @@ public class FundReservation {
 
   String paymentIntentId;
   String paymentMethodId;
+  String deadlineId;
   BigDecimal amount;
   Instant reservedAt;
 }
