@@ -38,6 +38,7 @@ import edu.fi.muni.cz.marketplace.order.events.TrackingStatusUpdatedEvent;
 class OrderTest {
 
   private static final Long REFUND_DEADLINE_DAYS = 7L;
+  private static final String COMMISSION_PERCENTAGE = "0.1";
   private static final Instant FIXED_TIME = Instant.parse("2026-01-10T12:00:00Z");
   private static final Clock FIXED_CLOCK = Clock.fixed(FIXED_TIME, ZoneOffset.UTC);
 
@@ -47,6 +48,7 @@ class OrderTest {
   void setUp() {
     fixture = new AggregateTestFixture<>(Order.class);
     fixture.registerInjectableResource(REFUND_DEADLINE_DAYS);
+    fixture.registerInjectableResource(COMMISSION_PERCENTAGE);
     fixture.registerInjectableResource(FIXED_CLOCK);
   }
 

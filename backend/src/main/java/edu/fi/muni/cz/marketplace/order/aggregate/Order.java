@@ -54,6 +54,9 @@ public class Order {
   private OrderStatus status;
 
   @Nonnull
+  private BigDecimal commissionMultiplier;
+
+  @Nonnull
   private FundReservation fundReservation;
 
   @Nullable
@@ -88,9 +91,11 @@ public class Order {
   }
 
   @EventSourcingHandler
-  public void on(FundsReservedEvent event) {
+  public void on(FundsReservedEvent event,
+      @Autowired @Value("${policy.commission-percentage}") String commissionPercentage) {
     this.id = event.getOrderId();
     this.status = OrderStatus.FUNDS_RESERVED;
+    this.commissionMultiplier = new BigDecimal(commissionPercentage);
     this.fundReservation = new FundReservation(
         event.getPaymentIntentId(),
         event.getPaymentMethodId(),
@@ -238,13 +243,11 @@ public class Order {
         event.getCompletedAt(), event.getPayoutTransferId(), event.getCommissionTransferId());
   }
 
-  // TODO: commission should be an aggregate field, not a hardcoded value, it
-  // might also change over time!
   private BigDecimal commission() {
-    return this.fundReservation.getNetAmount().multiply(BigDecimal.valueOf(0.1));
+    return this.fundReservation.getNetAmount().multiply(this.commissionMultiplier);
   }
 
   private BigDecimal payout() {
-    return this.fundReservation.getNetAmount().multiply(BigDecimal.valueOf(0.9));
+    return this.fundReservation.getNetAmount().multiply(BigDecimal.ONE.subtract(this.commissionMultiplier));
   }
 }
