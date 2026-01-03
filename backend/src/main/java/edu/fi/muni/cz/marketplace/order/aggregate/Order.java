@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 import edu.fi.muni.cz.marketplace.order.command.AssignFundReservationCommand;
 import edu.fi.muni.cz.marketplace.order.command.AssignTrackingInfoCommand;
+import edu.fi.muni.cz.marketplace.order.command.CompleteOrderCommand;
 import edu.fi.muni.cz.marketplace.order.command.EnterTrackingNumberCommand;
 import edu.fi.muni.cz.marketplace.order.command.FinishRefundCommand;
 import edu.fi.muni.cz.marketplace.order.command.UpdateTrackingStatusCommand;
@@ -28,6 +29,7 @@ import edu.fi.muni.cz.marketplace.order.deadline.ShippingDeadline;
 import edu.fi.muni.cz.marketplace.order.deadline.ShippingDeadlineNotMetPayload;
 import edu.fi.muni.cz.marketplace.order.events.FundsReservedEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderCancelledEvent;
+import edu.fi.muni.cz.marketplace.order.events.OrderCompletedEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderDeliveredEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderRefundScheduledEvent;
 import edu.fi.muni.cz.marketplace.order.events.TrackingNumberEnteredEvent;
@@ -55,6 +57,9 @@ public class Order {
 
   @Nullable
   private TrackingInfo trackingInfo;
+
+  @Nullable
+  private OrderCompletionInfo completionInfo;
 
   @Nullable
   private String refundId;
@@ -128,7 +133,7 @@ public class Order {
   public void on(EnterTrackingNumberCommand command, @Autowired DeadlineManager deadlineManager) {
     if (status != OrderStatus.FUNDS_RESERVED) {
       throw new IllegalStateException(
-          "Cannot enter tracking number for order " + this.id + " in state " + status);
+          "Cannot enter tracking number for order " + this.id + " in state: " + status);
     }
 
     log.info("Cancelling order deadline, the tracking info is now provided: " + this.id);
@@ -146,7 +151,7 @@ public class Order {
   public void on(AssignTrackingInfoCommand command) {
     if (status != OrderStatus.TRACKING_NUMBER_PROVIDED) {
       throw new IllegalStateException(
-          "Cannot assign tracking info for order " + this.id + " in state " + status);
+          "Cannot assign tracking info for order " + this.id + " in state: " + status);
     }
 
     apply(new TrackingNumberEnteredEvent(
@@ -172,7 +177,7 @@ public class Order {
   public void on(UpdateTrackingStatusCommand command) {
     if (status != OrderStatus.TRACKING_IN_PROGRESS) {
       throw new IllegalStateException(
-          "Cannot update tracking status for order " + this.id + " in state " + status);
+          "Cannot update tracking status for order " + this.id + " in state: " + status);
     }
 
     apply(new TrackingStatusUpdatedEvent(
@@ -212,6 +217,21 @@ public class Order {
   @EventSourcingHandler
   public void on(OrderDeliveredEvent event) {
     this.status = OrderStatus.DELIVERED;
+  }
+
+  @CommandHandler
+  public void on(CompleteOrderCommand command) {
+    if (status != OrderStatus.DELIVERED) {
+      throw new IllegalStateException("Cannot complete an order id: " + this.id + " in state: " + status);
+    }
+
+    apply(new OrderCompletedEvent(command.getPaymentTransferId(), command.getCommssionTransferId(), Instant.now()));
+  }
+
+  @EventSourcingHandler
+  public void on(OrderCompletedEvent event) {
+    this.completionInfo = new OrderCompletionInfo(
+        event.getCompletedAt(), event.getPayoutTransferId(), event.getCommissionTransferId());
   }
 
   private BigDecimal commission() {
