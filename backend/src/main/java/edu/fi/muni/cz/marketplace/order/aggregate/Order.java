@@ -239,6 +239,7 @@ public class Order {
 
   @EventSourcingHandler
   public void on(OrderCompletedEvent event) {
+    this.status = OrderStatus.COMPLETED;
     this.completionInfo = new OrderCompletionInfo(
         event.getCompletedAt(), event.getPayoutTransferId(), event.getCommissionTransferId());
   }

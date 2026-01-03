@@ -12,5 +12,7 @@ public enum OrderStatus {
   // refund is scheduled and will eventually happen
   REFUND_PENDING,
   // customer is refunded the order is cancelled
-  CANCELLED
+  CANCELLED,
+  // order is completed
+  COMPLETED
 }

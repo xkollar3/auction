@@ -473,6 +473,7 @@ class OrderTest {
             messageWithPayload(instanceOf(OrderCompletedEvent.class))))
         .expectState(order -> {
           assertEquals(orderId, order.getId());
+          assertEquals(OrderStatus.COMPLETED, order.getStatus());
           assertNotNull(order.getCompletionInfo());
           assertEquals(paymentTransferId, order.getCompletionInfo().getPayoutTransferId());
           assertEquals(commissionTransferId, order.getCompletionInfo().getCommissionTransferId());
