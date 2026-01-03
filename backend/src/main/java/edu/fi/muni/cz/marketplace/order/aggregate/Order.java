@@ -81,7 +81,7 @@ public class Order {
         command.getPaymentIntentId(),
         command.getPaymentMethodId(),
         deadlineId,
-        command.getAmount(),
+        command.getNetAmount(),
         command.getReservedAt(),
         command.getSellerId(),
         command.getSellerStripeAccountId()));
@@ -241,10 +241,10 @@ public class Order {
   // TODO: commission should be an aggregate field, not a hardcoded value, it
   // might also change over time!
   private BigDecimal commission() {
-    return this.fundReservation.getAmount().multiply(BigDecimal.valueOf(0.1));
+    return this.fundReservation.getNetAmount().multiply(BigDecimal.valueOf(0.1));
   }
 
   private BigDecimal payout() {
-    return this.fundReservation.getAmount().multiply(BigDecimal.valueOf(0.9));
+    return this.fundReservation.getNetAmount().multiply(BigDecimal.valueOf(0.9));
   }
 }

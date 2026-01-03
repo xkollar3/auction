@@ -2,6 +2,7 @@ package edu.fi.muni.cz.marketplace.order.command.handler;
 
 import java.time.Instant;
 
+import edu.fi.muni.cz.marketplace.order.client.FundReservationResult;
 import edu.fi.muni.cz.marketplace.order.command.AssignFundReservationCommand;
 import edu.fi.muni.cz.marketplace.order.command.ReserveFundsCommand;
 import org.axonframework.commandhandling.CommandHandler;
@@ -24,19 +25,20 @@ public class ReserveFundsCommandHandler {
   public void on(ReserveFundsCommand command) {
     log.info("Handling ReserveFundsCommand for order: {}", command.getId());
 
-    String paymentIntentId = stripeFundsApiClient.reserveFunds(
+    FundReservationResult result = stripeFundsApiClient.reserveFunds(
         command.getCustomerId(),
         command.getPaymentMethodId(),
         command.getAmount(),
         command.getId());
 
-    log.debug("Successfully reserved funds on Stripe. PaymentIntent: {}", paymentIntentId);
+    log.debug("Successfully reserved funds on Stripe. PaymentIntent: {}, net amount: {} CZK",
+        result.paymentIntentId(), result.netAmount());
 
     commandGateway.sendAndWait(new AssignFundReservationCommand(
         command.getId(),
-        paymentIntentId,
+        result.paymentIntentId(),
         command.getPaymentMethodId(),
-        command.getAmount(),
+        result.netAmount(),
         Instant.now(),
         command.getSellerId(),
         command.getSellerStripeAccountId()));

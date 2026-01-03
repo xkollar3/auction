@@ -83,7 +83,7 @@ class OrderTest {
           assertNotNull(reservation);
           assertEquals(paymentIntentId, reservation.getPaymentIntentId());
           assertEquals(paymentMethodId, reservation.getPaymentMethodId());
-          assertEquals(amount, reservation.getAmount());
+          assertEquals(amount, reservation.getNetAmount());
           assertEquals(reservedAt, reservation.getReservedAt());
           assertEquals(sellerId, reservation.getSellerId());
           assertEquals(sellerStripeAccountId, reservation.getSellerStripeAccountId());

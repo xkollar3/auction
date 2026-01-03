@@ -8,10 +8,13 @@ import org.springframework.stereotype.Component;
 
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
+import com.stripe.model.BalanceTransaction;
+import com.stripe.model.Charge;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.Refund;
 import com.stripe.model.Transfer;
 import com.stripe.net.RequestOptions;
+import com.stripe.param.ChargeRetrieveParams;
 import com.stripe.param.PaymentIntentCreateParams;
 import com.stripe.param.RefundCreateParams;
 import com.stripe.param.TransferCreateParams;
@@ -34,10 +37,10 @@ public class StripeFundsApiClient {
    * @param paymentMethodId the Stripe payment method ID to charge
    * @param amount          the amount to reserve in CZK
    * @param idempotencyKey  unique key to ensure idempotent creation
-   * @return the Stripe PaymentIntent ID
+   * @return the result containing PaymentIntent ID and net amount after Stripe fees
    * @throws StripeFundsApiClientException if payment intent creation fails
    */
-  public String reserveFunds(String customerId, String paymentMethodId, BigDecimal amount, UUID idempotencyKey) {
+  public FundReservationResult reserveFunds(String customerId, String paymentMethodId, BigDecimal amount, UUID idempotencyKey) {
     log.info("Reserving funds for customer {} with payment method {} and amount {} CZK",
         customerId, paymentMethodId, amount);
 
@@ -63,12 +66,27 @@ public class StripeFundsApiClient {
 
       PaymentIntent paymentIntent = PaymentIntent.create(params, requestOptions);
 
-      log.info("Successfully reserved funds with PaymentIntent: {}", paymentIntent.getId());
-      return paymentIntent.getId();
+      BigDecimal netAmount = retrieveNetAmount(paymentIntent.getLatestCharge());
+
+      log.info("Successfully reserved funds with PaymentIntent: {}, net amount: {} CZK",
+          paymentIntent.getId(), netAmount);
+      return new FundReservationResult(paymentIntent.getId(), netAmount);
     } catch (StripeException e) {
       throw new StripeFundsApiClientException(
           "Failed to reserve funds: " + e.getMessage(), e);
     }
+  }
+
+  private BigDecimal retrieveNetAmount(String chargeId) throws StripeException {
+    ChargeRetrieveParams chargeParams = ChargeRetrieveParams.builder()
+        .addExpand("balance_transaction")
+        .build();
+
+    Charge charge = Charge.retrieve(chargeId, chargeParams, null);
+    BalanceTransaction balanceTransaction = charge.getBalanceTransactionObject();
+
+    long netInCents = balanceTransaction.getNet();
+    return BigDecimal.valueOf(netInCents).divide(BigDecimal.valueOf(100));
   }
 
   /**
