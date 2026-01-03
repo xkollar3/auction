@@ -28,7 +28,7 @@ public class OrderController {
 
   private final CommandGateway commandGateway;
 
-  @PostMapping("/reserve-funds")
+  @PostMapping("/fund-reservation")
   public ResponseEntity<ReserveFundsResponse> reserveFunds(@RequestBody ReserveFundsRequest request) {
     UUID orderId = UUID.randomUUID();
 
@@ -38,7 +38,9 @@ public class OrderController {
         orderId,
         request.customerId(),
         request.paymentMethodId(),
-        request.amount()));
+        request.amount(),
+        request.sellerId(),
+        request.sellerStripeAccountId()));
 
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(new ReserveFundsResponse(orderId));
