@@ -3,6 +3,7 @@ package edu.fi.muni.cz.marketplace.order.aggregate;
 import static org.axonframework.modelling.command.AggregateLifecycle.apply;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
@@ -67,8 +68,9 @@ public class Order {
   @CommandHandler
   public Order(AssignFundReservationCommand command,
       @Autowired DeadlineManager deadlineManager,
-      @Autowired @Value("${policy.refund-deadline-days}") long refundPeriodDays) {
-    Instant shippingDeadlineTime = Instant.now().plus(refundPeriodDays,
+      @Autowired Clock clock,
+      @Autowired @Value("${policy.refund-deadline-days}") Long refundPeriodDays) {
+    Instant shippingDeadlineTime = clock.instant().plus(refundPeriodDays,
         ChronoUnit.DAYS);
     String deadlineId = deadlineManager.schedule(shippingDeadlineTime,
         ShippingDeadline.SHIPING_DEADLINE_NOT_MET,
@@ -102,7 +104,9 @@ public class Order {
   @DeadlineHandler(deadlineName = ShippingDeadline.SHIPING_DEADLINE_NOT_MET)
   public void onShippingDeadlineNotMet(ShippingDeadlineNotMetPayload payload) {
     if (status != OrderStatus.FUNDS_RESERVED) {
-      throw new IllegalStateException("Trying to cancel an unpaid order: " + this.id);
+      // deadlines run in a separate thread they should not interrupt it
+      log.warn("Deadline fired but order {} already in state {}. Ignoring.", this.id, this.status);
+      return;
     }
 
     log.info("Deadline for shipping order: {} was not met. Cancelling order.", payload.getOrderId());
@@ -170,7 +174,7 @@ public class Order {
         event.getEnteredAt(),
         TrackingStatusMilestone.PENDING,
         null,
-        Instant.now());
+        event.getEnteredAt());
   }
 
   @CommandHandler
@@ -234,11 +238,13 @@ public class Order {
         event.getCompletedAt(), event.getPayoutTransferId(), event.getCommissionTransferId());
   }
 
+  // TODO: commission should be an aggregate field, not a hardcoded value, it
+  // might also change over time!
   private BigDecimal commission() {
-    return this.fundReservation.getAmount().multiply(BigDecimal.valueOf(0.05f));
+    return this.fundReservation.getAmount().multiply(BigDecimal.valueOf(0.1));
   }
 
   private BigDecimal payout() {
-    return this.fundReservation.getAmount().multiply(BigDecimal.valueOf(0.9f));
+    return this.fundReservation.getAmount().multiply(BigDecimal.valueOf(0.9));
   }
 }

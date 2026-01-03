@@ -1,5 +1,6 @@
 package edu.fi.muni.cz.marketplace.config;
 
+import java.time.Clock;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -21,6 +22,11 @@ import com.github.kagkarlsson.scheduler.task.Task;
 
 @Configuration
 public class AxonConfig {
+
+  @Bean
+  public Clock clock() {
+    return Clock.systemUTC();
+  }
 
   @Bean
   public Scheduler scheduler(DataSource dataSource, List<Task<?>> tasks) {

@@ -16,6 +16,6 @@ public class ReserveFundsCommand {
   String paymentMethodId;
   BigDecimal amount;
   String sellerId;
-  String sellerStripeAccountId,
+  String sellerStripeAccountId;
 
 }

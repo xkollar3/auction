@@ -89,6 +89,12 @@
         <version>4.12.2</version>
     </dependency>
     <dependency>
+        <groupId>org.axonframework</groupId>
+        <artifactId>axon-test</artifactId>
+        <version>4.12.2</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
         <groupId>com.github.kagkarlsson</groupId>
         <artifactId>db-scheduler-spring-boot-starter</artifactId>
         <version>14.1.0</version>
