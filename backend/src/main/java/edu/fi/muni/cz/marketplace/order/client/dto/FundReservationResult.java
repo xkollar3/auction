@@ -1,4 +1,4 @@
-package edu.fi.muni.cz.marketplace.order.client;
+package edu.fi.muni.cz.marketplace.order.client.dto;
 
 import java.math.BigDecimal;
 
@@ -11,5 +11,5 @@ import java.math.BigDecimal;
  */
 public record FundReservationResult(
     String paymentIntentId,
-    BigDecimal netAmount
-) {}
+    BigDecimal netAmount) {
+}

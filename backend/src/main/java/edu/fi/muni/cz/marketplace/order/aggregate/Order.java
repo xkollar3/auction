@@ -234,7 +234,8 @@ public class Order {
       throw new IllegalStateException("Cannot complete an order id: " + this.id + " in state: " + status);
     }
 
-    apply(new OrderCompletedEvent(command.getPaymentTransferId(), command.getCommssionTransferId(), Instant.now()));
+    apply(new OrderCompletedEvent(this.id, command.getPaymentTransferId(), command.getCommssionTransferId(),
+        Instant.now()));
   }
 
   @EventSourcingHandler

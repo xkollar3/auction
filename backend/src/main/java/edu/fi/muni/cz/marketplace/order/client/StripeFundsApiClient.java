@@ -19,6 +19,7 @@ import com.stripe.param.PaymentIntentCreateParams;
 import com.stripe.param.RefundCreateParams;
 import com.stripe.param.TransferCreateParams;
 
+import edu.fi.muni.cz.marketplace.order.client.dto.FundReservationResult;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -37,10 +38,12 @@ public class StripeFundsApiClient {
    * @param paymentMethodId the Stripe payment method ID to charge
    * @param amount          the amount to reserve in CZK
    * @param idempotencyKey  unique key to ensure idempotent creation
-   * @return the result containing PaymentIntent ID and net amount after Stripe fees
+   * @return the result containing PaymentIntent ID and net amount after Stripe
+   *         fees
    * @throws StripeFundsApiClientException if payment intent creation fails
    */
-  public FundReservationResult reserveFunds(String customerId, String paymentMethodId, BigDecimal amount, UUID idempotencyKey) {
+  public FundReservationResult reserveFunds(String customerId, String paymentMethodId, BigDecimal amount,
+      UUID idempotencyKey) {
     log.info("Reserving funds for customer {} with payment method {} and amount {} CZK",
         customerId, paymentMethodId, amount);
 
@@ -126,7 +129,8 @@ public class StripeFundsApiClient {
    * @param amount     the amount to transfer in CZK
    * @param receiverId the destination connected Stripe account ID
    * @param orderId    the order ID used for idempotency key
-   * @param type       the transfer type (PAYOUT for sellers, COMMISSION for platform)
+   * @param type       the transfer type (PAYOUT for sellers, COMMISSION for
+   *                   platform)
    * @return the Stripe Transfer ID
    * @throws StripeFundsApiClientException if transfer creation fails
    */
