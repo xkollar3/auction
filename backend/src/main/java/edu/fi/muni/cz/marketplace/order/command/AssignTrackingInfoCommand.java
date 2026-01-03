@@ -1,6 +1,5 @@
 package edu.fi.muni.cz.marketplace.order.command;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -9,14 +8,11 @@ import org.axonframework.modelling.command.TargetAggregateIdentifier;
 import lombok.Value;
 
 @Value
-public class AssignFundReservationCommand {
+public class AssignTrackingInfoCommand {
 
   @TargetAggregateIdentifier
   UUID orderId;
-  String paymentIntentId;
-  String paymentMethodId;
-  BigDecimal amount;
-  Instant reservedAt;
-  String sellerId;
-  String sellerStripeAccountId;
+  String trackingNumber;
+  String ship24TrackerId;
+  Instant enteredAt;
 }

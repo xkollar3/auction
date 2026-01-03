@@ -5,5 +5,7 @@ import java.math.BigDecimal;
 public record ReserveFundsRequest(
     String customerId,
     String paymentMethodId,
-    BigDecimal amount) {
+    BigDecimal amount,
+    String sellerId,
+    String sellerStripeAccountId) {
 }

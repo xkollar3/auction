@@ -10,9 +10,11 @@ import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.Refund;
+import com.stripe.model.Transfer;
 import com.stripe.net.RequestOptions;
 import com.stripe.param.PaymentIntentCreateParams;
 import com.stripe.param.RefundCreateParams;
+import com.stripe.param.TransferCreateParams;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -97,5 +99,48 @@ public class StripeFundsApiClient {
       throw new StripeFundsApiClientException(
           "Failed to refund payment: " + e.getMessage(), e);
     }
+  }
+
+  /**
+   * Transfers funds to a connected Stripe account.
+   * Used for payouts to sellers or commission transfers to platform.
+   *
+   * @param amount     the amount to transfer in CZK
+   * @param receiverId the destination connected Stripe account ID
+   * @param orderId    the order ID used for idempotency key
+   * @param type       the transfer type (PAYOUT for sellers, COMMISSION for platform)
+   * @return the Stripe Transfer ID
+   * @throws StripeFundsApiClientException if transfer creation fails
+   */
+  public String transfer(BigDecimal amount, String receiverId, UUID orderId, TransferType type) {
+    log.info("Transferring {} CZK to account {} for order {} (type: {})",
+        amount, receiverId, orderId, type);
+
+    long amountInCents = amount.multiply(BigDecimal.valueOf(100)).longValue();
+
+    try {
+      TransferCreateParams params = TransferCreateParams.builder()
+          .setAmount(amountInCents)
+          .setCurrency("czk")
+          .setDestination(receiverId)
+          .build();
+
+      RequestOptions requestOptions = RequestOptions.builder()
+          .setIdempotencyKey(type.name().toLowerCase() + "_" + orderId.toString())
+          .build();
+
+      Transfer transfer = Transfer.create(params, requestOptions);
+
+      log.info("Successfully transferred funds with Transfer: {}", transfer.getId());
+      return transfer.getId();
+    } catch (StripeException e) {
+      throw new StripeFundsApiClientException(
+          "Failed to transfer funds: " + e.getMessage(), e);
+    }
+  }
+
+  public enum TransferType {
+    PAYOUT,
+    COMMISSION
   }
 }

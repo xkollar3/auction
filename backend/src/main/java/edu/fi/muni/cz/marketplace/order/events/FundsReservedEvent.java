@@ -15,4 +15,7 @@ public class FundsReservedEvent {
   String deadlineId;
   BigDecimal amount;
   Instant reservedAt;
+
+  String sellerId;
+  String sellerAccountId;
 }

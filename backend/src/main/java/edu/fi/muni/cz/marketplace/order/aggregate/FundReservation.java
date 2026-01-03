@@ -13,4 +13,7 @@ public class FundReservation {
   String deadlineId;
   BigDecimal amount;
   Instant reservedAt;
+
+  String sellerId;
+  String sellerStripeAccountId;
 }

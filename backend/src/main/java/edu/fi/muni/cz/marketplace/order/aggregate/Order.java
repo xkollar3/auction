@@ -2,6 +2,7 @@ package edu.fi.muni.cz.marketplace.order.aggregate;
 
 import static org.axonframework.modelling.command.AggregateLifecycle.apply;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
@@ -19,12 +20,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import edu.fi.muni.cz.marketplace.order.command.AssignFundReservationCommand;
+import edu.fi.muni.cz.marketplace.order.command.AssignTrackingInfoCommand;
+import edu.fi.muni.cz.marketplace.order.command.EnterTrackingNumberCommand;
 import edu.fi.muni.cz.marketplace.order.command.FinishRefundCommand;
+import edu.fi.muni.cz.marketplace.order.command.UpdateTrackingStatusCommand;
 import edu.fi.muni.cz.marketplace.order.deadline.ShippingDeadline;
 import edu.fi.muni.cz.marketplace.order.deadline.ShippingDeadlineNotMetPayload;
 import edu.fi.muni.cz.marketplace.order.events.FundsReservedEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderCancelledEvent;
+import edu.fi.muni.cz.marketplace.order.events.OrderDeliveredEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderRefundScheduledEvent;
+import edu.fi.muni.cz.marketplace.order.events.TrackingNumberEnteredEvent;
+import edu.fi.muni.cz.marketplace.order.events.TrackingNumberProvidedEvent;
+import edu.fi.muni.cz.marketplace.order.events.TrackingStatusUpdatedEvent;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +54,9 @@ public class Order {
   private FundReservation fundReservation;
 
   @Nullable
+  private TrackingInfo trackingInfo;
+
+  @Nullable
   private String refundId;
 
   @CommandHandler
@@ -64,19 +75,33 @@ public class Order {
         command.getPaymentMethodId(),
         deadlineId,
         command.getAmount(),
-        command.getReservedAt()));
+        command.getReservedAt(),
+        command.getSellerId(),
+        command.getSellerStripeAccountId()));
   }
 
   @EventSourcingHandler
   public void on(FundsReservedEvent event) {
     this.id = event.getOrderId();
-    this.status = OrderStatus.PAID;
+    this.status = OrderStatus.FUNDS_RESERVED;
     this.fundReservation = new FundReservation(
         event.getPaymentIntentId(),
         event.getPaymentMethodId(),
         event.getDeadlineId(),
         event.getAmount(),
-        event.getReservedAt());
+        event.getReservedAt(),
+        event.getSellerId(),
+        event.getSellerAccountId());
+  }
+
+  @DeadlineHandler(deadlineName = ShippingDeadline.SHIPING_DEADLINE_NOT_MET)
+  public void onShippingDeadlineNotMet(ShippingDeadlineNotMetPayload payload) {
+    if (status != OrderStatus.FUNDS_RESERVED) {
+      throw new IllegalStateException("Trying to cancel an unpaid order: " + this.id);
+    }
+
+    log.info("Deadline for shipping order: {} was not met. Cancelling order.", payload.getOrderId());
+    apply(new OrderRefundScheduledEvent(payload.getOrderId(), payload.getPaymentIntentId()));
   }
 
   @EventSourcingHandler
@@ -99,13 +124,101 @@ public class Order {
     this.refundId = event.getRefundId();
   }
 
-  @DeadlineHandler(deadlineName = ShippingDeadline.SHIPING_DEADLINE_NOT_MET)
-  public void onShippingDeadlineNotMet(ShippingDeadlineNotMetPayload payload) {
-    if (status != OrderStatus.PAID) {
-      throw new IllegalStateException("Trying to cancel an unpaid order: " + this.id);
+  @CommandHandler
+  public void on(EnterTrackingNumberCommand command, @Autowired DeadlineManager deadlineManager) {
+    if (status != OrderStatus.FUNDS_RESERVED) {
+      throw new IllegalStateException(
+          "Cannot enter tracking number for order " + this.id + " in state " + status);
     }
 
-    log.info("Deadline for shipping order: {} was not met. Cancelling order.", payload.getOrderId());
-    apply(new OrderRefundScheduledEvent(payload.getOrderId(), payload.getPaymentIntentId()));
+    log.info("Cancelling order deadline, the tracking info is now provided: " + this.id);
+    deadlineManager.cancelSchedule(ShippingDeadline.SHIPING_DEADLINE_NOT_MET, this.fundReservation.getDeadlineId());
+
+    apply(new TrackingNumberProvidedEvent(command.getOrderId(), command.getTrackingNumber()));
+  }
+
+  @EventSourcingHandler
+  public void on(TrackingNumberProvidedEvent event) {
+    this.status = OrderStatus.TRACKING_NUMBER_PROVIDED;
+  }
+
+  @CommandHandler
+  public void on(AssignTrackingInfoCommand command) {
+    if (status != OrderStatus.TRACKING_NUMBER_PROVIDED) {
+      throw new IllegalStateException(
+          "Cannot assign tracking info for order " + this.id + " in state " + status);
+    }
+
+    apply(new TrackingNumberEnteredEvent(
+        command.getOrderId(),
+        command.getTrackingNumber(),
+        command.getShip24TrackerId(),
+        command.getEnteredAt()));
+  }
+
+  @EventSourcingHandler
+  public void on(TrackingNumberEnteredEvent event) {
+    this.status = OrderStatus.TRACKING_IN_PROGRESS;
+    this.trackingInfo = new TrackingInfo(
+        event.getTrackingNumber(),
+        event.getShip24TrackerId(),
+        event.getEnteredAt(),
+        TrackingStatusMilestone.PENDING,
+        null,
+        Instant.now());
+  }
+
+  @CommandHandler
+  public void on(UpdateTrackingStatusCommand command) {
+    if (status != OrderStatus.TRACKING_IN_PROGRESS) {
+      throw new IllegalStateException(
+          "Cannot update tracking status for order " + this.id + " in state " + status);
+    }
+
+    apply(new TrackingStatusUpdatedEvent(
+        command.getOrderId(),
+        command.getEventId(),
+        command.getStatusMilestone(),
+        command.getEventStatus(),
+        command.getEventOccurredAt()));
+
+    if (command.getStatusMilestone() == TrackingStatusMilestone.EXCEPTION) {
+      apply(new OrderRefundScheduledEvent(
+          command.getOrderId(),
+          this.fundReservation.getPaymentIntentId()));
+    }
+
+    if (command.getStatusMilestone() == TrackingStatusMilestone.DELIVERED) {
+      apply(new OrderDeliveredEvent(
+          command.getOrderId(),
+          this.getFundReservation().getSellerStripeAccountId(),
+          this.payout(),
+          this.commission(),
+          command.getEventOccurredAt()));
+    }
+  }
+
+  @EventSourcingHandler
+  public void on(TrackingStatusUpdatedEvent event) {
+    this.trackingInfo = new TrackingInfo(
+        this.trackingInfo.getTrackingNumber(),
+        this.trackingInfo.getShip24TrackerId(),
+        this.trackingInfo.getCreatedAt(),
+        event.getStatusMilestone(),
+        event.getEventStatus(),
+        event.getEventOccurredAt());
+  }
+
+  @EventSourcingHandler
+  public void on(OrderDeliveredEvent event) {
+    this.status = OrderStatus.DELIVERED;
+  }
+
+  private BigDecimal commission() {
+    return this.fundReservation.getAmount().multiply(BigDecimal.valueOf(0.05f));
+  }
+
+  private BigDecimal payout() {
+    return this.fundReservation.getAmount().multiply(BigDecimal.valueOf(0.9f));
   }
 }

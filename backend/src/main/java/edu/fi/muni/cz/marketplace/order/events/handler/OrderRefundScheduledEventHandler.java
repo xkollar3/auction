@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class OrderRefundSchedulerEventHandler {
+public class OrderRefundScheduledEventHandler {
 
   private final CommandGateway commandGateway;
 

@@ -37,7 +37,9 @@ public class ReserveFundsCommandHandler {
         paymentIntentId,
         command.getPaymentMethodId(),
         command.getAmount(),
-        Instant.now()));
+        Instant.now(),
+        command.getSellerId(),
+        command.getSellerStripeAccountId()));
 
     log.debug("Successfully assigned fund reservation to order: {}", command.getId());
   }
