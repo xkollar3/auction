@@ -27,6 +27,6 @@ public class TransferPaymentCommandHandler {
 
     eventGateway.publish(new PaymentTransferredEvent(command.getOrderId(), transferId));
 
-    log.info("Commission deducted for order: {}", command.getOrderId());
+    log.info("Funds transferred for order for order: {}", command.getOrderId());
   }
 }
