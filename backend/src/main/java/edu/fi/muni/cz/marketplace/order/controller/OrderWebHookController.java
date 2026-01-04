@@ -29,7 +29,7 @@ public class OrderWebHookController {
 
   @PostMapping("/ship24")
   public ResponseEntity<String> handleShip24Webhook(
-      @RequestHeader("Authorization") String authHeader,
+      @RequestHeader(value = "Authorization", required = false) String authHeader,
       @RequestBody Ship24WebhookPayload payload) {
     if (!isValidWebhookSecret(authHeader)) {
       log.warn("Invalid webhook secret received");
