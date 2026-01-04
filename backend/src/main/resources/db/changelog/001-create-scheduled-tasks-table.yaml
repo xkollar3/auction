@@ -1,0 +1,80 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-scheduled-tasks-table
+      author: system
+      changes:
+        - createTable:
+            tableName: scheduled_tasks
+            columns:
+              - column:
+                  name: task_name
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: task_instance
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: task_data
+                  type: bytea
+              - column:
+                  name: execution_time
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: picked
+                  type: boolean
+                  constraints:
+                    nullable: false
+              - column:
+                  name: picked_by
+                  type: text
+              - column:
+                  name: last_success
+                  type: timestamp with time zone
+              - column:
+                  name: last_failure
+                  type: timestamp with time zone
+              - column:
+                  name: consecutive_failures
+                  type: int
+              - column:
+                  name: last_heartbeat
+                  type: timestamp with time zone
+              - column:
+                  name: version
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: priority
+                  type: smallint
+        - addPrimaryKey:
+            tableName: scheduled_tasks
+            columnNames: task_name, task_instance
+            constraintName: pk_scheduled_tasks
+        - createIndex:
+            tableName: scheduled_tasks
+            indexName: execution_time_idx
+            columns:
+              - column:
+                  name: execution_time
+        - createIndex:
+            tableName: scheduled_tasks
+            indexName: last_heartbeat_idx
+            columns:
+              - column:
+                  name: last_heartbeat
+        - createIndex:
+            tableName: scheduled_tasks
+            indexName: priority_execution_time_idx
+            columns:
+              - column:
+                  name: priority
+                  descending: true
+              - column:
+                  name: execution_time
+                  descending: false

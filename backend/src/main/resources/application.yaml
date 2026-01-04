@@ -7,3 +7,7 @@ axon:
 server:
   error:
     include-stacktrace: never
+
+policy:
+  refund-deadline-days: 30
+  commission-percentage: 0.1
