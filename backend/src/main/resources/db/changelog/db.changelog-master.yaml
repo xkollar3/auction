@@ -1,4 +1,4 @@
 databaseChangeLog:
   - include:
-      file: 001-create-scheduled-tasks-table.yaml
+      file: 001-create-system-tables.yaml
       relativeToChangelogFile: true

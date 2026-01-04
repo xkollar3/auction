@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: 001-create-scheduled-tasks-table
+      id: 001-1-create-scheduled-tasks-table
       author: system
       changes:
         - createTable:
@@ -78,3 +78,42 @@ databaseChangeLog:
               - column:
                   name: execution_time
                   descending: false
+  - changeSet:
+      id: 001-2-create-token-entry-table
+      author: axon
+      changes:
+        - createTable:
+            tableName: tokenentry
+            columns:
+              - column:
+                  name: processorname
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: segment
+                  type: int
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: token
+                  type: bytea
+
+              - column:
+                  name: tokentype
+                  type: varchar(255)
+
+              - column:
+                  name: timestamp
+                  type: varchar(255)
+
+              - column:
+                  name: owner
+                  type: varchar(255)
+
+        - addPrimaryKey:
+            tableName: tokenentry
+            columnNames: processorname, segment
+            constraintName: pk_tokenentry

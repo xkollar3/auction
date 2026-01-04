@@ -1,24 +1,40 @@
 package edu.fi.muni.cz.marketplace.config;
 
-import com.github.kagkarlsson.scheduler.Scheduler;
-import com.github.kagkarlsson.scheduler.task.Task;
 import java.time.Clock;
 import java.util.List;
+
 import javax.sql.DataSource;
+
 import org.axonframework.common.transaction.TransactionManager;
 import org.axonframework.config.ConfigurationScopeAwareProvider;
 import org.axonframework.deadline.DeadlineManager;
 import org.axonframework.deadline.DefaultDeadlineManagerSpanFactory;
 import org.axonframework.deadline.dbscheduler.DbSchedulerDeadlineManager;
+import org.axonframework.eventhandling.tokenstore.TokenStore;
+import org.axonframework.eventhandling.tokenstore.jdbc.JdbcTokenStore;
 import org.axonframework.messaging.ScopeAwareProvider;
 import org.axonframework.serialization.Serializer;
+import org.axonframework.spring.jdbc.SpringDataSourceConnectionProvider;
 import org.axonframework.tracing.SpanFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.github.kagkarlsson.scheduler.Scheduler;
+import com.github.kagkarlsson.scheduler.task.Task;
+
 @Configuration
 public class AxonConfig {
+
+  @Bean
+  public TokenStore tokenStore(Serializer serializer, DataSource source) {
+    JdbcTokenStore jdbcTokenStore = JdbcTokenStore.builder()
+        .serializer(serializer)
+        .connectionProvider(new SpringDataSourceConnectionProvider(source))
+        .build();
+
+    return jdbcTokenStore;
+  }
 
   @Bean
   public Clock clock() {
