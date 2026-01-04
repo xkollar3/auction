@@ -2,6 +2,8 @@ package edu.fi.muni.cz.marketplace.order.aggregate;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.UUID;
+
 import javax.annotation.Nonnull;
 import lombok.Value;
 
@@ -17,15 +19,14 @@ public class FundReservation {
   @Nonnull
   String deadlineId;
 
-  // net amount, because of deductions from stripe
   @Nonnull
-  BigDecimal netAmount;
+  BigDecimal grossAmount;
 
   @Nonnull
   Instant reservedAt;
 
   @Nonnull
-  String sellerId;
+  UUID sellerId;
 
   @Nonnull
   String sellerStripeAccountId;

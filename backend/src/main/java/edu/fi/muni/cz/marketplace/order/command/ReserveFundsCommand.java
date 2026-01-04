@@ -13,7 +13,7 @@ public class ReserveFundsCommand {
   String customerId;
   String paymentMethodId;
   BigDecimal amount;
-  String sellerId;
+  UUID sellerId;
   String sellerStripeAccountId;
 
 }

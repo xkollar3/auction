@@ -81,7 +81,7 @@ public class Order {
         command.getPaymentIntentId(),
         command.getPaymentMethodId(),
         deadlineId,
-        command.getNetAmount(),
+        command.getGrossAmount(),
         command.getReservedAt(),
         command.getSellerId(),
         command.getSellerStripeAccountId()));
@@ -247,11 +247,11 @@ public class Order {
   }
 
   private BigDecimal commission() {
-    return this.fundReservation.getNetAmount().multiply(this.commissionMultiplier);
+    return this.fundReservation.getGrossAmount().multiply(this.commissionMultiplier);
   }
 
   private BigDecimal payout() {
-    return this.fundReservation.getNetAmount()
+    return this.fundReservation.getGrossAmount()
         .multiply(BigDecimal.ONE.subtract(this.commissionMultiplier));
   }
 }

@@ -29,14 +29,14 @@ public class ReserveFundsCommandHandler {
         command.getAmount(),
         command.getId());
 
-    log.debug("Successfully reserved funds on Stripe. PaymentIntent: {}, net amount: {} CZK",
-        result.paymentIntentId(), result.netAmount());
+    log.debug("Successfully reserved funds on Stripe. PaymentIntent: {}, gross amount: {} CZK",
+        result.paymentIntentId(), result.grossAmount());
 
     commandGateway.send(new AssignFundReservationCommand(
         command.getId(),
         result.paymentIntentId(),
         command.getPaymentMethodId(),
-        result.netAmount(),
+        result.grossAmount(),
         Instant.now(),
         command.getSellerId(),
         command.getSellerStripeAccountId()));

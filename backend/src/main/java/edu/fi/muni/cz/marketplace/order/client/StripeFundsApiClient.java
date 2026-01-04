@@ -8,12 +8,13 @@ import com.stripe.model.PaymentIntent;
 import com.stripe.model.Refund;
 import com.stripe.model.Transfer;
 import com.stripe.net.RequestOptions;
-import com.stripe.param.ChargeRetrieveParams;
 import com.stripe.param.PaymentIntentCreateParams;
+import com.stripe.param.PaymentIntentRetrieveParams;
 import com.stripe.param.RefundCreateParams;
 import com.stripe.param.TransferCreateParams;
 import edu.fi.muni.cz.marketplace.order.client.dto.FundReservationResult;
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,14 +29,16 @@ public class StripeFundsApiClient {
   }
 
   /**
-   * Reserves funds from a payment method by creating a PaymentIntent. Uses CZK currency and
+   * Reserves funds from a payment method by creating a PaymentIntent. Uses CZK
+   * currency and
    * automatically captures the payment.
    *
    * @param customerId      the Stripe customer ID
    * @param paymentMethodId the Stripe payment method ID to charge
    * @param amount          the amount to reserve in CZK
    * @param idempotencyKey  unique key to ensure idempotent creation
-   * @return the result containing PaymentIntent ID and net amount after Stripe fees
+   * @return the result containing PaymentIntent ID and net amount after Stripe
+   *         fees
    * @throws StripeFundsApiClientException if payment intent creation fails
    */
   public FundReservationResult reserveFunds(String customerId, String paymentMethodId,
@@ -67,27 +70,13 @@ public class StripeFundsApiClient {
 
       PaymentIntent paymentIntent = PaymentIntent.create(params, requestOptions);
 
-      BigDecimal netAmount = retrieveNetAmount(paymentIntent.getLatestCharge());
-
-      log.info("Successfully reserved funds with PaymentIntent: {}, net amount: {} CZK",
-          paymentIntent.getId(), netAmount);
-      return new FundReservationResult(paymentIntent.getId(), netAmount);
+      log.info("Successfully reserved funds with PaymentIntent: {}, gross amount: {} CZK",
+          paymentIntent.getId(), amount);
+      return new FundReservationResult(paymentIntent.getId(), amount);
     } catch (StripeException e) {
       throw new StripeFundsApiClientException(
           "Failed to reserve funds: " + e.getMessage(), e);
     }
-  }
-
-  private BigDecimal retrieveNetAmount(String chargeId) throws StripeException {
-    ChargeRetrieveParams chargeParams = ChargeRetrieveParams.builder()
-        .addExpand("balance_transaction")
-        .build();
-
-    Charge charge = Charge.retrieve(chargeId, chargeParams, null);
-    BalanceTransaction balanceTransaction = charge.getBalanceTransactionObject();
-
-    long netInCents = balanceTransaction.getNet();
-    return BigDecimal.valueOf(netInCents).divide(BigDecimal.valueOf(100));
   }
 
   /**
@@ -121,13 +110,15 @@ public class StripeFundsApiClient {
   }
 
   /**
-   * Transfers funds to a connected Stripe account. Used for payouts to sellers or commission
+   * Transfers funds to a connected Stripe account. Used for payouts to sellers or
+   * commission
    * transfers to platform.
    *
    * @param amount     the amount to transfer in CZK
    * @param receiverId the destination connected Stripe account ID
    * @param orderId    the order ID used for idempotency key
-   * @param type       the transfer type (PAYOUT for sellers, COMMISSION for platform)
+   * @param type       the transfer type (PAYOUT for sellers, COMMISSION for
+   *                   platform)
    * @return the Stripe Transfer ID
    * @throws StripeFundsApiClientException if transfer creation fails
    */

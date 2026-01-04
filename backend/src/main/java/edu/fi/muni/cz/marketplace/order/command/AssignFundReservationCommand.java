@@ -13,8 +13,8 @@ public class AssignFundReservationCommand {
   UUID orderId;
   String paymentIntentId;
   String paymentMethodId;
-  BigDecimal netAmount;
+  BigDecimal grossAmount;
   Instant reservedAt;
-  String sellerId;
+  UUID sellerId;
   String sellerStripeAccountId;
 }

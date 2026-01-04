@@ -59,7 +59,7 @@ class OrderTest {
     String paymentMethodId = "pm_test456";
     BigDecimal amount = new BigDecimal("100.00");
     Instant reservedAt = Instant.now();
-    String sellerId = "seller123";
+    UUID sellerId = UUID.randomUUID();
     String sellerStripeAccountId = "acct_seller123";
 
     fixture.givenCurrentTime(FIXED_TIME)
@@ -85,7 +85,7 @@ class OrderTest {
           assertNotNull(reservation);
           assertEquals(paymentIntentId, reservation.getPaymentIntentId());
           assertEquals(paymentMethodId, reservation.getPaymentMethodId());
-          assertEquals(amount, reservation.getNetAmount());
+          assertEquals(amount, reservation.getGrossAmount());
           assertEquals(reservedAt, reservation.getReservedAt());
           assertEquals(sellerId, reservation.getSellerId());
           assertEquals(sellerStripeAccountId, reservation.getSellerStripeAccountId());
@@ -100,7 +100,7 @@ class OrderTest {
     String paymentMethodId = "pm_test456";
     BigDecimal amount = new BigDecimal("100.00");
     Instant reservedAt = FIXED_TIME;
-    String sellerId = "seller123";
+    UUID sellerId = UUID.randomUUID();
     String sellerStripeAccountId = "acct_seller123";
 
     fixture.givenCurrentTime(FIXED_TIME)
@@ -129,7 +129,7 @@ class OrderTest {
     String deadlineId = "deadline-123";
     BigDecimal amount = new BigDecimal("100.00");
     Instant reservedAt = FIXED_TIME;
-    String sellerId = "seller123";
+    UUID sellerId = UUID.randomUUID();
     String sellerAccountId = "acct_seller123";
     String refundId = "refund-456";
 
@@ -162,7 +162,7 @@ class OrderTest {
     String paymentMethodId = "pm_test456";
     BigDecimal amount = new BigDecimal("100.00");
     Instant reservedAt = FIXED_TIME;
-    String sellerId = "seller123";
+    UUID sellerId = UUID.randomUUID();
     String sellerStripeAccountId = "acct_seller123";
     String trackingNumber = "TRACK123";
 
@@ -192,7 +192,7 @@ class OrderTest {
     String deadlineId = "deadline-123";
     BigDecimal amount = new BigDecimal("100.00");
     Instant reservedAt = FIXED_TIME;
-    String sellerId = "seller123";
+    UUID sellerId = UUID.randomUUID();
     String sellerAccountId = "acct_seller123";
     String refundId = "refund-456";
 
@@ -218,7 +218,7 @@ class OrderTest {
     String paymentMethodId = "pm_test456";
     BigDecimal amount = new BigDecimal("100.00");
     Instant reservedAt = FIXED_TIME;
-    String sellerId = "seller123";
+    UUID sellerId = UUID.randomUUID();
     String sellerStripeAccountId = "acct_seller123";
     String trackingNumber = "TRACK123456";
 
@@ -250,7 +250,7 @@ class OrderTest {
     String deadlineId = "deadline-123";
     BigDecimal amount = new BigDecimal("100.00");
     Instant reservedAt = FIXED_TIME;
-    String sellerId = "seller123";
+    UUID sellerId = UUID.randomUUID();
     String sellerAccountId = "acct_seller123";
     String trackingNumber = "TRACK123456";
 
@@ -278,7 +278,7 @@ class OrderTest {
     String deadlineId = "deadline-123";
     BigDecimal amount = new BigDecimal("100.00");
     Instant reservedAt = FIXED_TIME;
-    String sellerId = "seller123";
+    UUID sellerId = UUID.randomUUID();
     String sellerAccountId = "acct_seller123";
     String trackingNumber = "TRACK123456";
     String ship24TrackerId = "ship24-tracker-789";
@@ -315,7 +315,7 @@ class OrderTest {
     String deadlineId = "deadline-123";
     BigDecimal amount = new BigDecimal("100.00");
     Instant reservedAt = FIXED_TIME;
-    String sellerId = "seller123";
+    UUID sellerId = UUID.randomUUID();
     String sellerAccountId = "acct_seller123";
     String trackingNumber = "TRACK123456";
     String ship24TrackerId = "ship24-tracker-789";
@@ -344,7 +344,7 @@ class OrderTest {
     String deadlineId = "deadline-123";
     BigDecimal amount = new BigDecimal("100.00");
     Instant reservedAt = FIXED_TIME;
-    String sellerId = "seller123";
+    UUID sellerId = UUID.randomUUID();
     String sellerAccountId = "acct_seller123";
     String trackingNumber = "TRACK123456";
     String ship24TrackerId = "ship24-tracker-789";
@@ -378,7 +378,7 @@ class OrderTest {
     String deadlineId = "deadline-123";
     BigDecimal amount = new BigDecimal(100);
     Instant reservedAt = FIXED_TIME;
-    String sellerId = "seller123";
+    UUID sellerId = UUID.randomUUID();
     String sellerAccountId = "acct_seller123";
     String trackingNumber = "TRACK123456";
     String ship24TrackerId = "ship24-tracker-789";
@@ -417,7 +417,7 @@ class OrderTest {
     String deadlineId = "deadline-123";
     BigDecimal amount = new BigDecimal("100.00");
     Instant reservedAt = FIXED_TIME;
-    String sellerId = "seller123";
+    UUID sellerId = UUID.randomUUID();
     String sellerAccountId = "acct_seller123";
     String trackingNumber = "TRACK123456";
     String ship24TrackerId = "ship24-tracker-789";
@@ -452,7 +452,7 @@ class OrderTest {
     String deadlineId = "deadline-123";
     BigDecimal amount = new BigDecimal(100);
     Instant reservedAt = FIXED_TIME;
-    String sellerId = "seller123";
+    UUID sellerId = UUID.randomUUID();
     String sellerAccountId = "acct_seller123";
     Instant deliveredAt = FIXED_TIME.plusSeconds(7200);
     String paymentTransferId = "transfer-payout-123";
@@ -488,7 +488,7 @@ class OrderTest {
     String deadlineId = "deadline-123";
     BigDecimal amount = new BigDecimal("100.00");
     Instant reservedAt = FIXED_TIME;
-    String sellerId = "seller123";
+    UUID sellerId = UUID.randomUUID();
     String sellerAccountId = "acct_seller123";
     String paymentTransferId = "transfer-payout-123";
     String commissionTransferId = "transfer-commission-456";

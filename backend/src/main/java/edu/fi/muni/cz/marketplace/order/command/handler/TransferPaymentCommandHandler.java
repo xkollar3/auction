@@ -23,7 +23,7 @@ public class TransferPaymentCommandHandler {
     String transferId = stripeFundsApiClient.transfer(command.getAmount(),
         command.getStripeAccountId(),
         command.getOrderId(),
-        TransferType.COMMISSION);
+        TransferType.PAYOUT);
 
     eventGateway.publish(new PaymentTransferredEvent(command.getOrderId(), transferId));
 
