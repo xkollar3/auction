@@ -1,10 +1,10 @@
 package edu.fi.muni.cz.marketplace.config;
 
+import com.github.kagkarlsson.scheduler.Scheduler;
+import com.github.kagkarlsson.scheduler.task.Task;
 import java.time.Clock;
 import java.util.List;
-
 import javax.sql.DataSource;
-
 import org.axonframework.common.transaction.TransactionManager;
 import org.axonframework.config.ConfigurationScopeAwareProvider;
 import org.axonframework.deadline.DeadlineManager;
@@ -16,9 +16,6 @@ import org.axonframework.tracing.SpanFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import com.github.kagkarlsson.scheduler.Scheduler;
-import com.github.kagkarlsson.scheduler.task.Task;
 
 @Configuration
 public class AxonConfig {

@@ -1,9 +1,8 @@
 package edu.fi.muni.cz.marketplace.order.events;
 
+import edu.fi.muni.cz.marketplace.order.aggregate.TrackingStatusMilestone;
 import java.time.Instant;
 import java.util.UUID;
-
-import edu.fi.muni.cz.marketplace.order.aggregate.TrackingStatusMilestone;
 import lombok.Value;
 
 @Value

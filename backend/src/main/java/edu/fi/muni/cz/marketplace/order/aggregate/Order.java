@@ -2,24 +2,6 @@ package edu.fi.muni.cz.marketplace.order.aggregate;
 
 import static org.axonframework.modelling.command.AggregateLifecycle.apply;
 
-import java.math.BigDecimal;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.UUID;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-import org.axonframework.commandhandling.CommandHandler;
-import org.axonframework.deadline.DeadlineManager;
-import org.axonframework.deadline.annotation.DeadlineHandler;
-import org.axonframework.eventsourcing.EventSourcingHandler;
-import org.axonframework.modelling.command.AggregateIdentifier;
-import org.axonframework.spring.stereotype.Aggregate;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-
 import edu.fi.muni.cz.marketplace.order.command.AssignFundReservationCommand;
 import edu.fi.muni.cz.marketplace.order.command.AssignTrackingInfoCommand;
 import edu.fi.muni.cz.marketplace.order.command.CompleteOrderCommand;
@@ -36,9 +18,24 @@ import edu.fi.muni.cz.marketplace.order.events.OrderRefundScheduledEvent;
 import edu.fi.muni.cz.marketplace.order.events.TrackingNumberEnteredEvent;
 import edu.fi.muni.cz.marketplace.order.events.TrackingNumberProvidedEvent;
 import edu.fi.muni.cz.marketplace.order.events.TrackingStatusUpdatedEvent;
+import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.UUID;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.axonframework.commandhandling.CommandHandler;
+import org.axonframework.deadline.DeadlineManager;
+import org.axonframework.deadline.annotation.DeadlineHandler;
+import org.axonframework.eventsourcing.EventSourcingHandler;
+import org.axonframework.modelling.command.AggregateIdentifier;
+import org.axonframework.spring.stereotype.Aggregate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 @Slf4j
 @Getter
@@ -114,7 +111,8 @@ public class Order {
       return;
     }
 
-    log.info("Deadline for shipping order: {} was not met. Cancelling order.", payload.getOrderId());
+    log.info("Deadline for shipping order: {} was not met. Cancelling order.",
+        payload.getOrderId());
     apply(new OrderRefundScheduledEvent(payload.getOrderId(), payload.getPaymentIntentId()));
   }
 
@@ -146,7 +144,8 @@ public class Order {
     }
 
     log.info("Cancelling order deadline, the tracking info is now provided: " + this.id);
-    deadlineManager.cancelSchedule(ShippingDeadline.SHIPING_DEADLINE_NOT_MET, this.fundReservation.getDeadlineId());
+    deadlineManager.cancelSchedule(ShippingDeadline.SHIPING_DEADLINE_NOT_MET,
+        this.fundReservation.getDeadlineId());
 
     apply(new TrackingNumberProvidedEvent(command.getOrderId(), command.getTrackingNumber()));
   }
@@ -231,10 +230,12 @@ public class Order {
   @CommandHandler
   public void on(CompleteOrderCommand command) {
     if (status != OrderStatus.DELIVERED) {
-      throw new IllegalStateException("Cannot complete an order id: " + this.id + " in state: " + status);
+      throw new IllegalStateException(
+          "Cannot complete an order id: " + this.id + " in state: " + status);
     }
 
-    apply(new OrderCompletedEvent(this.id, command.getPaymentTransferId(), command.getCommssionTransferId(),
+    apply(new OrderCompletedEvent(this.id, command.getPaymentTransferId(),
+        command.getCommssionTransferId(),
         Instant.now()));
   }
 
@@ -250,6 +251,7 @@ public class Order {
   }
 
   private BigDecimal payout() {
-    return this.fundReservation.getNetAmount().multiply(BigDecimal.ONE.subtract(this.commissionMultiplier));
+    return this.fundReservation.getNetAmount()
+        .multiply(BigDecimal.ONE.subtract(this.commissionMultiplier));
   }
 }

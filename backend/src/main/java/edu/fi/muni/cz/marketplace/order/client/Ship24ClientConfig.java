@@ -1,9 +1,8 @@
 package edu.fi.muni.cz.marketplace.order.client;
 
+import feign.RequestInterceptor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-
-import feign.RequestInterceptor;
 
 public class Ship24ClientConfig {
 

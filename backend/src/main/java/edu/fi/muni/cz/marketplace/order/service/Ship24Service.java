@@ -1,20 +1,19 @@
 package edu.fi.muni.cz.marketplace.order.service;
 
-import org.springframework.stereotype.Service;
-
 import edu.fi.muni.cz.marketplace.order.client.Ship24ApiClient;
 import edu.fi.muni.cz.marketplace.order.client.dto.CreateTrackerRequest;
 import edu.fi.muni.cz.marketplace.order.client.dto.CreateTrackerResponse;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 /**
  * Service for interacting with Ship24 shipment tracking API.
  * <p>
- * This service abstracts the underlying Feign client and provides a clean interface
- * for creating and managing shipment trackers. It handles all API communication,
- * error translation, and response unwrapping.
+ * This service abstracts the underlying Feign client and provides a clean interface for creating
+ * and managing shipment trackers. It handles all API communication, error translation, and response
+ * unwrapping.
  * </p>
  */
 @Slf4j
@@ -27,16 +26,16 @@ public class Ship24Service {
   /**
    * Creates a shipment tracker in Ship24 for the given tracking number.
    * <p>
-   * The tracker allows monitoring the shipment status through Ship24's tracking system.
-   * The shipmentReference (typically your order ID) is stored with the tracker and will
-   * be included in webhooks and API responses for correlation.
+   * The tracker allows monitoring the shipment status through Ship24's tracking system. The
+   * shipmentReference (typically your order ID) is stored with the tracker and will be included in
+   * webhooks and API responses for correlation.
    * </p>
    *
    * @param trackingNumber    the carrier's tracking number (5-50 characters)
    * @param shipmentReference your internal reference for this shipment (e.g., order ID)
    * @return the Ship24 tracker ID
-   * @throws Ship24ServiceException if tracker creation fails due to API errors, invalid input,
-   *                                or network issues
+   * @throws Ship24ServiceException if tracker creation fails due to API errors, invalid input, or
+   *                                network issues
    */
   public String createTracker(String trackingNumber, String shipmentReference) {
     log.info("Creating Ship24 tracker for tracking number: {}, shipment reference: {}",

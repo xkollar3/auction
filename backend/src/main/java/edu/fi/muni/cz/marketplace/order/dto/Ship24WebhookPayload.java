@@ -1,9 +1,8 @@
 package edu.fi.muni.cz.marketplace.order.dto;
 
+import edu.fi.muni.cz.marketplace.order.aggregate.TrackingStatusMilestone;
 import java.time.Instant;
 import java.util.List;
-
-import edu.fi.muni.cz.marketplace.order.aggregate.TrackingStatusMilestone;
 
 public record Ship24WebhookPayload(
     List<TrackingUpdate> trackings

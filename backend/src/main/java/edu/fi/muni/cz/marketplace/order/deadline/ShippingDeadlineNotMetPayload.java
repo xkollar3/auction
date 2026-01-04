@@ -1,7 +1,6 @@
 package edu.fi.muni.cz.marketplace.order.deadline;
 
 import java.util.UUID;
-
 import lombok.Value;
 
 @Value

@@ -1,13 +1,12 @@
 package edu.fi.muni.cz.marketplace.order.events.handler;
 
-import org.axonframework.commandhandling.gateway.CommandGateway;
-import org.axonframework.eventhandling.EventHandler;
-import org.springframework.stereotype.Component;
-
 import edu.fi.muni.cz.marketplace.order.command.RefundOrderCommand;
 import edu.fi.muni.cz.marketplace.order.events.OrderRefundScheduledEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.axonframework.commandhandling.gateway.CommandGateway;
+import org.axonframework.eventhandling.EventHandler;
+import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component

@@ -1,9 +1,7 @@
 package edu.fi.muni.cz.marketplace.order.aggregate;
 
 import java.time.Instant;
-
 import javax.annotation.Nonnull;
-
 import lombok.Value;
 
 @Value

@@ -1,17 +1,15 @@
 package edu.fi.muni.cz.marketplace.order.command.handler;
 
-import java.time.Instant;
-
+import edu.fi.muni.cz.marketplace.order.client.StripeFundsApiClient;
 import edu.fi.muni.cz.marketplace.order.client.dto.FundReservationResult;
 import edu.fi.muni.cz.marketplace.order.command.AssignFundReservationCommand;
 import edu.fi.muni.cz.marketplace.order.command.ReserveFundsCommand;
+import java.time.Instant;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.springframework.stereotype.Component;
-
-import edu.fi.muni.cz.marketplace.order.client.StripeFundsApiClient;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component

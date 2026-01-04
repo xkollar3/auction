@@ -1,11 +1,5 @@
 package edu.fi.muni.cz.marketplace.order.client;
 
-import java.math.BigDecimal;
-import java.util.UUID;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.BalanceTransaction;
@@ -18,9 +12,12 @@ import com.stripe.param.ChargeRetrieveParams;
 import com.stripe.param.PaymentIntentCreateParams;
 import com.stripe.param.RefundCreateParams;
 import com.stripe.param.TransferCreateParams;
-
 import edu.fi.muni.cz.marketplace.order.client.dto.FundReservationResult;
+import java.math.BigDecimal;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
@@ -31,18 +28,18 @@ public class StripeFundsApiClient {
   }
 
   /**
-   * Reserves funds from a payment method by creating a PaymentIntent.
-   * Uses CZK currency and automatically captures the payment.
+   * Reserves funds from a payment method by creating a PaymentIntent. Uses CZK currency and
+   * automatically captures the payment.
    *
    * @param customerId      the Stripe customer ID
    * @param paymentMethodId the Stripe payment method ID to charge
    * @param amount          the amount to reserve in CZK
    * @param idempotencyKey  unique key to ensure idempotent creation
-   * @return the result containing PaymentIntent ID and net amount after Stripe
-   *         fees
+   * @return the result containing PaymentIntent ID and net amount after Stripe fees
    * @throws StripeFundsApiClientException if payment intent creation fails
    */
-  public FundReservationResult reserveFunds(String customerId, String paymentMethodId, BigDecimal amount,
+  public FundReservationResult reserveFunds(String customerId, String paymentMethodId,
+      BigDecimal amount,
       UUID idempotencyKey) {
     log.info("Reserving funds for customer {} with payment method {} and amount {} CZK",
         customerId, paymentMethodId, amount);
@@ -59,7 +56,8 @@ public class StripeFundsApiClient {
           .setAutomaticPaymentMethods(
               PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
                   .setEnabled(true)
-                  .setAllowRedirects(PaymentIntentCreateParams.AutomaticPaymentMethods.AllowRedirects.NEVER)
+                  .setAllowRedirects(
+                      PaymentIntentCreateParams.AutomaticPaymentMethods.AllowRedirects.NEVER)
                   .build())
           .build();
 
@@ -123,14 +121,13 @@ public class StripeFundsApiClient {
   }
 
   /**
-   * Transfers funds to a connected Stripe account.
-   * Used for payouts to sellers or commission transfers to platform.
+   * Transfers funds to a connected Stripe account. Used for payouts to sellers or commission
+   * transfers to platform.
    *
    * @param amount     the amount to transfer in CZK
    * @param receiverId the destination connected Stripe account ID
    * @param orderId    the order ID used for idempotency key
-   * @param type       the transfer type (PAYOUT for sellers, COMMISSION for
-   *                   platform)
+   * @param type       the transfer type (PAYOUT for sellers, COMMISSION for platform)
    * @return the Stripe Transfer ID
    * @throws StripeFundsApiClientException if transfer creation fails
    */

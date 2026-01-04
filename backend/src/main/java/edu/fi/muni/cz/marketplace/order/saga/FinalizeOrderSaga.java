@@ -1,12 +1,5 @@
 package edu.fi.muni.cz.marketplace.order.saga;
 
-import org.axonframework.commandhandling.gateway.CommandGateway;
-import org.axonframework.modelling.saga.SagaEventHandler;
-import org.axonframework.modelling.saga.SagaLifecycle;
-import org.axonframework.modelling.saga.StartSaga;
-import org.axonframework.spring.stereotype.Saga;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import edu.fi.muni.cz.marketplace.order.command.CompleteOrderCommand;
 import edu.fi.muni.cz.marketplace.order.command.DeductCommissionCommand;
 import edu.fi.muni.cz.marketplace.order.command.TransferPaymentCommand;
@@ -14,6 +7,12 @@ import edu.fi.muni.cz.marketplace.order.events.CommissionDeductedEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderDeliveredEvent;
 import edu.fi.muni.cz.marketplace.order.events.PaymentTransferredEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.axonframework.commandhandling.gateway.CommandGateway;
+import org.axonframework.modelling.saga.SagaEventHandler;
+import org.axonframework.modelling.saga.SagaLifecycle;
+import org.axonframework.modelling.saga.StartSaga;
+import org.axonframework.spring.stereotype.Saga;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Saga
 @Slf4j
@@ -31,7 +30,8 @@ public class FinalizeOrderSaga {
     commandGateway.send(new DeductCommissionCommand(event.getOrderId(), event.getCommission()));
     commandGateway
         .send(
-            new TransferPaymentCommand(event.getOrderId(), event.getSellerStripeAccountId(), event.getPayoutAmount()));
+            new TransferPaymentCommand(event.getOrderId(), event.getSellerStripeAccountId(),
+                event.getPayoutAmount()));
   }
 
   @SagaEventHandler(associationProperty = "orderId")
@@ -39,7 +39,8 @@ public class FinalizeOrderSaga {
     this.commissionTransferId = event.getTransferId();
     if (this.paymentTransferId != null && !this.paymentTransferId.isEmpty()) {
       commandGateway
-          .send(new CompleteOrderCommand(event.getOrderId(), this.paymentTransferId, this.commissionTransferId));
+          .send(new CompleteOrderCommand(event.getOrderId(), this.paymentTransferId,
+              this.commissionTransferId));
       SagaLifecycle.end();
     }
   }
@@ -49,7 +50,8 @@ public class FinalizeOrderSaga {
     this.paymentTransferId = event.getTransferId();
     if (this.commissionTransferId != null && !this.commissionTransferId.isEmpty()) {
       commandGateway
-          .send(new CompleteOrderCommand(event.getOrderId(), this.paymentTransferId, this.commissionTransferId));
+          .send(new CompleteOrderCommand(event.getOrderId(), this.paymentTransferId,
+              this.commissionTransferId));
       SagaLifecycle.end();
     }
   }

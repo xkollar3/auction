@@ -1,7 +1,11 @@
 package edu.fi.muni.cz.marketplace.order.controller;
 
+import edu.fi.muni.cz.marketplace.order.aggregate.TrackingStatusMilestone;
+import edu.fi.muni.cz.marketplace.order.command.UpdateTrackingStatusCommand;
+import edu.fi.muni.cz.marketplace.order.dto.Ship24WebhookPayload;
 import java.util.UUID;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -11,12 +15,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import edu.fi.muni.cz.marketplace.order.aggregate.TrackingStatusMilestone;
-import edu.fi.muni.cz.marketplace.order.command.UpdateTrackingStatusCommand;
-import edu.fi.muni.cz.marketplace.order.dto.Ship24WebhookPayload;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
