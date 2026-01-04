@@ -1,0 +1,46 @@
+package edu.fi.muni.cz.marketplace.order.command.handler;
+
+import edu.fi.muni.cz.marketplace.order.client.StripeFundsApiClient;
+import edu.fi.muni.cz.marketplace.order.client.dto.FundReservationResult;
+import edu.fi.muni.cz.marketplace.order.command.AssignFundReservationCommand;
+import edu.fi.muni.cz.marketplace.order.command.ReserveFundsCommand;
+import java.time.Instant;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.axonframework.commandhandling.CommandHandler;
+import org.axonframework.commandhandling.gateway.CommandGateway;
+import org.springframework.stereotype.Component;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class ReserveFundsCommandHandler {
+
+  private final StripeFundsApiClient stripeFundsApiClient;
+  private final CommandGateway commandGateway;
+
+  @CommandHandler
+  public void on(ReserveFundsCommand command) {
+    log.info("Handling ReserveFundsCommand for order: {}", command.getId());
+
+    FundReservationResult result = stripeFundsApiClient.reserveFunds(
+        command.getCustomerId(),
+        command.getPaymentMethodId(),
+        command.getAmount(),
+        command.getId());
+
+    log.debug("Successfully reserved funds on Stripe. PaymentIntent: {}, gross amount: {} CZK",
+        result.paymentIntentId(), result.grossAmount());
+
+    commandGateway.send(new AssignFundReservationCommand(
+        command.getId(),
+        result.paymentIntentId(),
+        command.getPaymentMethodId(),
+        result.grossAmount(),
+        Instant.now(),
+        command.getSellerId(),
+        command.getSellerStripeAccountId()));
+
+    log.debug("Successfully assigned fund reservation to order: {}", command.getId());
+  }
+}

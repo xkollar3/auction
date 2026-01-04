@@ -35,6 +35,9 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     show-sql: true
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    enabled: true
   security:
     oauth2:
       resourceserver:
@@ -59,3 +62,9 @@ keycloak:
 
 stripe:
   api-key: ${STRIPE_SECRET_KEY}
+  platform-account-id: acct_1SjJEWEEAhhOCf0h
+
+ship24:
+  base-url: https://api.ship24.com/public/v1
+  api-key: ${SHIP24_API_KEY}
+  webhook-secret: ${SHIP24_WEBHOOK_SECRET}
