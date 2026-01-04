@@ -27,7 +27,7 @@ public class OrderController {
   private final CommandGateway commandGateway;
 
   @PostMapping("/fund-reservation")
-  public ResponseEntity<ReserveFundsResponse> reserveFunds(
+  public ResponseEntity<ReserveFundsResponse> fundReservation(
       @RequestBody ReserveFundsRequest request) {
     UUID orderId = UUID.randomUUID();
 
@@ -46,7 +46,7 @@ public class OrderController {
   }
 
   @PostMapping("/{orderId}/tracking-number")
-  public ResponseEntity<EnterTrackingNumberResponse> enterTrackingNumber(
+  public ResponseEntity<EnterTrackingNumberResponse> trackingNumber(
       @PathVariable UUID orderId,
       @RequestBody EnterTrackingNumberRequest request) {
 
