@@ -10,10 +10,12 @@ import org.axonframework.modelling.command.AggregateIdentifier;
 import org.axonframework.spring.stereotype.Aggregate;
 
 import edu.fi.muni.cz.marketplace.user.command.AddPaymentInformationCommand;
+import edu.fi.muni.cz.marketplace.user.command.AssignStripeSellerAccountIdCommand;
 import edu.fi.muni.cz.marketplace.user.command.AssignStripeCustomerIdCommand;
 import edu.fi.muni.cz.marketplace.user.command.RegisterUserCommand;
 import edu.fi.muni.cz.marketplace.user.event.PaymentInformationAddedEvent;
 import edu.fi.muni.cz.marketplace.user.event.StripeCustomerCreatedEvent;
+import edu.fi.muni.cz.marketplace.user.event.StripeSellerAccountCreatedEvent;
 import edu.fi.muni.cz.marketplace.user.event.UserRegisteredEvent;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -102,5 +104,19 @@ public class User {
   @EventSourcingHandler
   public void on(PaymentInformationAddedEvent event) {
     this.stripePaymentMethodId = event.getPaymentMethodId();
+  }
+
+  @CommandHandler
+  public void on(AssignStripeSellerAccountIdCommand command) {
+    if (stripeSellerAccountId != null) {
+      throw new IllegalStateException(
+          String.format("User with id: %s, already has a seller account", command.getId()));
+    }
+    apply(new StripeSellerAccountCreatedEvent(command.getId(), command.getStripeSellerAccountId()));
+  }
+
+  @EventSourcingHandler
+  public void on(StripeSellerAccountCreatedEvent event) {
+    this.stripeSellerAccountId = event.getStripeSellerAccountId();
   }
 }

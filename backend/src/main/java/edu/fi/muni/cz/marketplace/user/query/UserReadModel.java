@@ -25,4 +25,7 @@ public class UserReadModel {
 
   @Column(unique = true)
   private String stripeCustomerId;
+
+  @Column(unique = true)
+  private String stripeSellerAccountId;
 }

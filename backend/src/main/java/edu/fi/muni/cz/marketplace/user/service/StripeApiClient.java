@@ -16,6 +16,8 @@ import com.stripe.param.AccountCreateParams;
 import com.stripe.param.CustomerCreateParams;
 import com.stripe.param.PaymentMethodAttachParams;
 import com.stripe.param.SetupIntentCreateParams;
+import com.stripe.model.AccountLink;
+import com.stripe.param.AccountLinkCreateParams;
 
 import edu.fi.muni.cz.marketplace.user.dto.Address;
 import edu.fi.muni.cz.marketplace.user.service.dto.ConnectedAccountResponse;
@@ -177,7 +179,7 @@ public class StripeApiClient {
           .build();
 
       RequestOptions requestOptions = RequestOptions.builder()
-          .setIdempotencyKey(idempotencyKey.toString())
+          .setIdempotencyKey(idempotencyKey.toString() + "_account") // Must be unique from user's stripe id
           .build();
 
       Account account = Account.create(params, requestOptions);
@@ -188,6 +190,37 @@ public class StripeApiClient {
     } catch (StripeException e) {
       throw new StripeApiClientException(
           "Failed to create Stripe Connected Account: " + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Creates an Account Link to onboard the user for Stripe Connect.
+   *
+   * @param accountId  the connected account ID
+   * @param refreshUrl URL to redirect if the link expires
+   * @param returnUrl  URL to redirect after successful onboarding
+   * @return the account link URL
+   * @throws StripeApiClientException if link creation fails
+   */
+  public String createAccountLink(String accountId, String refreshUrl, String returnUrl) {
+    log.info("Creating Account Link for account: {}", accountId);
+
+    try {
+      AccountLinkCreateParams params = AccountLinkCreateParams.builder()
+          .setAccount(accountId)
+          .setRefreshUrl(refreshUrl)
+          .setReturnUrl(returnUrl)
+          .setType(AccountLinkCreateParams.Type.ACCOUNT_ONBOARDING)
+          .build();
+
+      AccountLink accountLink = AccountLink.create(params);
+
+      log.info("Successfully created Account Link for account: {}", accountId);
+      return accountLink.getUrl();
+
+    } catch (StripeException e) {
+      throw new StripeApiClientException(
+          "Failed to create Account Link: " + e.getMessage(), e);
     }
   }
 }

@@ -6,6 +6,7 @@ import org.axonframework.queryhandling.QueryHandler;
 import org.springframework.stereotype.Component;
 
 import edu.fi.muni.cz.marketplace.user.event.StripeCustomerCreatedEvent;
+import edu.fi.muni.cz.marketplace.user.event.StripeSellerAccountCreatedEvent;
 import edu.fi.muni.cz.marketplace.user.event.UserRegisteredEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,8 +26,8 @@ public class UserProjection {
     UserReadModel readModel = new UserReadModel(
         event.getId(),
         event.getKeycloakUserId(),
-        null
-    );
+        null,
+        null);
 
     repository.save(readModel);
     log.info("Saved Keycloak user ID lookup for aggregate ID: {}", event.getId());
@@ -40,6 +41,18 @@ public class UserProjection {
       user.setStripeCustomerId(event.getStripeCustomerId());
       repository.save(user);
       log.info("Updated Stripe Customer ID for aggregate ID: {}", event.getId());
+      log.info("Updated Stripe Customer ID for aggregate ID: {}", event.getId());
+    });
+  }
+
+  @EventHandler
+  public void on(StripeSellerAccountCreatedEvent event) {
+    log.info("Processing StripeSellerAccountCreatedEvent for aggregate ID: {}", event.getId());
+
+    repository.findById(event.getId()).ifPresent(user -> {
+      user.setStripeSellerAccountId(event.getStripeSellerAccountId());
+      repository.save(user);
+      log.info("Updated Stripe Seller Account ID for aggregate ID: {}", event.getId());
     });
   }
 

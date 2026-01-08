@@ -18,9 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import edu.fi.muni.cz.marketplace.config.exception.HttpException;
 import edu.fi.muni.cz.marketplace.user.command.AddPaymentInformationCommand;
+import edu.fi.muni.cz.marketplace.user.command.CreateStripeConnectedAccountCommand;
 import edu.fi.muni.cz.marketplace.user.command.CreateStripeCustomerCommand;
 import edu.fi.muni.cz.marketplace.user.command.RegisterUserCommand;
 import edu.fi.muni.cz.marketplace.user.dto.AddPaymentMethodRequest;
+import edu.fi.muni.cz.marketplace.user.dto.CreateStripeConnectedAccountResponse;
 import edu.fi.muni.cz.marketplace.user.dto.CreateStripeCustomerRequest;
 import edu.fi.muni.cz.marketplace.user.dto.UserRegistrationResponse;
 import edu.fi.muni.cz.marketplace.user.query.FindUserByKeycloakIdQuery;
@@ -89,6 +91,27 @@ public class UserController {
     return ResponseEntity.status(HttpStatus.ACCEPTED).build();
   }
 
+  @PostMapping("/me/create-seller-account")
+  public ResponseEntity<CreateStripeConnectedAccountResponse> createStripeConnectedAccount(
+      @AuthenticationPrincipal Jwt jwt) {
+    validateJwtClaims(jwt, "email");
+
+    String keycloakUserId = jwt.getSubject();
+    UserReadModel user = findUserByKeycloakId(keycloakUserId);
+    String email = jwt.getClaimAsString("email");
+
+    log.info("Creating Stripe seller account for user aggregate: {}", user.getId());
+
+    CompletableFuture<String> future = commandGateway.send(new CreateStripeConnectedAccountCommand(
+        user.getId(),
+        email));
+
+    // We wait for the result to get the onboarding URL
+    String onboardingUrl = future.join();
+
+    return ResponseEntity.status(HttpStatus.CREATED).body(new CreateStripeConnectedAccountResponse(onboardingUrl));
+  }
+
   @PostMapping("/me/setup-payment-intent")
   public ResponseEntity<SetupIntentResponse> createSetupIntent(@AuthenticationPrincipal Jwt jwt) {
     String keycloakUserId = jwt.getSubject();
@@ -100,7 +123,8 @@ public class UserController {
       throw new HttpException(400, "User does not have a Stripe Customer ID");
     }
 
-    // We use a random UUID for idempotency here because a user might try to setup multiple payment methods
+    // We use a random UUID for idempotency here because a user might try to setup
+    // multiple payment methods
     SetupIntentResponse response = stripeApiClient.createSetupIntent(UUID.randomUUID(), user.getStripeCustomerId());
 
     return ResponseEntity.ok(response);
