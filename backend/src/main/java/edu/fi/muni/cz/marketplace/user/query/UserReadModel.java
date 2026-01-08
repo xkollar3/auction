@@ -11,15 +11,18 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "keycloak_user_id_lookup")
+@Table(name = "user_read_model")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class KeycloakUserIdReadModel {
+public class UserReadModel {
 
   @Id
   private UUID id;
 
   @Column(unique = true, nullable = false)
   private String keycloakUserId;
+
+  @Column(unique = true)
+  private String stripeCustomerId;
 }

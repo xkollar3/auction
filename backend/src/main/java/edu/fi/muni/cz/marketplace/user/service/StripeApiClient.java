@@ -9,10 +9,12 @@ import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Account;
 import com.stripe.model.Customer;
+import com.stripe.model.PaymentMethod;
 import com.stripe.model.SetupIntent;
 import com.stripe.net.RequestOptions;
 import com.stripe.param.AccountCreateParams;
 import com.stripe.param.CustomerCreateParams;
+import com.stripe.param.PaymentMethodAttachParams;
 import com.stripe.param.SetupIntentCreateParams;
 
 import edu.fi.muni.cz.marketplace.user.dto.Address;
@@ -90,17 +92,50 @@ public class StripeApiClient {
   }
 
   /**
+   * Attaches a payment method to a customer.
+   *
+   * @param customerId      the Stripe customer ID
+   * @param paymentMethodId the Stripe payment method ID
+   * @throws StripeApiClientException if attachment fails
+   */
+  public void attachPaymentMethod(String customerId, String paymentMethodId) {
+    log.info("Attaching payment method {} to customer {}", paymentMethodId, customerId);
+
+    try {
+      PaymentMethod paymentMethod = PaymentMethod.retrieve(paymentMethodId);
+
+      PaymentMethodAttachParams params = PaymentMethodAttachParams.builder()
+          .setCustomer(customerId)
+          .build();
+
+      paymentMethod.attach(params);
+
+      log.info("Successfully attached payment method {} to customer {}", paymentMethodId, customerId);
+
+    } catch (StripeException e) {
+      throw new StripeApiClientException(
+          "Failed to attach payment method: " + e.getMessage(), e);
+    }
+  }
+
+  /**
    * Creates a Stripe SetupIntent for saving payment method details.
    *
    * @param idempotencyKey unique key to ensure idempotent creation
+   * @param customerId     the Stripe customer ID to attach the method to
    * @return SetupIntentResponse containing the intent ID and client secret
    * @throws StripeApiClientException if setup intent creation fails
    */
-  public SetupIntentResponse createSetupIntent(UUID idempotencyKey) {
-    log.info("Creating Stripe SetupIntent with idempotency key: {}", idempotencyKey);
+  public SetupIntentResponse createSetupIntent(UUID idempotencyKey, String customerId) {
+    log.info("Creating Stripe SetupIntent with idempotency key: {} for customer: {}", idempotencyKey, customerId);
 
     try {
       SetupIntentCreateParams params = SetupIntentCreateParams.builder()
+          .setCustomer(customerId)
+          .setAutomaticPaymentMethods(
+              SetupIntentCreateParams.AutomaticPaymentMethods.builder()
+                  .setEnabled(true)
+                  .build())
           .build();
 
       RequestOptions requestOptions = RequestOptions.builder()

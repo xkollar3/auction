@@ -9,8 +9,10 @@ import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.modelling.command.AggregateIdentifier;
 import org.axonframework.spring.stereotype.Aggregate;
 
+import edu.fi.muni.cz.marketplace.user.command.AddPaymentInformationCommand;
 import edu.fi.muni.cz.marketplace.user.command.AssignStripeCustomerIdCommand;
 import edu.fi.muni.cz.marketplace.user.command.RegisterUserCommand;
+import edu.fi.muni.cz.marketplace.user.event.PaymentInformationAddedEvent;
 import edu.fi.muni.cz.marketplace.user.event.StripeCustomerCreatedEvent;
 import edu.fi.muni.cz.marketplace.user.event.UserRegisteredEvent;
 import lombok.Getter;
@@ -86,5 +88,19 @@ public class User {
   @EventSourcingHandler
   public void on(StripeCustomerCreatedEvent event) {
     this.stripeCustomerId = event.getStripeCustomerId();
+  }
+
+  @CommandHandler
+  public void on(AddPaymentInformationCommand command) {
+    if (stripeCustomerId == null) {
+      throw new IllegalStateException(
+          String.format("User with id: %s, does not have a customer account", command.getId()));
+    }
+    apply(new PaymentInformationAddedEvent(command.getId(), command.getPaymentMethodId()));
+  }
+
+  @EventSourcingHandler
+  public void on(PaymentInformationAddedEvent event) {
+    this.stripePaymentMethodId = event.getPaymentMethodId();
   }
 }

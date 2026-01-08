@@ -8,7 +8,7 @@ import org.axonframework.messaging.MessageDispatchInterceptor;
 import org.springframework.stereotype.Component;
 
 import edu.fi.muni.cz.marketplace.config.exception.HttpException;
-import edu.fi.muni.cz.marketplace.user.query.KeycloakUserIdRepository;
+import edu.fi.muni.cz.marketplace.user.query.UserReadModelRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class RegisterUserCommandInterceptor implements MessageDispatchInterceptor<CommandMessage<?>> {
 
-  private final KeycloakUserIdRepository keycloakUserIdRepository;
+  private final UserReadModelRepository userReadModelRepository;
 
   @Override
   public BiFunction<Integer, CommandMessage<?>, CommandMessage<?>> handle(
@@ -28,7 +28,7 @@ public class RegisterUserCommandInterceptor implements MessageDispatchIntercepto
         log.info("Intercepting RegisterUserCommand for Keycloak user ID: {}",
             registerCommand.getKeycloakUserId());
 
-        if (keycloakUserIdRepository.existsByKeycloakUserId(registerCommand.getKeycloakUserId())) {
+        if (userReadModelRepository.existsByKeycloakUserId(registerCommand.getKeycloakUserId())) {
           log.warn("Duplicate Keycloak user ID detected: {}", registerCommand.getKeycloakUserId());
           throw new HttpException(409,
               String.format("User with Keycloak user ID '%s' already exists",
