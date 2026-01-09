@@ -101,35 +101,35 @@ All paths relative to `frontend/`:
 
 ### Types & Mock Data
 
-- [ ] T024 [P] [US1] Extend `src/types/listing.ts` - Add ListingFilterParams interface (query?: string, category?: string, sortBy: 'price_asc' | 'price_desc' | 'ending_soon' | 'hot', page: number)
-- [ ] T025 [P] [US1] Extend `src/types/listing.ts` - Add ListingPageData interface (listings: ListingCardData[], hasMore: boolean, totalCount: number)
-- [ ] T026 [US1] Extend `src/mocks/listings.ts` - Add 24+ mock listings with varied categories, prices, endTimes, and bidCounts (for pagination testing). Add recentBids field to ListingCardData for "hot" sorting
+- [X] T024 [P] [US1] Extend `src/types/listing.ts` - Add ListingFilterParams interface (query?: string, category?: string, sortBy: 'price_asc' | 'price_desc' | 'ending_soon' | 'hot', page: number)
+- [X] T025 [P] [US1] Extend `src/types/listing.ts` - Add ListingPageData interface (listings: ListingCardData[], hasMore: boolean, totalCount: number)
+- [X] T026 [US1] Extend `src/mocks/listings.ts` - Add 24+ mock listings with varied categories, prices, endTimes, and bidCounts (for pagination testing). Add recentBids field to ListingCardData for "hot" sorting
 
 ### Shared Components
 
-- [ ] T027 [P] [US1] Create `src/shared/SearchBar.tsx` - Standalone search input component with search icon, placeholder "Search auctions...", onSearch callback that navigates to /listings?q={query}
-- [ ] T028 [P] [US1] Create `src/shared/CategoryFilter.tsx` - Dropdown or button group to select category filter (All, Watches, Cameras, Fashion, Furniture, Art, Jewelry, Electronics, Music), onChange callback
-- [ ] T029 [P] [US1] Create `src/shared/SortSelect.tsx` - Dropdown to select sort option: "Price: Low to High", "Price: High to Low", "Ending Soon", "Hot" (most bids in last 10 mins), onChange callback
-- [ ] T030 [P] [US1] Create `src/shared/ListingGrid.tsx` - Responsive grid wrapper for ListingCard components (1 col mobile, 2 tablet, 4 desktop), accepts listings array
-- [ ] T031 [P] [US1] Create `src/shared/LoadingSpinner.tsx` - Simple loading spinner component for infinite scroll loading state
-- [ ] T032 [P] [US1] Create `src/shared/EmptyState.tsx` - Empty state component for "No listings found" with optional message and icon
+- [X] T027 [P] [US1] Create `src/shared/SearchBar.tsx` - Standalone search input component with search icon, placeholder "Search auctions...", onSearch callback that navigates to /listings?q={query}
+- [X] T028 [P] [US1] Create `src/shared/CategoryFilter.tsx` - Dropdown or button group to select category filter (All, Watches, Cameras, Fashion, Furniture, Art, Jewelry, Electronics, Music), onChange callback
+- [X] T029 [P] [US1] Create `src/shared/SortSelect.tsx` - Dropdown to select sort option: "Price: Low to High", "Price: High to Low", "Ending Soon", "Hot" (most bids in last 10 mins), onChange callback
+- [X] T030 [P] [US1] Create `src/shared/ListingGrid.tsx` - Responsive grid wrapper for ListingCard components (1 col mobile, 2 tablet, 4 desktop), accepts listings array
+- [X] T031 [P] [US1] Create `src/shared/LoadingSpinner.tsx` - Simple loading spinner component for infinite scroll loading state
+- [X] T032 [P] [US1] Create `src/shared/EmptyState.tsx` - Empty state component for "No listings found" with optional message and icon
 
 ### Hooks
 
-- [ ] T033 [US1] Create `src/hooks/useListingsFilter.ts` - Custom hook to manage filter state (query, category, sortBy), parse URL params on mount, update URL on change, return { filters, setQuery, setCategory, setSortBy }
-- [ ] T034 [US1] Create `src/hooks/useInfiniteScroll.ts` - Custom hook for infinite scroll: accepts callback, returns { observerRef, isLoading }. Uses IntersectionObserver to detect when sentinel element is visible
+- [X] T033 [US1] Create `src/hooks/useListingsFilter.ts` - Custom hook to manage filter state (query, category, sortBy), parse URL params on mount, update URL on change, return { filters, setQuery, setCategory, setSortBy }
+- [X] T034 [US1] Create `src/hooks/useInfiniteScroll.ts` - Custom hook for infinite scroll: accepts callback, returns { observerRef, isLoading }. Uses IntersectionObserver to detect when sentinel element is visible
 
 ### Mock API Layer
 
-- [ ] T035 [US1] Create `src/mocks/listingsApi.ts` - Mock API function `fetchListings(params: ListingFilterParams): Promise<ListingPageData>` that filters/sorts mock data and returns paginated results (8 items per page). Implements: full-text search on title (just string includes), category filter, sort by price/ending_soon/hot
+- [X] T035 [US1] Create `src/mocks/listingsApi.ts` - Mock API function `fetchListings(params: ListingFilterParams): Promise<ListingPageData>` that filters/sorts mock data and returns paginated results (8 items per page). Implements: full-text search on title (just string includes), category filter, sort by price/ending_soon/hot
 
 ### Page Implementation
 
-- [ ] T036 [US1] Create `src/pages/ListingsPage.tsx` - Main listings browsing page with Header, search/filter controls, listing grid, and Footer
-- [ ] T037 [US1] Implement filter bar in ListingsPage - Horizontal bar with SearchBar (pre-filled from URL ?q param), CategoryFilter (pre-selected from URL ?category param), SortSelect
-- [ ] T038 [US1] Implement listings grid section in ListingsPage - Use ListingGrid component, display listings from mock API, show LoadingSpinner while loading, show EmptyState if no results
-- [ ] T039 [US1] Implement infinite scroll in ListingsPage - Use useInfiniteScroll hook, add sentinel div at bottom of grid, load next page when sentinel visible, append new listings to existing, stop when hasMore=false
-- [ ] T040 [US1] Integrate Header search with ListingsPage - Update Header.tsx to navigate to /listings?q={query} on search submit, pre-fill search input if on ListingsPage with existing query
+- [X] T036 [US1] Create `src/pages/ListingsPage.tsx` - Main listings browsing page with Header, search/filter controls, listing grid, and Footer
+- [X] T037 [US1] Implement filter bar in ListingsPage - Horizontal bar with SearchBar (pre-filled from URL ?q param), CategoryFilter (pre-selected from URL ?category param), SortSelect
+- [X] T038 [US1] Implement listings grid section in ListingsPage - Use ListingGrid component, display listings from mock API, show LoadingSpinner while loading, show EmptyState if no results
+- [X] T039 [US1] Implement infinite scroll in ListingsPage - Use useInfiniteScroll hook, add sentinel div at bottom of grid, load next page when sentinel visible, append new listings to existing, stop when hasMore=false
+- [X] T040 [US1] Integrate Header search with ListingsPage - Update Header.tsx to navigate to /listings?q={query} on search submit, pre-fill search input if on ListingsPage with existing query
 
 **Checkpoint**: Listings page fully functional with search, category filter, sorting, and infinite scroll pagination
 
@@ -139,12 +139,32 @@ All paths relative to `frontend/`:
 
 **Purpose**: Final styling, responsiveness, and UX polish
 
-- [ ] T041 [P] Add responsive styling to filter bar - Stack filters vertically on mobile, horizontal on desktop
-- [ ] T042 [P] Add loading skeleton to ListingGrid while initial data loads
-- [ ] T043 [P] Add "Back to top" button that appears after scrolling down
-- [ ] T044 Verify URL state sync - Filters should update URL, page reload should restore filter state
-- [ ] T045 Test page loads without errors in browser console
-- [ ] T046 Verify navigation from HomePage to ListingsPage works via all entry points (search, Browse Auctions, View All, category cards)
+- [X] T041 [P] Add responsive styling to filter bar - Stack filters vertically on mobile, horizontal on desktop
+- [ ] T042 [P] Add loading skeleton to ListingGrid while initial data loads (OPTIONAL)
+- [ ] T043 [P] Add "Back to top" button that appears after scrolling down (OPTIONAL)
+- [X] T044 Verify URL state sync - Filters should update URL, page reload should restore filter state
+- [X] T045 Test page loads without errors in browser console
+- [X] T046 Verify navigation from HomePage to ListingsPage works via all entry points (search, Browse Auctions, View All, category cards)
+
+---
+
+## Phase 7: Homepage Preview Fix (Bug Fix)
+
+**Goal**: Fix HomePage to show only 8 featured listings instead of all listings from the expanded mock data
+
+**Bug Description**: HomePage currently imports all mockListings directly, which now shows 32+ items instead of the intended 8 preview items.
+
+**Solution**: Create a separate mock API for homepage featured listings that returns exactly 8 items (sorted by "ending soon" or "hot").
+
+### Mock API
+
+- [X] T047 [US1] Create `src/mocks/homeApi.ts` - Mock API function `fetchFeaturedListings(): Promise<ListingCardData[]>` that returns 8 listings sorted by endTime (ending soonest first) for homepage preview
+
+### Page Update
+
+- [X] T048 [US1] Update `src/pages/HomePage.tsx` - Replace direct mockListings import with fetchFeaturedListings API call, add loading state, display exactly 8 items in the Live Auctions section
+
+**Checkpoint**: HomePage displays exactly 8 featured listings (ending soonest), using the same mock data source but through a dedicated API
 
 ---
 
