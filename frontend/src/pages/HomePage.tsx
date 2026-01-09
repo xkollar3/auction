@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { UserPlus, Search, TrendingUp, Gift } from 'lucide-react';
 import { Header } from '../shared/Header';
@@ -5,9 +6,39 @@ import { Footer } from '../shared/Footer';
 import { ListingCard } from '../shared/ListingCard';
 import { CategoryCard } from '../shared/CategoryCard';
 import { HowItWorksStep } from '../shared/HowItWorksStep';
-import { mockListings, mockCategories } from '../mocks/listings';
+import { LoadingSpinner } from '../shared/LoadingSpinner';
+import { mockCategories } from '../mocks/listings';
+import { fetchFeaturedListings } from '../mocks/homeApi';
+import type { ListingCardData } from '../types/listing';
 
 export function HomePage() {
+  const [featuredListings, setFeaturedListings] = useState<ListingCardData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadFeaturedListings = async () => {
+      try {
+        const listings = await fetchFeaturedListings();
+        if (!cancelled) {
+          setFeaturedListings(listings);
+        }
+      } catch (error) {
+        console.error('Failed to fetch featured listings:', error);
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadFeaturedListings();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handlePlaceBid = (listingId: string) => {
     console.log('Place bid clicked for listing:', listingId);
   };
@@ -90,15 +121,21 @@ export function HomePage() {
             </div>
 
             {/* Listings Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {mockListings.map((listing) => (
-                <ListingCard
-                  key={listing.id}
-                  listing={listing}
-                  onPlaceBid={handlePlaceBid}
-                />
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="py-16">
+                <LoadingSpinner size="lg" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {featuredListings.map((listing) => (
+                  <ListingCard
+                    key={listing.id}
+                    listing={listing}
+                    onPlaceBid={handlePlaceBid}
+                  />
+                ))}
+              </div>
+            )}
 
             {/* Mobile View All */}
             <div className="mt-8 text-center sm:hidden">

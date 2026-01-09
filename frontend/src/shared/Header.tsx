@@ -8,7 +8,11 @@ export function Header() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Search query:', searchQuery);
+    if (searchQuery.trim()) {
+      navigate(`/listings?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate('/listings');
+    }
   };
 
   const handleNotificationClick = () => {
