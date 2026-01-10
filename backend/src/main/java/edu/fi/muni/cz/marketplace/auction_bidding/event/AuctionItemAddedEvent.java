@@ -7,6 +7,8 @@ import java.util.UUID;
 public record AuctionItemAddedEvent(
     UUID auctionItemId,
     UUID sellerId,
+    String title,
+    String description,
     BigDecimal startingPrice,
     Instant auctionEndTime
 ) {

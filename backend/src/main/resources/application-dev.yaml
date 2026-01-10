@@ -45,7 +45,7 @@ spring:
           issuer-uri: http://localhost:8089/realms/auction-marketplace
           jwk-set-uri: http://localhost:8089/realms/auction-marketplace/protocol/openid-connect/certs
   config:
-    import: .env[.properties]
+    import: optional:.env[.properties]
 
 axon:
   axonserver:

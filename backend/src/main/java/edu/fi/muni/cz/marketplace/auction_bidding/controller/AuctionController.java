@@ -40,6 +40,7 @@ public class AuctionController {
     UUID userId = getUserId(jwt);
     UUID auctionItemId = UUID.randomUUID();
 
+    // Todo: check stripe id from jwt
     log.info("Creating auction item for seller: {}", userId);
     commandGateway.sendAndWait(new AddAuctionItemCommand(
         auctionItemId,

@@ -3,6 +3,7 @@ package edu.fi.muni.cz.marketplace.auction_bidding.aggregate;
 import static org.axonframework.modelling.command.AggregateLifecycle.apply;
 
 import edu.fi.muni.cz.marketplace.auction_bidding.command.AddAuctionItemCommand;
+import edu.fi.muni.cz.marketplace.auction_bidding.command.CloseAuctionCommand;
 import edu.fi.muni.cz.marketplace.auction_bidding.command.PlaceBidCommand;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.Bid;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.AuctionClosedEvent;
@@ -20,6 +21,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.axonframework.commandhandling.CommandHandler;
+import org.axonframework.deadline.DeadlineManager;
+import org.axonframework.deadline.annotation.DeadlineHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.modelling.command.AggregateIdentifier;
 import org.axonframework.spring.stereotype.Aggregate;
@@ -31,8 +34,10 @@ import org.axonframework.spring.stereotype.Aggregate;
 @NoArgsConstructor
 public class AuctionItem {
 
-  private static final String AUCTION_CLOSED_REASON = "Auction is closed";
-  private static final String BID_TOO_LOW_REASON = "Bid amount is too low";
+  private static final String AUCTION_STARTING_PRICE_LOW = "Starting price cannot be negative";
+  private static final String AUCTION_END_TIME_EXPIRED = "Auction end time can't be in the past";
+  private static final String AUCTION_REJECT_REASON = "Bid amount is too low or auction closed already";
+  private static final String AUCTION_END_DEADLINE = "auction-end-deadline";
 
   @AggregateIdentifier
   private UUID id;
@@ -45,7 +50,6 @@ public class AuctionItem {
   private AuctionStatus status;
 
   // Current highest bid information
-  private UUID highestBidId;
   private UUID highestBidderId; // keycloak user ID of the highest bidder
   private BigDecimal highestBidAmount;
 
@@ -57,20 +61,36 @@ public class AuctionItem {
    * verified.
    */
   @CommandHandler
-  public AuctionItem(AddAuctionItemCommand command) {
+  public AuctionItem(AddAuctionItemCommand command, DeadlineManager manager) {
+    if (startingPrice == null || startingPrice.compareTo(BigDecimal.ZERO) <= 0) {
+      throw new IllegalArgumentException(AUCTION_STARTING_PRICE_LOW);
+    }
+    if (auctionEndTime.compareTo(Instant.now()) <= 0) {
+      throw new IllegalArgumentException(AUCTION_END_TIME_EXPIRED);
+    }
+
     apply(new AuctionItemAddedEvent(
         command.auctionItemId(),
         command.sellerId(),
+        command.title(),
+        command.description(),
         command.startingPrice(),
         command.auctionEndTime()));
+    manager.schedule(
+        command.auctionEndTime(),
+        AUCTION_END_DEADLINE,
+        new CloseAuctionCommand(command.auctionItemId()));
   }
 
   @EventSourcingHandler
   public void on(AuctionItemAddedEvent event) {
     this.id = event.auctionItemId();
     this.sellerId = event.sellerId();
+    this.title = event.title();
+    this.description = event.description();
     this.startingPrice = event.startingPrice();
     this.highestBidAmount = event.startingPrice();
+    this.auctionEndTime = event.auctionEndTime();
     this.status = AuctionStatus.ACTIVE;
     log.info("Auction item {} created for seller {}", event.auctionItemId(), event.sellerId());
   }
@@ -86,26 +106,19 @@ public class AuctionItem {
         command.bidderId(),
         command.bidAmount()));
 
-    if (status == AuctionStatus.CLOSED) {
+    if (status == AuctionStatus.ACTIVE && command.bidAmount().compareTo(highestBidAmount) <= 0) {
+      apply(new HighestBidSetEvent(
+          command.auctionItemId(),
+          command.bidderId(),
+          command.bidAmount()));
+      return;
+    }
+
       apply(new BidRejectedEvent(
           command.auctionItemId(),
           command.bidderId(),
-          AUCTION_CLOSED_REASON));
-      throw new IllegalStateException(AUCTION_CLOSED_REASON);
-    }
-
-    if (command.bidAmount().compareTo(highestBidAmount) <= 0) {
-      apply(new BidRejectedEvent(
-          command.auctionItemId(),
-          command.bidderId(),
-          BID_TOO_LOW_REASON));
-      throw new IllegalStateException(BID_TOO_LOW_REASON);
-    }
-
-    apply(new HighestBidSetEvent(
-        command.auctionItemId(),
-        command.bidderId(),
-        command.bidAmount()));
+          AUCTION_REJECT_REASON));
+      throw new IllegalStateException(AUCTION_REJECT_REASON);
   }
 
   @EventSourcingHandler
@@ -122,11 +135,6 @@ public class AuctionItem {
         event.auctionItemId(), event.bidderId(), event.bidAmount());
   }
 
-  /**
-   * Event sourcing handler for when an auction item is added.
-   *
-   * @param event the HighestBidSetEvent
-   */
   @EventSourcingHandler
   public void on(HighestBidSetEvent event) {
     this.highestBidderId = event.bidderId();
@@ -143,8 +151,23 @@ public class AuctionItem {
   }
 
   @CommandHandler
-  public void handleCloseAuctionCommand() {
+  public void handleCloseAuctionCommand(CloseAuctionCommand command) {
+    if (status == AuctionStatus.CLOSED) {
+      log.info("Auction closed for auction item {}", command.auctionItemId());
+      return;
+    }
+    if (auctionEndTime.isAfter(Instant.now())) {
+      log.info("Auction item {} close attempt before deadline", command.auctionItemId());
+    }
     apply(new AuctionClosedEvent(id, allBids));
+  }
+
+  @DeadlineHandler(deadlineName = AUCTION_END_DEADLINE)
+  public void onAuctionEndDeadline(CloseAuctionCommand payload) {
+    log.info("Auction end deadline reached for auction item ID: {}", payload.auctionItemId());
+    if (status != AuctionStatus.CLOSED) {
+      apply(new AuctionClosedEvent(id, allBids));
+    }
   }
 
   @EventSourcingHandler
