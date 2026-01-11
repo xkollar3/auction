@@ -63,6 +63,7 @@ keycloak:
 stripe:
   api-key: ${STRIPE_SECRET_KEY}
   platform-account-id: acct_1SjJEWEEAhhOCf0h
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET}
 
 ship24:
   base-url: https://api.ship24.com/public/v1

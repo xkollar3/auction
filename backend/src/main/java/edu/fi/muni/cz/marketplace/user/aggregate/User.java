@@ -13,9 +13,11 @@ import edu.fi.muni.cz.marketplace.user.command.AddPaymentInformationCommand;
 import edu.fi.muni.cz.marketplace.user.command.AssignStripeSellerAccountIdCommand;
 import edu.fi.muni.cz.marketplace.user.command.AssignStripeCustomerIdCommand;
 import edu.fi.muni.cz.marketplace.user.command.RegisterUserCommand;
+import edu.fi.muni.cz.marketplace.user.command.UpdateStripeSellerStatusCommand;
 import edu.fi.muni.cz.marketplace.user.event.PaymentInformationAddedEvent;
 import edu.fi.muni.cz.marketplace.user.event.StripeCustomerCreatedEvent;
 import edu.fi.muni.cz.marketplace.user.event.StripeSellerAccountCreatedEvent;
+import edu.fi.muni.cz.marketplace.user.event.StripeSellerStatusUpdatedEvent;
 import edu.fi.muni.cz.marketplace.user.event.UserRegisteredEvent;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -65,6 +67,13 @@ public class User {
    * Added by flow from CreateStripeConnectedAccountCommand
    **/
   private String stripeSellerAccountId;
+
+  /**
+   * True if seller account is enabled
+   *
+   * Added by flow from UpdateStripeSellerStatusCommand
+   */
+  private boolean sellerAccountEnabled;
 
   @CommandHandler
   public User(RegisterUserCommand command) {
@@ -118,5 +127,18 @@ public class User {
   @EventSourcingHandler
   public void on(StripeSellerAccountCreatedEvent event) {
     this.stripeSellerAccountId = event.getStripeSellerAccountId();
+  }
+
+  @CommandHandler
+  public void on(UpdateStripeSellerStatusCommand command) {
+    if (this.sellerAccountEnabled == command.isEnabled()) {
+      return; // No change
+    }
+    apply(new StripeSellerStatusUpdatedEvent(command.getId(), command.isEnabled()));
+  }
+
+  @EventSourcingHandler
+  public void on(StripeSellerStatusUpdatedEvent event) {
+    this.sellerAccountEnabled = event.isEnabled();
   }
 }

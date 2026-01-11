@@ -12,4 +12,6 @@ public interface UserReadModelRepository extends JpaRepository<UserReadModel, UU
   boolean existsByKeycloakUserId(String keycloakUserId);
 
   Optional<UserReadModel> findByKeycloakUserId(String keycloakUserId);
+
+  Optional<UserReadModel> findByStripeSellerAccountId(String stripeSellerAccountId);
 }

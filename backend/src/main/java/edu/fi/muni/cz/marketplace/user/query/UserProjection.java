@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import edu.fi.muni.cz.marketplace.user.event.StripeCustomerCreatedEvent;
 import edu.fi.muni.cz.marketplace.user.event.StripeSellerAccountCreatedEvent;
+import edu.fi.muni.cz.marketplace.user.event.StripeSellerStatusUpdatedEvent;
 import edu.fi.muni.cz.marketplace.user.event.UserRegisteredEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,8 @@ public class UserProjection {
         event.getId(),
         event.getKeycloakUserId(),
         null,
-        null);
+        null,
+        false);
 
     repository.save(readModel);
     log.info("Saved Keycloak user ID lookup for aggregate ID: {}", event.getId());
@@ -41,7 +43,6 @@ public class UserProjection {
       user.setStripeCustomerId(event.getStripeCustomerId());
       repository.save(user);
       log.info("Updated Stripe Customer ID for aggregate ID: {}", event.getId());
-      log.info("Updated Stripe Customer ID for aggregate ID: {}", event.getId());
     });
   }
 
@@ -53,6 +54,17 @@ public class UserProjection {
       user.setStripeSellerAccountId(event.getStripeSellerAccountId());
       repository.save(user);
       log.info("Updated Stripe Seller Account ID for aggregate ID: {}", event.getId());
+    });
+  }
+
+  @EventHandler
+  public void on(StripeSellerStatusUpdatedEvent event) {
+    log.info("Processing StripeSellerStatusUpdatedEvent for aggregate ID: {}", event.getId());
+
+    repository.findById(event.getId()).ifPresent(user -> {
+      user.setSellerAccountEnabled(event.isEnabled());
+      repository.save(user);
+      log.info("Updated seller account status to {} for aggregate ID: {}", event.isEnabled(), event.getId());
     });
   }
 
