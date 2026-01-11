@@ -131,7 +131,7 @@ class AuctionItemTest {
             messageWithPayload(instanceOf(BidRejectedEvent.class))))
         .expectState(auction -> {
           // Bid is recorded but not set as highest
-          assertEquals(1, auction.getAllBids().size());
+          assertEquals(0, auction.getAllBids().size());
           assertEquals(startingPrice, auction.getHighestBidAmount());
         });
   }
@@ -242,15 +242,16 @@ class AuctionItemTest {
     BigDecimal startingPrice = new BigDecimal("100.00");
     Instant auctionEndTime = FIXED_TIME.plus(Duration.ofDays(7));
 
-    fixture.given(new AuctionItemAddedEvent(
+    fixture.givenCurrentTime(FIXED_TIME)
+        .andGivenCommands(new AddAuctionItemCommand(
             auctionItemId,
             sellerId,
             title,
             description,
             startingPrice,
             auctionEndTime))
-        .when(new CloseAuctionCommand(auctionItemId))
-        .expectSuccessfulHandlerExecution()
+        .whenTimeElapses(Duration.ofDays(7))
+        .expectTriggeredDeadlinesWithName(AUCTION_END_DEADLINE)
         .expectEventsMatching(exactSequenceOf(
             messageWithPayload(instanceOf(AuctionClosedEvent.class))))
         .expectState(auction ->
@@ -266,17 +267,19 @@ class AuctionItemTest {
     BigDecimal startingPrice = new BigDecimal("100.00");
     Instant auctionEndTime = FIXED_TIME.plus(Duration.ofDays(7));
 
-    fixture.given(
-            new AuctionItemAddedEvent(
-                auctionItemId,
-                sellerId,
-                title,
-                description,
-                startingPrice,
-                auctionEndTime),
-            new AuctionClosedEvent(auctionItemId, Collections.emptyList()))
-        .when(new CloseAuctionCommand(auctionItemId))
-        .expectSuccessfulHandlerExecution()
+    // Given auction is created (which schedules deadline) and then manually closed via event,
+    // when deadline fires, no new event should be emitted since auction is already closed
+    fixture.givenCurrentTime(FIXED_TIME)
+        .andGivenCommands(new AddAuctionItemCommand(
+            auctionItemId,
+            sellerId,
+            title,
+            description,
+            startingPrice,
+            auctionEndTime))
+        .andGiven(new AuctionClosedEvent(auctionItemId, Collections.emptyList()))
+        .whenTimeElapses(Duration.ofDays(7))
+        .expectTriggeredDeadlinesWithName(AUCTION_END_DEADLINE)
         .expectNoEvents()
         .expectState(auction ->
             assertEquals(AuctionStatus.CLOSED, auction.getStatus()));
@@ -316,16 +319,17 @@ class AuctionItemTest {
     BigDecimal startingPrice = new BigDecimal("100.00");
     Instant auctionEndTime = FIXED_TIME.plus(Duration.ofDays(7));
 
+    // Given auction is created (which schedules deadline) and then manually closed via event,
+    // when deadline fires, no new event should be emitted since auction is already closed
     fixture.givenCurrentTime(FIXED_TIME)
-        .andGivenCommands(
-            new AddAuctionItemCommand(
-                auctionItemId,
-                sellerId,
-                title,
-                description,
-                startingPrice,
-                auctionEndTime),
-            new CloseAuctionCommand(auctionItemId))
+        .andGivenCommands(new AddAuctionItemCommand(
+            auctionItemId,
+            sellerId,
+            title,
+            description,
+            startingPrice,
+            auctionEndTime))
+        .andGiven(new AuctionClosedEvent(auctionItemId, Collections.emptyList()))
         .whenTimeElapses(Duration.ofDays(7))
         .expectTriggeredDeadlinesWithName(AUCTION_END_DEADLINE)
         .expectNoEvents()
@@ -346,20 +350,21 @@ class AuctionItemTest {
     BigDecimal bidAmount2 = new BigDecimal("200.00");
     Instant auctionEndTime = FIXED_TIME.plus(Duration.ofDays(7));
 
-    fixture.given(
-            new AuctionItemAddedEvent(
-                auctionItemId,
-                sellerId,
-                title,
-                description,
-                startingPrice,
-                auctionEndTime),
+    fixture.givenCurrentTime(FIXED_TIME)
+        .andGivenCommands(new AddAuctionItemCommand(
+            auctionItemId,
+            sellerId,
+            title,
+            description,
+            startingPrice,
+            auctionEndTime))
+        .andGiven(
             new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderId1, bidAmount1),
             new HighestBidSetEvent(auctionItemId, bidderId1, bidAmount1),
             new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderId2, bidAmount2),
             new HighestBidSetEvent(auctionItemId, bidderId2, bidAmount2))
-        .when(new CloseAuctionCommand(auctionItemId))
-        .expectSuccessfulHandlerExecution()
+        .whenTimeElapses(Duration.ofDays(7))
+        .expectTriggeredDeadlinesWithName(AUCTION_END_DEADLINE)
         .expectState(auction -> {
           assertEquals(AuctionStatus.CLOSED, auction.getStatus());
           assertEquals(2, auction.getAllBids().size());

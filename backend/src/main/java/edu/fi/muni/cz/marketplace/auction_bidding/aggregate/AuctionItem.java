@@ -166,18 +166,6 @@ public class AuctionItem {
     // No state change needed for rejected bids
   }
 
-  @CommandHandler
-  public void handleCloseAuctionCommand(CloseAuctionCommand command) {
-    if (status == AuctionStatus.CLOSED) {
-      log.info("Auction closed for auction item {}", command.getAuctionItemId());
-      return;
-    }
-    if (auctionEndTime.isAfter(Instant.now())) {
-      log.info("Auction item {} close attempt before deadline", command.getAuctionItemId());
-    }
-    apply(new AuctionClosedEvent(id, allBids));
-  }
-
   @DeadlineHandler(deadlineName = AUCTION_END_DEADLINE)
   public void onAuctionEndDeadline(CloseAuctionCommand payload) {
     log.info("Auction end deadline reached for auction item ID: {}", payload.getAuctionItemId());
