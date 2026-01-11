@@ -12,6 +12,7 @@ import edu.fi.muni.cz.marketplace.auction_bidding.event.AuctionItemAddedEvent;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.BidPlacedEvent;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.BidRejectedEvent;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.HighestBidSetEvent;
+import jakarta.annotation.Nonnull;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.LinkedList;
@@ -41,14 +42,21 @@ public class AuctionItem {
   private static final String AUCTION_END_DEADLINE = "auction-end-deadline";
   private static final int MAX_BIDS_SAVED = 10;
 
+  @Nonnull
   @AggregateIdentifier
   private UUID id;
 
+  @Nonnull
   private UUID sellerId; // keycloak user ID of the seller
+  @Nonnull
   private String title;
+  @Nonnull
   private String description;
+  @Nonnull
   private BigDecimal startingPrice;
+  @Nonnull
   private Instant auctionEndTime;
+  @Nonnull
   private AuctionStatus status;
 
   // Current highest bid information
