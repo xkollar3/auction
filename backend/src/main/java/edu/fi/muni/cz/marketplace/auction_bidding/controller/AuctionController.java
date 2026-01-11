@@ -5,11 +5,11 @@ import edu.fi.muni.cz.marketplace.auction_bidding.command.PlaceBidCommand;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.AddAuctionItemRequest;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.AddAuctionItemResponse;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.PlaceBidRequest;
+import edu.fi.muni.cz.marketplace.auction_bidding.dto.PlaceBidResponse;
 import edu.fi.muni.cz.marketplace.config.exception.HttpException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.axonframework.commandhandling.CommandExecutionException;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -58,7 +58,7 @@ public class AuctionController {
    * Place a bid on an auction item.
    */
   @PostMapping("/{auctionItemId}/bids")
-  public ResponseEntity<String> placeBid(
+  public ResponseEntity<PlaceBidResponse> placeBid(
       @PathVariable UUID auctionItemId,
       @RequestBody PlaceBidRequest request,
       @AuthenticationPrincipal Jwt jwt) {
@@ -66,16 +66,19 @@ public class AuctionController {
     UUID userId = getUserId(jwt);
 
     log.info("Placing bid on auction {} by bidder {}", auctionItemId, userId);
-    try {
-      commandGateway.sendAndWait(new PlaceBidCommand(
-          auctionItemId,
-          userId,
-          request.bidAmount()));
-    } catch (CommandExecutionException e) {
-      return ResponseEntity.badRequest().body(e.getMessage());
+    PlaceBidResponse result = commandGateway.sendAndWait(new PlaceBidCommand(
+        auctionItemId,
+        UUID.randomUUID(),
+        userId,
+        request.bidAmount()));
+    if (result == null) {
+      return ResponseEntity.notFound().build();
+    }
+    if (!result.isAccepted()) {
+      return ResponseEntity.badRequest().body(result);
     }
 
-    return ResponseEntity.status(HttpStatus.ACCEPTED).body("Bid placed successfully");
+    return ResponseEntity.accepted().build();
   }
 
   private UUID getUserId(Jwt jwt) {
