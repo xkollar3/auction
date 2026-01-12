@@ -1,18 +1,64 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ReactKeycloakProvider } from '@react-keycloak/web';
+import { Elements } from '@stripe/react-stripe-js';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HomePage } from './pages/HomePage';
 import { ListingsPage } from './pages/ListingsPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { PaymentSetupPage } from './pages/PaymentSetupPage';
+import { PaymentMethodsPage } from './pages/PaymentMethodsPage';
+import { ProtectedRoute } from './shared/ProtectedRoute';
+import { keycloak, keycloakInitConfig } from './lib/keycloak';
+import { getStripe, stripeElementsOptions } from './lib/stripe';
+
+// Create a QueryClient instance
+const queryClient = new QueryClient();
 
 function App() {
+  const stripePromise = getStripe();
+
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<div>Login Page (placeholder)</div>} />
-        <Route path="/register" element={<div>Register Page (placeholder)</div>} />
-        <Route path="/listings" element={<ListingsPage />} />
-        <Route path="/seller/dashboard" element={<div>Seller Dashboard (placeholder)</div>} />
-      </Routes>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <ReactKeycloakProvider authClient={keycloak} initOptions={keycloakInitConfig}>
+        <Elements stripe={stripePromise} options={stripeElementsOptions}>
+          <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<div>Login Page (placeholder)</div>} />
+            <Route path="/register" element={<div>Register Page (placeholder)</div>} />
+            <Route path="/listings" element={<ListingsPage />} />
+            <Route path="/seller/dashboard" element={<div>Seller Dashboard (placeholder)</div>} />
+
+            {/* Protected user management routes */}
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile/payments"
+              element={
+                <ProtectedRoute>
+                  <PaymentMethodsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile/payments/setup"
+              element={
+                <ProtectedRoute>
+                  <PaymentSetupPage />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+          </BrowserRouter>
+        </Elements>
+      </ReactKeycloakProvider>
+    </QueryClientProvider>
   );
 }
 

@@ -1,10 +1,15 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Bell, Gavel } from 'lucide-react';
+import { Search, Bell, Gavel, User } from 'lucide-react';
 import { useState } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import { SignUpButton } from './SignUpButton';
+import { LoginButton } from './LoginButton';
+import { LogoutButton } from './LogoutButton';
 
 export function Header() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const { isAuthenticated, user } = useAuth();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,18 +85,27 @@ export function Header() {
             >
               <Bell className="h-5 w-5" />
             </button>
-            <button
-              onClick={() => navigate('/login')}
-              className="text-gray-600 hover:text-gray-900 font-medium"
-            >
-              Log In
-            </button>
-            <button
-              onClick={() => navigate('/register')}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-            >
-              Sign Up
-            </button>
+
+            {/* Authentication Section */}
+            {isAuthenticated && user ? (
+              // Authenticated: Show user menu and logout
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/profile"
+                  className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <User className="h-4 w-4" />
+                  <span className="font-medium">{user.name}</span>
+                </Link>
+                <LogoutButton />
+              </div>
+            ) : (
+              // Not authenticated: Show login and sign up buttons
+              <div className="flex items-center gap-3">
+                <LoginButton />
+                <SignUpButton />
+              </div>
+            )}
           </div>
         </div>
       </div>
