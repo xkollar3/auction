@@ -1,6 +1,7 @@
 package edu.fi.muni.cz.marketplace.user.aggregate;
 
 import static org.axonframework.modelling.command.AggregateLifecycle.apply;
+import static org.axonframework.modelling.command.AggregateLifecycle.markDeleted;
 
 import java.util.UUID;
 
@@ -13,12 +14,14 @@ import edu.fi.muni.cz.marketplace.user.command.AddPaymentInformationCommand;
 import edu.fi.muni.cz.marketplace.user.command.AssignStripeSellerAccountIdCommand;
 import edu.fi.muni.cz.marketplace.user.command.AssignStripeCustomerIdCommand;
 import edu.fi.muni.cz.marketplace.user.command.RegisterUserCommand;
+import edu.fi.muni.cz.marketplace.user.command.RemoveUserCommand;
 import edu.fi.muni.cz.marketplace.user.command.UpdateStripeSellerStatusCommand;
 import edu.fi.muni.cz.marketplace.user.event.PaymentInformationAddedEvent;
 import edu.fi.muni.cz.marketplace.user.event.StripeCustomerCreatedEvent;
 import edu.fi.muni.cz.marketplace.user.event.StripeSellerAccountCreatedEvent;
 import edu.fi.muni.cz.marketplace.user.event.StripeSellerStatusUpdatedEvent;
 import edu.fi.muni.cz.marketplace.user.event.UserRegisteredEvent;
+import edu.fi.muni.cz.marketplace.user.event.UserRemovedEvent;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -140,5 +143,15 @@ public class User {
   @EventSourcingHandler
   public void on(StripeSellerStatusUpdatedEvent event) {
     this.sellerAccountEnabled = event.isEnabled();
+  }
+
+  @CommandHandler
+  public void on(RemoveUserCommand command) {
+    apply(new UserRemovedEvent(command.getId(), this.keycloakUserId));
+  }
+
+  @EventSourcingHandler
+  public void on(UserRemovedEvent event) {
+    markDeleted();
   }
 }

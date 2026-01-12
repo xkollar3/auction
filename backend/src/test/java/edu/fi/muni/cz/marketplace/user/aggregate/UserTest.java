@@ -14,12 +14,14 @@ import edu.fi.muni.cz.marketplace.user.command.AddPaymentInformationCommand;
 import edu.fi.muni.cz.marketplace.user.command.AssignStripeCustomerIdCommand;
 import edu.fi.muni.cz.marketplace.user.command.AssignStripeSellerAccountIdCommand;
 import edu.fi.muni.cz.marketplace.user.command.RegisterUserCommand;
+import edu.fi.muni.cz.marketplace.user.command.RemoveUserCommand;
 import edu.fi.muni.cz.marketplace.user.command.UpdateStripeSellerStatusCommand;
 import edu.fi.muni.cz.marketplace.user.event.PaymentInformationAddedEvent;
 import edu.fi.muni.cz.marketplace.user.event.StripeCustomerCreatedEvent;
 import edu.fi.muni.cz.marketplace.user.event.StripeSellerAccountCreatedEvent;
 import edu.fi.muni.cz.marketplace.user.event.StripeSellerStatusUpdatedEvent;
 import edu.fi.muni.cz.marketplace.user.event.UserRegisteredEvent;
+import edu.fi.muni.cz.marketplace.user.event.UserRemovedEvent;
 
 class UserTest {
 
@@ -142,5 +144,14 @@ class UserTest {
                 .expectState(user -> {
                     assertTrue(user.isSellerAccountEnabled());
                 });
+    }
+
+    @Test
+    void removeUser_shouldEmitUserRemovedEventAndMarkDeleted() {
+        fixture.given(new UserRegisteredEvent(USER_ID, KEYCLOAK_USER_ID))
+                .when(new RemoveUserCommand(USER_ID))
+                .expectSuccessfulHandlerExecution()
+                .expectEvents(new UserRemovedEvent(USER_ID, KEYCLOAK_USER_ID))
+                .expectMarkedDeleted();
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +22,7 @@ import edu.fi.muni.cz.marketplace.user.command.AddPaymentInformationCommand;
 import edu.fi.muni.cz.marketplace.user.command.CreateStripeConnectedAccountCommand;
 import edu.fi.muni.cz.marketplace.user.command.CreateStripeCustomerCommand;
 import edu.fi.muni.cz.marketplace.user.command.RegisterUserCommand;
+import edu.fi.muni.cz.marketplace.user.command.RemoveUserCommand;
 import edu.fi.muni.cz.marketplace.user.dto.AddPaymentMethodRequest;
 import edu.fi.muni.cz.marketplace.user.dto.CreateStripeConnectedAccountResponse;
 import edu.fi.muni.cz.marketplace.user.dto.CreateStripeCustomerRequest;
@@ -145,6 +147,15 @@ public class UserController {
         request.paymentMethodId()));
 
     return ResponseEntity.ok().build();
+  }
+
+  @DeleteMapping("/me")
+  public ResponseEntity<Void> deleteUser(@AuthenticationPrincipal Jwt jwt) {
+    String keycloakUserId = jwt.getSubject();
+    UserReadModel user = findUserByKeycloakId(keycloakUserId);
+    log.info("Deleting user with aggregate ID: {}", user.getId());
+    commandGateway.sendAndWait(new RemoveUserCommand(user.getId()));
+    return ResponseEntity.noContent().build();
   }
 
   private UserReadModel findUserByKeycloakId(String keycloakUserId) {

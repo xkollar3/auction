@@ -9,6 +9,7 @@ import edu.fi.muni.cz.marketplace.user.event.StripeCustomerCreatedEvent;
 import edu.fi.muni.cz.marketplace.user.event.StripeSellerAccountCreatedEvent;
 import edu.fi.muni.cz.marketplace.user.event.StripeSellerStatusUpdatedEvent;
 import edu.fi.muni.cz.marketplace.user.event.UserRegisteredEvent;
+import edu.fi.muni.cz.marketplace.user.event.UserRemovedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -66,6 +67,13 @@ public class UserProjection {
       repository.save(user);
       log.info("Updated seller account status to {} for aggregate ID: {}", event.isEnabled(), event.getId());
     });
+  }
+
+  @EventHandler
+  public void on(UserRemovedEvent event) {
+    log.info("Processing UserRemovedEvent for aggregate ID: {}", event.getId());
+    repository.deleteById(event.getId());
+    log.info("Deleted user from read model for aggregate ID: {}", event.getId());
   }
 
   @QueryHandler
