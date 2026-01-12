@@ -4,7 +4,7 @@ import java.util.UUID;
 import lombok.Value;
 
 @Value
-public class PaymentTransferredEvent {
+public class SellerPayoutTransferredEvent {
 
   private UUID orderId;
   private String transferId;

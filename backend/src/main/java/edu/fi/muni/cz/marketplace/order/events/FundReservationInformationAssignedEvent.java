@@ -1,18 +1,20 @@
 package edu.fi.muni.cz.marketplace.order.events;
 
-import lombok.Value;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
+import lombok.Value;
 
 @Value
-public class FundsReservedEvent {
+public class FundReservationInformationAssignedEvent {
 
   UUID orderId;
   String paymentIntentId;
   String paymentMethodId;
-  BigDecimal grossAmount;
+  String deadlineId;
+  BigDecimal amount;
   Instant reservedAt;
+
   UUID sellerId;
-  String sellerStripeAccountId;
+  String sellerAccountId;
 }

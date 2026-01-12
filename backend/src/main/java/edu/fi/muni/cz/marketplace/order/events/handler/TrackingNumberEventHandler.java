@@ -1,7 +1,7 @@
 package edu.fi.muni.cz.marketplace.order.events.handler;
 
-import edu.fi.muni.cz.marketplace.order.command.AssignTrackingInfoCommand;
-import edu.fi.muni.cz.marketplace.order.events.TrackingNumberProvidedEvent;
+import edu.fi.muni.cz.marketplace.order.command.AssignTrackingNumberToOrderCommand;
+import edu.fi.muni.cz.marketplace.order.events.TrackingNumberEnteredEvent;
 import edu.fi.muni.cz.marketplace.order.service.Ship24Service;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
@@ -15,25 +15,16 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TrackingNumberEventHandler {
 
-  private final Ship24Service ship24Service;
   private final CommandGateway commandGateway;
 
   @EventHandler
-  public void on(TrackingNumberProvidedEvent event) {
+  public void on(TrackingNumberEnteredEvent event) {
     log.info("Creating Ship24 tracker for order: {}", event.getOrderId());
 
-    String ship24TrackerId = ship24Service.createTracker(
-        event.getTrackingNumber(),
-        event.getOrderId().toString()
-    );
-
-    log.info("Ship24 tracker created with ID: {} for order: {}", ship24TrackerId,
-        event.getOrderId());
-
-    commandGateway.send(new AssignTrackingInfoCommand(
+    commandGateway.send(new AssignTrackingNumberToOrderCommand(
         event.getOrderId(),
         event.getTrackingNumber(),
-        ship24TrackerId,
+        event.getTrackerId(),
         Instant.now()
     ));
   }
