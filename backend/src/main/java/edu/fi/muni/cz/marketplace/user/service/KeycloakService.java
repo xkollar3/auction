@@ -7,6 +7,13 @@ import org.springframework.stereotype.Service;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Service for interacting with Keycloak Admin API.
+ * <p>
+ * Used primarily for user management tasks such as deleting users from Keycloak
+ * when they are removed from the auction system.
+ * </p>
+ */
 @Slf4j
 @Service
 public class KeycloakService {
@@ -44,6 +51,12 @@ public class KeycloakService {
                 .build();
     }
 
+    /**
+     * Deletes a user from Keycloak by their ID.
+     *
+     * @param keycloakUserId the unique user ID in Keycloak
+     * @throws RuntimeException if the deletion fails
+     */
     public void deleteUser(String keycloakUserId) {
         log.info("Deleting user from Keycloak: {}", keycloakUserId);
         try (Keycloak keycloak = getKeycloakClient()) {

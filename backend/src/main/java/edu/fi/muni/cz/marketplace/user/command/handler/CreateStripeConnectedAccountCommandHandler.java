@@ -1,5 +1,7 @@
-package edu.fi.muni.cz.marketplace.user.command;
+package edu.fi.muni.cz.marketplace.user.command.handler;
 
+import edu.fi.muni.cz.marketplace.user.command.AssignStripeSellerAccountIdCommand;
+import edu.fi.muni.cz.marketplace.user.command.CreateStripeConnectedAccountCommand;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.springframework.stereotype.Service;
@@ -9,6 +11,16 @@ import org.springframework.beans.factory.annotation.Value;
 import edu.fi.muni.cz.marketplace.user.service.StripeApiClient;
 import edu.fi.muni.cz.marketplace.user.service.dto.ConnectedAccountResponse;
 
+/**
+ * Handles the creation of a Stripe Connect Express account.
+ * <p>
+ * Orchestrates the flow:
+ * 1. Creates a Stripe Connected Account.
+ * 2. Dispatches {@link AssignStripeSellerAccountIdCommand} to store the account
+ * ID.
+ * 3. Creates and returns a Stripe Account Link for onboarding.
+ * </p>
+ */
 @Service
 public class CreateStripeConnectedAccountCommandHandler {
 
