@@ -8,6 +8,7 @@ import lombok.Value;
 public class HighestBidSetEvent {
 
   UUID auctionItemId;
+  UUID bidId;
   UUID bidderId;
   BigDecimal bidAmount;
 }

@@ -78,7 +78,7 @@ public class AuctionController {
       return ResponseEntity.badRequest().body(result);
     }
 
-    return ResponseEntity.accepted().build();
+    return ResponseEntity.accepted().body(result);
   }
 
   private UUID getUserId(Jwt jwt) {

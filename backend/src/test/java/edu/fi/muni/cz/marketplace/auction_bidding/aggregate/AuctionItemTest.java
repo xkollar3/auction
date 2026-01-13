@@ -203,6 +203,7 @@ class AuctionItemTest {
     UUID sellerId = UUID.randomUUID();
     UUID bidderId = UUID.randomUUID();
     UUID bidId = UUID.randomUUID();
+    UUID firstBidId = UUID.randomUUID();
     String title = "Test Auction Item";
     String description = "A description";
     BigDecimal startingPrice = new BigDecimal("100.00");
@@ -218,8 +219,8 @@ class AuctionItemTest {
                 description,
                 startingPrice,
                 auctionEndTime),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderId, firstBidAmount),
-            new HighestBidSetEvent(auctionItemId, bidderId, firstBidAmount))
+            new BidPlacedEvent(auctionItemId, firstBidId, bidderId, firstBidAmount),
+            new HighestBidSetEvent(auctionItemId, firstBidId, bidderId, firstBidAmount))
         .when(new PlaceBidCommand(auctionItemId, bidId, bidderId, secondBidAmount))
         .expectSuccessfulHandlerExecution()
         .expectEventsMatching(exactSequenceOf(
@@ -343,6 +344,8 @@ class AuctionItemTest {
     UUID sellerId = UUID.randomUUID();
     UUID bidderId1 = UUID.randomUUID();
     UUID bidderId2 = UUID.randomUUID();
+    UUID bidId1 = UUID.randomUUID();
+    UUID bidId2 = UUID.randomUUID();
     String title = "Test Auction Item";
     String description = "A description";
     BigDecimal startingPrice = new BigDecimal("100.00");
@@ -359,10 +362,10 @@ class AuctionItemTest {
             startingPrice,
             auctionEndTime))
         .andGiven(
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderId1, bidAmount1),
-            new HighestBidSetEvent(auctionItemId, bidderId1, bidAmount1),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderId2, bidAmount2),
-            new HighestBidSetEvent(auctionItemId, bidderId2, bidAmount2))
+            new BidPlacedEvent(auctionItemId, bidId1, bidderId1, bidAmount1),
+            new HighestBidSetEvent(auctionItemId, bidId1, bidderId1, bidAmount1),
+            new BidPlacedEvent(auctionItemId, bidId2, bidderId2, bidAmount2),
+            new HighestBidSetEvent(auctionItemId, bidId2, bidderId2, bidAmount2))
         .whenTimeElapses(Duration.ofDays(7))
         .expectTriggeredDeadlinesWithName(AUCTION_END_DEADLINE)
         .expectState(auction -> {
@@ -383,37 +386,39 @@ class AuctionItemTest {
     Instant auctionEndTime = FIXED_TIME.plus(Duration.ofDays(7));
 
     // Create 12 bidders with increasing bid amounts
-    UUID[] bidderIds = new UUID[12];
-    for (int i = 0; i < 12; i++) {
+    UUID[] bidderIds = new UUID[11];
+    UUID[] bidIds = new UUID[11];
+    for (int i = 0; i < 11; i++) {
       bidderIds[i] = UUID.randomUUID();
+      bidIds[i] = UUID.randomUUID();
     }
 
     // Set up the auction with 10 initial bids (amounts 110-200)
     fixture.given(
             new AuctionItemAddedEvent(auctionItemId, sellerId, title, description, startingPrice, auctionEndTime),
             // Bids with amounts 110, 120, 130, ..., 200
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderIds[0], new BigDecimal("110.00")),
-            new HighestBidSetEvent(auctionItemId, bidderIds[0], new BigDecimal("110.00")),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderIds[1], new BigDecimal("120.00")),
-            new HighestBidSetEvent(auctionItemId, bidderIds[1], new BigDecimal("120.00")),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderIds[2], new BigDecimal("130.00")),
-            new HighestBidSetEvent(auctionItemId, bidderIds[2], new BigDecimal("130.00")),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderIds[3], new BigDecimal("140.00")),
-            new HighestBidSetEvent(auctionItemId, bidderIds[3], new BigDecimal("140.00")),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderIds[4], new BigDecimal("150.00")),
-            new HighestBidSetEvent(auctionItemId, bidderIds[4], new BigDecimal("150.00")),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderIds[5], new BigDecimal("160.00")),
-            new HighestBidSetEvent(auctionItemId, bidderIds[5], new BigDecimal("160.00")),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderIds[6], new BigDecimal("170.00")),
-            new HighestBidSetEvent(auctionItemId, bidderIds[6], new BigDecimal("170.00")),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderIds[7], new BigDecimal("180.00")),
-            new HighestBidSetEvent(auctionItemId, bidderIds[7], new BigDecimal("180.00")),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderIds[8], new BigDecimal("190.00")),
-            new HighestBidSetEvent(auctionItemId, bidderIds[8], new BigDecimal("190.00")),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderIds[9], new BigDecimal("200.00")),
-            new HighestBidSetEvent(auctionItemId, bidderIds[9], new BigDecimal("200.00")))
+            new BidPlacedEvent(auctionItemId, bidIds[0], bidderIds[0], new BigDecimal("110.00")),
+            new HighestBidSetEvent(auctionItemId, bidIds[0], bidderIds[0], new BigDecimal("110.00")),
+            new BidPlacedEvent(auctionItemId, bidIds[1], bidderIds[1], new BigDecimal("120.00")),
+            new HighestBidSetEvent(auctionItemId, bidIds[1], bidderIds[1], new BigDecimal("120.00")),
+            new BidPlacedEvent(auctionItemId, bidIds[2], bidderIds[2], new BigDecimal("130.00")),
+            new HighestBidSetEvent(auctionItemId, bidIds[2], bidderIds[2], new BigDecimal("130.00")),
+            new BidPlacedEvent(auctionItemId, bidIds[3], bidderIds[3], new BigDecimal("140.00")),
+            new HighestBidSetEvent(auctionItemId, bidIds[3], bidderIds[3], new BigDecimal("140.00")),
+            new BidPlacedEvent(auctionItemId, bidIds[4], bidderIds[4], new BigDecimal("150.00")),
+            new HighestBidSetEvent(auctionItemId, bidIds[4], bidderIds[4], new BigDecimal("150.00")),
+            new BidPlacedEvent(auctionItemId, bidIds[5], bidderIds[5], new BigDecimal("160.00")),
+            new HighestBidSetEvent(auctionItemId, bidIds[5], bidderIds[5], new BigDecimal("160.00")),
+            new BidPlacedEvent(auctionItemId, bidIds[6], bidderIds[6], new BigDecimal("170.00")),
+            new HighestBidSetEvent(auctionItemId, bidIds[6], bidderIds[6], new BigDecimal("170.00")),
+            new BidPlacedEvent(auctionItemId, bidIds[7], bidderIds[7], new BigDecimal("180.00")),
+            new HighestBidSetEvent(auctionItemId, bidIds[7], bidderIds[7], new BigDecimal("180.00")),
+            new BidPlacedEvent(auctionItemId, bidIds[8], bidderIds[8], new BigDecimal("190.00")),
+            new HighestBidSetEvent(auctionItemId, bidIds[8], bidderIds[8], new BigDecimal("190.00")),
+            new BidPlacedEvent(auctionItemId, bidIds[9], bidderIds[9], new BigDecimal("200.00")),
+            new HighestBidSetEvent(auctionItemId, bidIds[9], bidderIds[9], new BigDecimal("200.00")))
         // Now place an 11th bid with a higher amount - should push out the lowest (110.00)
-        .when(new PlaceBidCommand(auctionItemId, UUID.randomUUID(), bidderIds[10], new BigDecimal("210.00")))
+        .when(new PlaceBidCommand(auctionItemId, bidIds[10], bidderIds[10], new BigDecimal("210.00")))
         .expectSuccessfulHandlerExecution()
         .expectState(auction -> {
           assertEquals(10, auction.getAllBids().size());
@@ -440,37 +445,39 @@ class AuctionItemTest {
     BigDecimal startingPrice = new BigDecimal("100.00");
     Instant auctionEndTime = FIXED_TIME.plus(Duration.ofDays(7));
 
-    // Create 11 bidders
+    // Create 11 bidders and bid IDs
     UUID[] bidderIds = new UUID[11];
+    UUID[] bidIds = new UUID[11];
     for (int i = 0; i < 11; i++) {
       bidderIds[i] = UUID.randomUUID();
+      bidIds[i] = UUID.randomUUID();
     }
 
     // Set up the auction with 10 bids (amounts 110-200)
     fixture.given(
             new AuctionItemAddedEvent(auctionItemId, sellerId, title, description, startingPrice, auctionEndTime),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderIds[0], new BigDecimal("110.00")),
-            new HighestBidSetEvent(auctionItemId, bidderIds[0], new BigDecimal("110.00")),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderIds[1], new BigDecimal("120.00")),
-            new HighestBidSetEvent(auctionItemId, bidderIds[1], new BigDecimal("120.00")),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderIds[2], new BigDecimal("130.00")),
-            new HighestBidSetEvent(auctionItemId, bidderIds[2], new BigDecimal("130.00")),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderIds[3], new BigDecimal("140.00")),
-            new HighestBidSetEvent(auctionItemId, bidderIds[3], new BigDecimal("140.00")),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderIds[4], new BigDecimal("150.00")),
-            new HighestBidSetEvent(auctionItemId, bidderIds[4], new BigDecimal("150.00")),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderIds[5], new BigDecimal("160.00")),
-            new HighestBidSetEvent(auctionItemId, bidderIds[5], new BigDecimal("160.00")),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderIds[6], new BigDecimal("170.00")),
-            new HighestBidSetEvent(auctionItemId, bidderIds[6], new BigDecimal("170.00")),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderIds[7], new BigDecimal("180.00")),
-            new HighestBidSetEvent(auctionItemId, bidderIds[7], new BigDecimal("180.00")),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderIds[8], new BigDecimal("190.00")),
-            new HighestBidSetEvent(auctionItemId, bidderIds[8], new BigDecimal("190.00")),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderIds[9], new BigDecimal("200.00")),
-            new HighestBidSetEvent(auctionItemId, bidderIds[9], new BigDecimal("200.00")))
+            new BidPlacedEvent(auctionItemId, bidIds[0], bidderIds[0], new BigDecimal("110.00")),
+            new HighestBidSetEvent(auctionItemId, bidIds[0], bidderIds[0], new BigDecimal("110.00")),
+            new BidPlacedEvent(auctionItemId, bidIds[1], bidderIds[1], new BigDecimal("120.00")),
+            new HighestBidSetEvent(auctionItemId, bidIds[1], bidderIds[1], new BigDecimal("120.00")),
+            new BidPlacedEvent(auctionItemId, bidIds[2], bidderIds[2], new BigDecimal("130.00")),
+            new HighestBidSetEvent(auctionItemId, bidIds[2], bidderIds[2], new BigDecimal("130.00")),
+            new BidPlacedEvent(auctionItemId, bidIds[3], bidderIds[3], new BigDecimal("140.00")),
+            new HighestBidSetEvent(auctionItemId, bidIds[3], bidderIds[3], new BigDecimal("140.00")),
+            new BidPlacedEvent(auctionItemId, bidIds[4], bidderIds[4], new BigDecimal("150.00")),
+            new HighestBidSetEvent(auctionItemId, bidIds[4], bidderIds[4], new BigDecimal("150.00")),
+            new BidPlacedEvent(auctionItemId, bidIds[5], bidderIds[5], new BigDecimal("160.00")),
+            new HighestBidSetEvent(auctionItemId, bidIds[5], bidderIds[5], new BigDecimal("160.00")),
+            new BidPlacedEvent(auctionItemId, bidIds[6], bidderIds[6], new BigDecimal("170.00")),
+            new HighestBidSetEvent(auctionItemId, bidIds[6], bidderIds[6], new BigDecimal("170.00")),
+            new BidPlacedEvent(auctionItemId, bidIds[7], bidderIds[7], new BigDecimal("180.00")),
+            new HighestBidSetEvent(auctionItemId, bidIds[7], bidderIds[7], new BigDecimal("180.00")),
+            new BidPlacedEvent(auctionItemId, bidIds[8], bidderIds[8], new BigDecimal("190.00")),
+            new HighestBidSetEvent(auctionItemId, bidIds[8], bidderIds[8], new BigDecimal("190.00")),
+            new BidPlacedEvent(auctionItemId, bidIds[9], bidderIds[9], new BigDecimal("200.00")),
+            new HighestBidSetEvent(auctionItemId, bidIds[9], bidderIds[9], new BigDecimal("200.00")))
         // Place an 11th bid with a LOWER amount than the lowest (105 < 110) - will be rejected and not in top 10 by default
-        .when(new PlaceBidCommand(auctionItemId, UUID.randomUUID(), bidderIds[10], new BigDecimal("105.00")))
+        .when(new PlaceBidCommand(auctionItemId, bidIds[10], bidderIds[10], new BigDecimal("105.00")))
         .expectSuccessfulHandlerExecution()
         .expectEventsMatching(exactSequenceOf(
             messageWithPayload(instanceOf(BidPlacedEvent.class)),
@@ -491,6 +498,9 @@ class AuctionItemTest {
     UUID bidderId1 = UUID.randomUUID();
     UUID bidderId2 = UUID.randomUUID();
     UUID bidderId3 = UUID.randomUUID();
+    UUID bidId1 = UUID.randomUUID();
+    UUID bidId2 = UUID.randomUUID();
+    UUID bidId3 = UUID.randomUUID();
     String title = "Test Auction Item";
     String description = "A description";
     BigDecimal startingPrice = new BigDecimal("100.00");
@@ -499,11 +509,11 @@ class AuctionItemTest {
     fixture.given(
             new AuctionItemAddedEvent(auctionItemId, sellerId, title, description, startingPrice, auctionEndTime),
             // Place bids in non-sorted order
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderId1, new BigDecimal("150.00")),
-            new HighestBidSetEvent(auctionItemId, bidderId1, new BigDecimal("150.00")),
-            new BidPlacedEvent(auctionItemId, UUID.randomUUID(), bidderId2, new BigDecimal("175.00")),
-            new HighestBidSetEvent(auctionItemId, bidderId2, new BigDecimal("175.00")))
-        .when(new PlaceBidCommand(auctionItemId, UUID.randomUUID(), bidderId3, new BigDecimal("200.00")))
+            new BidPlacedEvent(auctionItemId, bidId1, bidderId1, new BigDecimal("150.00")),
+            new HighestBidSetEvent(auctionItemId, bidId1, bidderId1, new BigDecimal("150.00")),
+            new BidPlacedEvent(auctionItemId, bidId2, bidderId2, new BigDecimal("175.00")),
+            new HighestBidSetEvent(auctionItemId, bidId2, bidderId2, new BigDecimal("175.00")))
+        .when(new PlaceBidCommand(auctionItemId, bidId3, bidderId3, new BigDecimal("200.00")))
         .expectSuccessfulHandlerExecution()
         .expectState(auction -> {
           assertEquals(3, auction.getAllBids().size());

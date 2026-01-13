@@ -1,6 +1,6 @@
 package edu.fi.muni.cz.marketplace.auction_bidding.event;
 
-import edu.fi.muni.cz.marketplace.auction_bidding.dto.Bid;
+import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.Bid;
 import java.util.List;
 import java.util.UUID;
 import lombok.Value;

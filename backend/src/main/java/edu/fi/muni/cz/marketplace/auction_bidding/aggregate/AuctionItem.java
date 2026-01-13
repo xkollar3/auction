@@ -5,7 +5,6 @@ import static org.axonframework.modelling.command.AggregateLifecycle.apply;
 import edu.fi.muni.cz.marketplace.auction_bidding.command.AddAuctionItemCommand;
 import edu.fi.muni.cz.marketplace.auction_bidding.command.CloseAuctionCommand;
 import edu.fi.muni.cz.marketplace.auction_bidding.command.PlaceBidCommand;
-import edu.fi.muni.cz.marketplace.auction_bidding.dto.Bid;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.PlaceBidResponse;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.AuctionClosedEvent;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.AuctionItemAddedEvent;
@@ -120,6 +119,7 @@ public class AuctionItem {
     if (status == AuctionStatus.ACTIVE && command.getBidAmount().compareTo(highestBidAmount) > 0) {
       apply(new HighestBidSetEvent(
           command.getAuctionItemId(),
+          command.getBidId(),
           command.getBidderId(),
           command.getBidAmount()));
       return PlaceBidResponse.success();
@@ -134,38 +134,36 @@ public class AuctionItem {
 
   @EventSourcingHandler
   public void on(BidPlacedEvent event) {
-    if (event.getBidAmount().compareTo(highestBidAmount) <= 0) {
-      log.info("Bid placed on auction item {} by bidder {}: {}. Bid was too low", event.getAuctionItemId(),
-          event.getBidderId(), event.getBidAmount());
-      return;
-    }
-    Bid newBid = new Bid(
-        event.getBidId(),
-        event.getBidderId(),
-        event.getBidAmount());
-
-    // Remove the bidder's previous bid if exists
-    allBids.removeIf(bid -> bid.bidderId().equals(event.getBidderId()));
-
-    // Add the new bid
-    allBids.addFirst(newBid);
-
-    // Sort by bid amount descending and keep only top 10
-    if (allBids.size() > MAX_BIDS_SAVED) {
-      allBids = allBids.subList(0, MAX_BIDS_SAVED);
-    }
-
-    log.info("Bid placed on auction item {} by bidder {}: {}. Total bids: {}",
-        event.getAuctionItemId(), event.getBidderId(), event.getBidAmount(), allBids.size());
+    log.info("Bid placed on auction item {} by bidder {}: {}",
+        event.getAuctionItemId(), event.getBidderId(), event.getBidAmount());
+    // No state change - BidPlacedEvent is for analytics/tracking purposes only
   }
 
   @EventSourcingHandler
   public void on(HighestBidSetEvent event) {
     this.highestBidderId = event.getBidderId();
     this.highestBidAmount = event.getBidAmount();
-    log.info("New highest bid for auction item {} by bidder {}: {}",
-        event.getAuctionItemId(), event.getBidderId(), event.getBidAmount());
+
+    Bid newBid = new Bid(
+        event.getBidId(),
+        event.getBidderId(),
+        event.getBidAmount());
+
+    // Remove the bidder's previous bid if exists (each bidder can only have one bid in top 10)
+    allBids.removeIf(bid -> bid.bidderId().equals(event.getBidderId()));
+
+    // Add the new highest bid at the front (bids are ordered by recency/amount)
+    allBids.addFirst(newBid);
+
+    // Keep only top 10 bids
+    if (allBids.size() > MAX_BIDS_SAVED) {
+      allBids = allBids.subList(0, MAX_BIDS_SAVED);
+    }
+
+    log.info("New highest bid for auction item {} by bidder {}: {}. Total tracked bids: {}",
+        event.getAuctionItemId(), event.getBidderId(), event.getBidAmount(), allBids.size());
   }
+
 
   @EventSourcingHandler
   public void on(BidRejectedEvent event) {

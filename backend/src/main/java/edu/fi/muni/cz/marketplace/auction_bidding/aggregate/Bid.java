@@ -1,4 +1,4 @@
-package edu.fi.muni.cz.marketplace.auction_bidding.dto;
+package edu.fi.muni.cz.marketplace.auction_bidding.aggregate;
 
 import java.math.BigDecimal;
 import java.util.UUID;
