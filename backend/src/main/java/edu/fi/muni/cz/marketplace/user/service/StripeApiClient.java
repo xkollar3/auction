@@ -9,12 +9,10 @@ import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Account;
 import com.stripe.model.Customer;
-import com.stripe.model.PaymentMethod;
 import com.stripe.model.SetupIntent;
 import com.stripe.net.RequestOptions;
 import com.stripe.param.AccountCreateParams;
 import com.stripe.param.CustomerCreateParams;
-import com.stripe.param.PaymentMethodAttachParams;
 import com.stripe.param.SetupIntentCreateParams;
 import com.stripe.model.AccountLink;
 import com.stripe.param.AccountLinkCreateParams;
@@ -24,6 +22,13 @@ import edu.fi.muni.cz.marketplace.user.service.dto.ConnectedAccountResponse;
 import edu.fi.muni.cz.marketplace.user.service.dto.SetupIntentResponse;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Client service for interacting with the Stripe API.
+ * <p>
+ * Handles customer creation, account management, and payment method setup.
+ * All operations use the provided API key.
+ * </p>
+ */
 @Slf4j
 @Service
 public class StripeApiClient {
@@ -90,33 +95,6 @@ public class StripeApiClient {
     } catch (StripeException e) {
       throw new StripeApiClientException(
           "Failed to create Stripe customer: " + e.getMessage(), e);
-    }
-  }
-
-  /**
-   * Attaches a payment method to a customer.
-   *
-   * @param customerId      the Stripe customer ID
-   * @param paymentMethodId the Stripe payment method ID
-   * @throws StripeApiClientException if attachment fails
-   */
-  public void attachPaymentMethod(String customerId, String paymentMethodId) {
-    log.info("Attaching payment method {} to customer {}", paymentMethodId, customerId);
-
-    try {
-      PaymentMethod paymentMethod = PaymentMethod.retrieve(paymentMethodId);
-
-      PaymentMethodAttachParams params = PaymentMethodAttachParams.builder()
-          .setCustomer(customerId)
-          .build();
-
-      paymentMethod.attach(params);
-
-      log.info("Successfully attached payment method {} to customer {}", paymentMethodId, customerId);
-
-    } catch (StripeException e) {
-      throw new StripeApiClientException(
-          "Failed to attach payment method: " + e.getMessage(), e);
     }
   }
 
