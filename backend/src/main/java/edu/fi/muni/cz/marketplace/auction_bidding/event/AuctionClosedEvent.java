@@ -9,5 +9,7 @@ import lombok.Value;
 public class AuctionClosedEvent {
 
   UUID auctionItemId;
+  UUID sellerId;
+  String title;
   List<Bid> winningBids;
 }
