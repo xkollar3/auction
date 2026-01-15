@@ -1,7 +1,7 @@
 axon:
   eventhandling:
     processors:
-      keycloak_user_ids:
+      user_read_model:
         mode: subscribing
 
 server:
@@ -15,3 +15,10 @@ policy:
 spring:
   jpa:
     open-in-view: false
+
+stripe:
+  seller:
+    # Where to send the user if the link expires or they click "refresh"
+    refresh-url: http://localhost:3000/api/stripe/callback/refresh
+    # Where to send the user after they finish the form (FE "Success" page).
+    return-url: http://localhost:3000/api/stripe/callback/return

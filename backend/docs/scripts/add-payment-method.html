@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stripe Setup Test</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        input { padding: 10px; width: 300px; margin-bottom: 20px; }
+        #payment-element { margin-bottom: 20px; }
+        button { padding: 10px 20px; background: #5469d4; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+<h2>1. Paste Client Secret</h2>
+<input type="text" id="clientSecret" placeholder="seti_..._secret_...">
+<button id="load-element">Load Payment Form</button>
+
+<div id="payment-form" style="display:none; margin-top: 20px;">
+    <h2>2. Enter Card Details</h2>
+    <div id="payment-element"></div>
+    <button id="submit">Save Card</button>
+    <div id="message" style="margin-top: 20px; color: green; font-weight: bold;"></div>
+    <div id="error-message" style="margin-top: 20px; color: red;"></div>
+</div>
+
+<script>
+    // Publishable key
+    const stripe = Stripe('pk_test_51ScNwkCvL7lAvScr38X8uwjXiRYhMycdfAZKgzj79NqYWRcTlmg7JLhCgjJgGOTXbjPGiZcKW0pHYLDxjSwWHc0500JCK2202q');
+
+    let elements;
+
+    document.getElementById('load-element').addEventListener('click', async () => {
+        const clientSecret = document.getElementById('clientSecret').value;
+        if (!clientSecret) {
+            alert("Please enter a client secret first");
+            return;
+        }
+
+        // Initialize Elements with the clientSecret
+        elements = stripe.elements({ clientSecret });
+
+        // Create and mount the Payment Element
+        const paymentElement = elements.create('payment');
+        paymentElement.mount('#payment-element');
+
+        document.getElementById('payment-form').style.display = 'block';
+        document.getElementById('load-element').disabled = true;
+    });
+
+    document.getElementById('submit').addEventListener('click', async () => {
+        document.getElementById('submit').disabled = true;
+        document.getElementById('message').innerText = "Processing...";
+
+        const { setupIntent, error } = await stripe.confirmSetup({
+            elements,
+            confirmParams: {
+                // We don't actually want to redirect for this test, but it's required param.
+                // We'll handle the result manually if no redirect happens.
+                return_url: 'http://localhost:8081/return',
+            },
+            redirect: 'if_required' // IMPORTANT: Prevents redirect if not needed (e.g. no 3DS)
+        });
+
+        if (error) {
+            document.getElementById('error-message').innerText = error.message;
+            document.getElementById('submit').disabled = false;
+        } else if (setupIntent && setupIntent.status === 'succeeded') {
+            document.getElementById('message').innerText =
+                "SUCCESS! Payment Method ID: " + setupIntent.payment_method;
+            console.log("Full SetupIntent:", setupIntent);
+        } else {
+            document.getElementById('message').innerText = "Setup processing... check logs.";
+        }
+    });
+</script>
+</body>
+</html>
