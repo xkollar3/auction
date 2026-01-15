@@ -38,10 +38,10 @@ export const PaymentSetupPage = () => {
   const handleAddressSubmit = (address: CreateStripeCustomerRequest) => {
     setError(null);
     createCustomer(address, {
-      onSuccess: (data) => {
+      onSuccess: () => {
         console.log('Customer created, creating setup intent...');
         // Automatically create setup intent after customer creation
-        createSetupIntent(data.customerId, {
+        createSetupIntent(undefined, {
           onSuccess: () => {
             console.log('Setup intent created, moving to card step');
             setStep('card');

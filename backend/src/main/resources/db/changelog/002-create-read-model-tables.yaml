@@ -1,6 +1,30 @@
 databaseChangeLog:
   - changeSet:
-      id: 002-1-create-user-read-model-table
+      id: 002-1-create-keycloak-user-lookup-table
+      author: system
+      changes:
+        - createTable:
+            tableName: keycloak_user_lookup
+            columns:
+              - column:
+                  name: keycloak_user_id
+                  type: varchar(255)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: keycloak_user_lookup
+            indexName: idx_keycloak_user_lookup_user_id
+            columns:
+              - column:
+                  name: user_id
+  - changeSet:
+      id: 002-2-create-user-read-model-table
       author: system
       changes:
         - createTable:

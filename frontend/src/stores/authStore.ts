@@ -20,11 +20,17 @@ interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  isRegistering: boolean;
+  registrationError: string | null;
+  backendUserId: string | null;
   setUser: (user: User | null) => void;
   setToken: (token: string | null) => void;
   clearUser: () => void;
   setCustomerId: (customerId: string) => void;
   setSellerId: (sellerId: string) => void;
+  setRegistering: (isRegistering: boolean) => void;
+  setRegistrationError: (error: string | null) => void;
+  setBackendUserId: (id: string) => void;
 }
 
 /**
@@ -38,6 +44,9 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isAuthenticated: false,
+      isRegistering: false,
+      registrationError: null,
+      backendUserId: null,
 
       /**
        * Set the current user and mark as authenticated
@@ -64,6 +73,9 @@ export const useAuthStore = create<AuthState>()(
           user: null,
           token: null,
           isAuthenticated: false,
+          isRegistering: false,
+          registrationError: null,
+          backendUserId: null,
         }),
 
       /**
@@ -81,13 +93,32 @@ export const useAuthStore = create<AuthState>()(
         set((state) => ({
           user: state.user ? { ...state.user, sellerId } : null,
         })),
+
+      /**
+       * Set registration loading state
+       */
+      setRegistering: (isRegistering) =>
+        set({ isRegistering }),
+
+      /**
+       * Set registration error
+       */
+      setRegistrationError: (registrationError) =>
+        set({ registrationError }),
+
+      /**
+       * Set backend user ID after successful registration
+       */
+      setBackendUserId: (backendUserId) =>
+        set({ backendUserId }),
     }),
     {
       name: 'auth-storage', // localStorage key
       partialize: (state) => ({
-        // Only persist user and token, not isAuthenticated (computed from user)
+        // Persist user, token, and backendUserId
         user: state.user,
         token: state.token,
+        backendUserId: state.backendUserId,
       }),
       onRehydrateStorage: () => (state) => {
         // After rehydration, set isAuthenticated based on user presence

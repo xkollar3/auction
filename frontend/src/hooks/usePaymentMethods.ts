@@ -16,9 +16,9 @@ export const usePaymentMethods = (customerId?: string) => {
     enabled: !!customerId, // Only fetch if customer ID exists
   });
 
-  // Mutation for creating setup intent
+  // Mutation for creating setup intent (no customerId needed - backend gets it from JWT)
   const setupIntentMutation = useMutation({
-    mutationFn: (customerId: string) => createSetupIntent(customerId),
+    mutationFn: () => createSetupIntent(),
     onError: (error) => {
       console.error('Failed to create setup intent:', error);
     },

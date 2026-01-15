@@ -2,7 +2,11 @@ import { useKeycloak } from "@react-keycloak/web";
 import { useAuthStore } from "../stores/authStore";
 import { type User } from "../types/user";
 import { userSchema, keycloakTokenSchema } from "../schemas/user";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
+import { registerUser } from "../api/user";
+
+// Module-level lock to prevent duplicate registration calls (survives StrictMode remounts)
+let registrationInFlight = false;
 
 /**
  * Authentication hook
@@ -12,8 +16,57 @@ import { useEffect } from "react";
  */
 export const useAuth = () => {
   const { keycloak, initialized } = useKeycloak();
-  const { user, token, isAuthenticated, setUser, setToken, clearUser } =
-    useAuthStore();
+  const {
+    user,
+    token,
+    isAuthenticated,
+    isRegistering,
+    registrationError,
+    backendUserId,
+    setUser,
+    setToken,
+    clearUser,
+    setRegistering,
+    setRegistrationError,
+    setBackendUserId,
+  } = useAuthStore();
+
+  /**
+   * Retry registration after failure
+   */
+  const retryRegistration = useCallback(async () => {
+    if (registrationInFlight) return;
+    registrationInFlight = true;
+
+    setRegistering(true);
+    setRegistrationError(null);
+
+    try {
+      console.log("Registering user with backend...");
+      const response = await registerUser();
+      console.log("Backend registration successful:", response);
+      setBackendUserId(response.aggregateId);
+    } catch (error: unknown) {
+      // 409 means user already exists - treat as success
+      if (
+        error &&
+        typeof error === "object" &&
+        "response" in error &&
+        (error as { response?: { status?: number } }).response?.status === 409
+      ) {
+        console.log("User already registered (409), proceeding...");
+        // Use keycloak user id as backend id since user exists
+        setBackendUserId("existing");
+      } else {
+        console.error("Backend registration failed:", error);
+        const message = error instanceof Error ? error.message : "Registration failed";
+        setRegistrationError(message);
+      }
+    } finally {
+      setRegistering(false);
+      registrationInFlight = false;
+    }
+  }, [setRegistering, setRegistrationError, setBackendUserId]);
 
   /**
    * Sync Keycloak state with auth store on initialization
@@ -44,7 +97,7 @@ export const useAuth = () => {
         const validatedUser = userSchema.parse(userData);
         console.log("User data validated:", validatedUser);
 
-        // Update store
+        // Update store with user info and token
         setUser(validatedUser);
         setToken(keycloak.token || null);
         console.log("User authenticated and stored successfully");
@@ -67,6 +120,24 @@ export const useAuth = () => {
     setToken,
     clearUser,
   ]);
+
+  /**
+   * After Keycloak auth and token stored, register with backend if needed
+   */
+  useEffect(() => {
+    const state = useAuthStore.getState();
+    if (
+      initialized &&
+      keycloak.authenticated &&
+      token &&
+      !state.backendUserId &&
+      !registrationInFlight
+    ) {
+      retryRegistration();
+    }
+    // Only run when keycloak auth state or token changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialized, keycloak.authenticated, token]);
 
   /**
    * Initiate login flow
@@ -112,15 +183,22 @@ export const useAuth = () => {
     };
   };
 
+  // User is fully ready when KC is authenticated AND backend registration is complete
+  const isReady = isAuthenticated && keycloak.authenticated && !!backendUserId;
+
   return {
     isAuthenticated: isAuthenticated && keycloak.authenticated,
+    isReady,
+    isRegistering,
+    registrationError,
     user,
     token: getToken(),
     login,
     register,
     logout,
+    retryRegistration,
     getUserProfile,
-    keycloak, // Expose keycloak instance for advanced usage
+    keycloak,
     initialized,
   };
 };

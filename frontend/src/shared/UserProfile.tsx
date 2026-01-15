@@ -1,4 +1,4 @@
-import { User, Mail, Phone, CheckCircle, XCircle } from 'lucide-react';
+import { User, Mail, Phone } from 'lucide-react';
 import { type ProfileData } from '../types/profile';
 
 interface UserProfileProps {
@@ -30,16 +30,12 @@ export const UserProfile = ({ profile }: UserProfileProps) => {
           <Mail className="h-5 w-5 text-gray-400 mt-0.5" />
           <div className="flex-1">
             <label className="block text-sm font-medium text-gray-500 mb-1">Email Address</label>
-            <div className="flex items-center gap-2">
-              <p className="text-lg text-gray-900">{profile.email}</p>
-              {profile.emailVerified !== undefined && (
-                profile.emailVerified ? (
-                  <CheckCircle className="h-5 w-5 text-green-500" title="Verified" />
-                ) : (
-                  <XCircle className="h-5 w-5 text-gray-400" title="Not verified" />
-                )
-              )}
-            </div>
+            <p className="text-lg text-gray-900">{profile.email}</p>
+            {profile.emailVerified !== undefined && (
+              <p className={`text-sm mt-1 ${profile.emailVerified ? 'text-green-600' : 'text-amber-600'}`}>
+                {profile.emailVerified ? 'Email is verified' : 'Please verify your email'}
+              </p>
+            )}
           </div>
         </div>
 

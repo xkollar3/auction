@@ -53,6 +53,10 @@ axon:
     standalone: true
     devmode:
       enabled: true
+  eventhandling:
+    processors:
+      keycloakUserLookup:
+        mode: subscribing
 
 keycloak:
   admin:

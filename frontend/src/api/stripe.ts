@@ -1,3 +1,5 @@
+import { api } from "../lib/api";
+import { getUserProfile } from "./user";
 import {
   type CreateSellerAccountResponse,
   type CreateStripeCustomerRequest,
@@ -7,74 +9,62 @@ import {
   type PaymentMethodsResponse,
 } from "../types/stripe";
 
-const API_BASE = "/api/user/stripe";
-
 /**
  * Create Stripe seller account (Connect)
  *
- * @returns Seller account details with onboarding URLs
+ * @returns Seller account details with onboarding URL
  */
 export const createSellerAccount =
   async (): Promise<CreateSellerAccountResponse> => {
-    // TODO: Replace with real API call
-    // const response = await axios.post(`${API_BASE}/seller-account`);
-    // return response.data;
-
-    // Mock response - replace these values with real ones from your backend
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate network delay
-
+    const response = await api.post<{ onboardingUrl: string }>(
+      "/api/users/me/create-seller-account"
+    );
     return {
-      sellerId: "acct_1234567890abcdef",
-      onboardingUrl:
-        "https://connect.stripe.com/express/onboarding/REPLACE_WITH_REAL_URL",
-      dashboardUrl:
-        "https://dashboard.stripe.com/test/connect/accounts/acct_1234567890abcdef",
+      sellerId: "", // Will be populated after onboarding
+      onboardingUrl: response.data.onboardingUrl,
+      dashboardUrl: "",
     };
   };
 
 /**
  * Create Stripe customer with address
+ * This is an async operation - we poll for completion
  *
  * @param address - Customer address details
- * @returns Customer ID
+ * @returns Customer ID after polling for completion
  */
 export const createStripeCustomer = async (
   address: CreateStripeCustomerRequest,
 ): Promise<CreateStripeCustomerResponse> => {
-  // TODO: Replace with real API call
-  // const response = await axios.post(`${API_BASE}/customer`, address);
-  // return response.data;
+  // Send the create customer request (returns 202 Accepted)
+  await api.post("/api/users/me/create-stripe-customer", address);
 
-  // Mock response - replace customerId with real one from your backend
-  await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate network delay
+  // Poll for customer creation to complete
+  const maxAttempts = 10;
+  const delayMs = 1000;
 
-  return {
-    customerId: "cus_TgHkwE58wZorRB",
-  };
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+
+    const profile = await getUserProfile();
+    if (profile.stripeCustomerId) {
+      return { customerId: profile.stripeCustomerId };
+    }
+  }
+
+  throw new Error("Timed out waiting for customer creation");
 };
 
 /**
  * Create SetupIntent for payment method
  *
- * @param customerId - Stripe customer ID
  * @returns SetupIntent client secret
  */
-export const createSetupIntent = async (
-  customerId: string,
-): Promise<SetupIntentResponse> => {
-  // TODO: Replace with real API call
-  // const response = await axios.post(`${API_BASE}/setup-intent`, { customerId });
-  // return response.data;
-
-  // Mock response - REPLACE THESE WITH REAL VALUES FROM YOUR BACKEND
-  await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate network delay
-
-  return {
-    // Replace this client secret with a real one from your Stripe backend
-    clientSecret:
-      "seti_1SolqECvL7lAvScrbisWr6EY_secret_TmKVHddCQ7cRrwsLiil6p4EVB0IRGcz",
-    setupIntentId: "seti_1SolqECvL7lAvScrbisWr6EY",
-  };
+export const createSetupIntent = async (): Promise<SetupIntentResponse> => {
+  const response = await api.post<SetupIntentResponse>(
+    "/api/users/me/setup-payment-intent"
+  );
+  return response.data;
 };
 
 /**
@@ -86,13 +76,7 @@ export const createSetupIntent = async (
 export const attachPaymentMethod = async (
   paymentMethodId: string,
 ): Promise<AttachPaymentMethodResponse> => {
-  // TODO: Replace with real API call
-  // const response = await axios.post(`${API_BASE}/payment-method`, { paymentMethodId });
-  // return response.data;
-
-  // Mock response
-  await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate network delay
-
+  await api.post("/api/users/me/payment-methods", { paymentMethodId });
   return {
     success: true,
     paymentMethodId,
@@ -101,35 +85,13 @@ export const attachPaymentMethod = async (
 
 /**
  * Get customer's saved payment methods
+ * Note: This requires backend support - currently returns empty
  *
  * @returns List of payment methods
  */
 export const getPaymentMethods = async (): Promise<PaymentMethodsResponse> => {
-  // TODO: Replace with real API call
-  // const response = await axios.get(`${API_BASE}/payment-methods`);
-  // return response.data;
-
-  // Mock response - replace with real data from your backend
-  await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate network delay
-
+  // Backend doesn't have a list endpoint yet, return empty
   return {
-    paymentMethods: [
-      {
-        id: "pm_1234567890abcdef",
-        brand: "visa",
-        last4: "4242",
-        expMonth: 12,
-        expYear: 2025,
-        isDefault: true,
-      },
-      {
-        id: "pm_0987654321fedcba",
-        brand: "mastercard",
-        last4: "5555",
-        expMonth: 6,
-        expYear: 2026,
-        isDefault: false,
-      },
-    ],
+    paymentMethods: [],
   };
 };
