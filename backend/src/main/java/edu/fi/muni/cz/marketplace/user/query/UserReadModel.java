@@ -28,5 +28,8 @@ public class UserReadModel {
   @Column(unique = true)
   private String stripeSellerAccountId;
 
+  @Column(unique = true)
+  private String stripePaymentMethodId;
+
   private boolean sellerAccountEnabled;
 }

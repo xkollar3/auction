@@ -5,6 +5,7 @@ import org.axonframework.eventhandling.EventHandler;
 import org.axonframework.queryhandling.QueryHandler;
 import org.springframework.stereotype.Component;
 
+import edu.fi.muni.cz.marketplace.user.event.PaymentInformationAddedEvent;
 import edu.fi.muni.cz.marketplace.user.event.StripeCustomerCreatedEvent;
 import edu.fi.muni.cz.marketplace.user.event.StripeSellerAccountCreatedEvent;
 import edu.fi.muni.cz.marketplace.user.event.StripeSellerStatusUpdatedEvent;
@@ -28,6 +29,7 @@ public class UserProjection {
     UserReadModel readModel = new UserReadModel(
         event.getId(),
         event.getKeycloakUserId(),
+        null,
         null,
         null,
         false);
@@ -66,6 +68,17 @@ public class UserProjection {
       user.setSellerAccountEnabled(event.isEnabled());
       repository.save(user);
       log.info("Updated seller account status to {} for aggregate ID: {}", event.isEnabled(), event.getId());
+    });
+  }
+
+  @EventHandler
+  public void on(PaymentInformationAddedEvent event) {
+    log.info("Processing PaymentInformationAddedEvent for aggregate ID: {}", event.getId());
+
+    repository.findById(event.getId()).ifPresent(user -> {
+      user.setStripePaymentMethodId(event.getPaymentMethodId());
+      repository.save(user);
+      log.info("Updated Stripe Payment Method ID for aggregate ID: {}", event.getId());
     });
   }
 
