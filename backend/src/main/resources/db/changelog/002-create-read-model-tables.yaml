@@ -1,0 +1,53 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-1-create-user-read-model-table
+      author: system
+      changes:
+        - createTable:
+            tableName: user_read_model
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: keycloak_user_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: stripe_customer_id
+                  type: varchar(255)
+                  constraints:
+                    unique: true
+              - column:
+                  name: stripe_seller_account_id
+                  type: varchar(255)
+                  constraints:
+                    unique: true
+              - column:
+                  name: stripe_payment_method_id
+                  type: varchar(255)
+                  constraints:
+                    unique: true
+              - column:
+                  name: seller_account_enabled
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: user_read_model
+            indexName: idx_user_read_model_keycloak_user_id
+            columns:
+              - column:
+                  name: keycloak_user_id
+        - createIndex:
+            tableName: user_read_model
+            indexName: idx_user_read_model_stripe_seller_account_id
+            columns:
+              - column:
+                  name: stripe_seller_account_id

@@ -29,7 +29,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -45,7 +45,7 @@ spring:
           issuer-uri: http://localhost:8089/realms/auction-marketplace
           jwk-set-uri: http://localhost:8089/realms/auction-marketplace/protocol/openid-connect/certs
   config:
-    import: optional:.env[.properties]
+    import: .env[.properties]
 
 axon:
   axonserver:
