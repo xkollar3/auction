@@ -1,9 +1,9 @@
 package edu.fi.muni.cz.marketplace.user.command.handler;
 
-import edu.fi.muni.cz.marketplace.user.command.AssignStripeSellerAccountIdCommand;
 import edu.fi.muni.cz.marketplace.user.command.CreateStripeConnectedAccountCommand;
+import edu.fi.muni.cz.marketplace.user.event.StripeConnectedAccountCreatedEvent;
 import org.axonframework.commandhandling.CommandHandler;
-import org.axonframework.commandhandling.gateway.CommandGateway;
+import org.axonframework.eventhandling.gateway.EventGateway;
 import org.springframework.stereotype.Service;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -16,8 +16,8 @@ import edu.fi.muni.cz.marketplace.user.service.dto.ConnectedAccountResponse;
  * <p>
  * Orchestrates the flow:
  * 1. Creates a Stripe Connected Account.
- * 2. Dispatches {@link AssignStripeSellerAccountIdCommand} to store the account
- * ID.
+ * 2. Publishes {@link StripeConnectedAccountCreatedEvent} (handled
+ * asynchronously to assign account ID).
  * 3. Creates and returns a Stripe Account Link for onboarding.
  * </p>
  */
@@ -25,18 +25,18 @@ import edu.fi.muni.cz.marketplace.user.service.dto.ConnectedAccountResponse;
 public class CreateStripeConnectedAccountCommandHandler {
 
     private final StripeApiClient stripeClient;
-    private final CommandGateway commandGateway;
+    private final EventGateway eventGateway;
 
     private final String refreshUrl;
     private final String returnUrl;
 
     public CreateStripeConnectedAccountCommandHandler(
             StripeApiClient stripeClient,
-            CommandGateway commandGateway,
+            EventGateway eventGateway,
             @Value("${stripe.seller.refresh-url}") String refreshUrl,
             @Value("${stripe.seller.return-url}") String returnUrl) {
         this.stripeClient = stripeClient;
-        this.commandGateway = commandGateway;
+        this.eventGateway = eventGateway;
         this.refreshUrl = refreshUrl;
         this.returnUrl = returnUrl;
     }
@@ -46,7 +46,7 @@ public class CreateStripeConnectedAccountCommandHandler {
         ConnectedAccountResponse accountResponse = stripeClient.createConnectedAccount(command.getId(),
                 command.getEmail());
 
-        commandGateway.send(new AssignStripeSellerAccountIdCommand(command.getId(), accountResponse.accountId()));
+        eventGateway.publish(new StripeConnectedAccountCreatedEvent(command.getId(), accountResponse.accountId()));
 
         return stripeClient.createAccountLink(accountResponse.accountId(), refreshUrl, returnUrl);
     }
