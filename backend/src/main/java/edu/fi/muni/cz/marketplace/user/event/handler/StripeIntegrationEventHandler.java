@@ -1,4 +1,4 @@
-package edu.fi.muni.cz.marketplace.user.service;
+package edu.fi.muni.cz.marketplace.user.event.handler;
 
 import edu.fi.muni.cz.marketplace.user.command.AssignStripeCustomerIdCommand;
 import edu.fi.muni.cz.marketplace.user.command.AssignStripeSellerAccountIdCommand;

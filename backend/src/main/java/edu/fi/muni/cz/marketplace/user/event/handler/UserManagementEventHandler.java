@@ -1,10 +1,11 @@
-package edu.fi.muni.cz.marketplace.user.service;
+package edu.fi.muni.cz.marketplace.user.event.handler;
 
 import org.axonframework.config.ProcessingGroup;
 import org.axonframework.eventhandling.EventHandler;
 import org.springframework.stereotype.Component;
 
 import edu.fi.muni.cz.marketplace.user.event.UserRemovedEvent;
+import edu.fi.muni.cz.marketplace.user.service.KeycloakService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
