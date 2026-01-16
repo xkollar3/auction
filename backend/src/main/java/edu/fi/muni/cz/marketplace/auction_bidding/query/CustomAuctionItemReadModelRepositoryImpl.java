@@ -1,7 +1,5 @@
 package edu.fi.muni.cz.marketplace.auction_bidding.query;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,9 +9,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionItemCategory;
-import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionStatus;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.TypedQuery;
+import jakarta.persistence.Query;
 import lombok.RequiredArgsConstructor;
 
 @Repository
@@ -23,6 +20,7 @@ public class CustomAuctionItemReadModelRepositoryImpl implements CustomAuctionIt
   private final EntityManager entityManager;
 
   @Override
+  @SuppressWarnings("unchecked")
   public Page<AuctionItemReadModel> browse(
       AuctionItemCategory category,
       AuctionSortOption sortOption,
@@ -32,79 +30,57 @@ public class CustomAuctionItemReadModelRepositoryImpl implements CustomAuctionIt
 
     boolean hasCategory = category != null;
     boolean hasSearch = searchQuery != null && !searchQuery.isBlank();
-    boolean isHotSort = sortOption == AuctionSortOption.HOT;
 
-    StringBuilder queryBuilder = new StringBuilder();
-    StringBuilder countBuilder = new StringBuilder();
-
-    if (isHotSort) {
-      queryBuilder.append("""
-          SELECT a FROM AuctionItemReadModel a
-          LEFT JOIN a.bids b ON b.placedAt >= :oneHourAgo
-          """);
-      countBuilder.append("""
-          SELECT COUNT(DISTINCT a) FROM AuctionItemReadModel a
-          LEFT JOIN a.bids b ON b.placedAt >= :oneHourAgo
-          """);
-    } else {
-      queryBuilder.append("SELECT a FROM AuctionItemReadModel a ");
-      countBuilder.append("SELECT COUNT(a) FROM AuctionItemReadModel a ");
-    }
+    StringBuilder queryBuilder = new StringBuilder("SELECT * FROM auction_item_read_model a ");
+    StringBuilder countBuilder = new StringBuilder("SELECT COUNT(*) FROM auction_item_read_model a ");
 
     List<String> conditions = new ArrayList<>();
-    conditions.add("a.status = :status");
+    conditions.add("a.status = 'ACTIVE'");
 
     if (hasCategory) {
       conditions.add("a.category = :category");
     }
 
     if (hasSearch) {
-      conditions.add("(LOWER(a.title) LIKE LOWER(:searchPattern) OR LOWER(a.description) LIKE LOWER(:searchPattern))");
+      conditions.add("a.search_vector @@ websearch_to_tsquery('english', :searchQuery)");
     }
 
     String whereClause = "WHERE " + String.join(" AND ", conditions) + " ";
     queryBuilder.append(whereClause);
     countBuilder.append(whereClause);
 
-    if (isHotSort) {
-      queryBuilder.append("GROUP BY a ");
+    String orderBy = switch (sortOption) {
+      case ENDING_SOON -> "ORDER BY a.auction_end_time ASC";
+      case HOT -> "ORDER BY a.bid_count DESC, a.auction_end_time ASC";
+      case PRICE_HIGH_TO_LOW -> "ORDER BY a.current_price DESC";
+      case PRICE_LOW_TO_HIGH -> "ORDER BY a.current_price ASC";
+    };
+
+    if (hasSearch) {
+      queryBuilder.append("ORDER BY ts_rank(a.search_vector, websearch_to_tsquery('english', :searchQuery)) DESC, ");
+      queryBuilder.append(orderBy.replace("ORDER BY ", ""));
+    } else {
+      queryBuilder.append(orderBy);
     }
 
-    switch (sortOption) {
-      case ENDING_SOON -> queryBuilder.append("ORDER BY a.auctionEndTime ASC");
-      case HOT -> queryBuilder.append("ORDER BY COUNT(b) DESC, a.auctionEndTime ASC");
-      case PRICE_HIGH_TO_LOW -> queryBuilder.append("ORDER BY a.currentPrice DESC");
-      case PRICE_LOW_TO_HIGH -> queryBuilder.append("ORDER BY a.currentPrice ASC");
-    }
-
-    TypedQuery<AuctionItemReadModel> query = entityManager.createQuery(queryBuilder.toString(), AuctionItemReadModel.class);
-    TypedQuery<Long> countQuery = entityManager.createQuery(countBuilder.toString(), Long.class);
-
-    query.setParameter("status", AuctionStatus.ACTIVE);
-    countQuery.setParameter("status", AuctionStatus.ACTIVE);
-
-    if (isHotSort) {
-      Instant oneHourAgo = Instant.now().minus(1, ChronoUnit.HOURS);
-      query.setParameter("oneHourAgo", oneHourAgo);
-      countQuery.setParameter("oneHourAgo", oneHourAgo);
-    }
+    Query query = entityManager.createNativeQuery(queryBuilder.toString(), AuctionItemReadModel.class);
+    Query countQuery = entityManager.createNativeQuery(countBuilder.toString());
 
     if (hasCategory) {
-      query.setParameter("category", category);
-      countQuery.setParameter("category", category);
+      query.setParameter("category", category.name());
+      countQuery.setParameter("category", category.name());
     }
 
     if (hasSearch) {
-      String searchPattern = "%" + searchQuery + "%";
-      query.setParameter("searchPattern", searchPattern);
-      countQuery.setParameter("searchPattern", searchPattern);
+      query.setParameter("searchQuery", searchQuery);
+      countQuery.setParameter("searchQuery", searchQuery);
     }
 
     query.setFirstResult(page * size);
     query.setMaxResults(size);
 
     List<AuctionItemReadModel> results = query.getResultList();
-    Long total = countQuery.getSingleResult();
+    Long total = ((Number) countQuery.getSingleResult()).longValue();
 
     return new PageImpl<>(results, PageRequest.of(page, size), total);
   }
