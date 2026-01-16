@@ -1,7 +1,7 @@
 /**
  * Auction item status
  */
-export type AuctionStatus = 'OPEN' | 'CLOSED' | 'CANCELLED';
+export type AuctionStatus = 'ACTIVE' | 'CLOSED' | 'CANCELLED';
 
 /**
  * Auction item category

@@ -95,12 +95,11 @@ public class AuctionController {
    * Get seller's auction items filtered by status.
    * For ACTIVE items, sorted by ending soon first.
    */
-  @GetMapping("/seller/dashboard")
+  @GetMapping("/seller/{sellerId}")
   public ResponseEntity<List<SellerAuctionItemResponse>> getSellerAuctions(
-      @RequestParam AuctionStatus status,
-      @AuthenticationPrincipal Jwt jwt) {
-    UUID sellerId = getUserId(jwt);
-    log.info("Retrieving dashboard for seller: " + sellerId);
+      @PathVariable UUID sellerId,
+      @RequestParam AuctionStatus status) {
+    log.info("Retrieving auctions for seller: {}", sellerId);
 
     List<AuctionItemReadModel> items = queryGateway.query(
         new FindSellerAuctionItemsQuery(sellerId, status),

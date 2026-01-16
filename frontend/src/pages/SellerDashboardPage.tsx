@@ -4,8 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Plus, Clock, Coins, Tag } from 'lucide-react';
 import { Header } from '../shared/Header';
 import { Footer } from '../shared/Footer';
+import { useAuth } from '../hooks/useAuth';
 import { getUserProfile } from '../api/user';
-import { getSellerAuctions } from '../api/auction';
+import { getSellerShopAuctions } from '../api/auction';
 import type { AuctionStatus } from '../types/auction';
 
 const formatTimeRemaining = (endTime: string): string => {
@@ -34,6 +35,7 @@ const formatPrice = (price: number): string => {
 
 export const SellerDashboardPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [statusFilter, setStatusFilter] = useState<AuctionStatus>('ACTIVE');
 
   const { data: profile, isLoading: profileLoading } = useQuery({
@@ -42,9 +44,9 @@ export const SellerDashboardPage = () => {
   });
 
   const { data: auctions, isLoading: auctionsLoading, error } = useQuery({
-    queryKey: ['sellerAuctions', statusFilter],
-    queryFn: () => getSellerAuctions(statusFilter),
-    enabled: !!profile?.sellerAccountEnabled,
+    queryKey: ['sellerAuctions', user?.id, statusFilter],
+    queryFn: () => getSellerShopAuctions(user!.id, statusFilter),
+    enabled: !!profile?.sellerAccountEnabled && !!user?.id,
   });
 
   if (profileLoading) {

@@ -37,6 +37,8 @@ public class SecurityConfig {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/actuator/**", "/health/**", "/error")
             .permitAll()
+            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/auctions", "/api/auctions/**")
+            .permitAll()
             .anyRequest().authenticated())
         .oauth2ResourceServer(oauth2 -> oauth2
             .jwt(Customizer.withDefaults()))

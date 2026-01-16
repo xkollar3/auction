@@ -34,7 +34,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-    show-sql: true
+    show-sql: false
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
     enabled: true

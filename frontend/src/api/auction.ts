@@ -26,7 +26,7 @@ Shipping: Insured worldwide shipping available. Local pickup in Los Angeles also
   startingPrice: 150000,
   category: 'MUSIC',
   auctionEndTime: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(), // 4 hours from now
-  status: 'OPEN',
+  status: 'ACTIVE',
   highestBidderId: 'bidder-456',
   highestBidderName: 'Jane Bidder',
   highestBidAmount: 185000,
@@ -109,10 +109,10 @@ export const addAuctionItem = async (request: AddAuctionItemRequest): Promise<Ad
 };
 
 /**
- * Get seller's auction items by status
+ * Get a seller's auction items by status
  */
-export const getSellerAuctions = async (status: AuctionStatus): Promise<SellerAuctionItemResponse[]> => {
-  const response = await api.get<SellerAuctionItemResponse[]>('/api/auctions/seller/dashboard', {
+export const getSellerShopAuctions = async (sellerId: string, status: AuctionStatus): Promise<SellerAuctionItemResponse[]> => {
+  const response = await api.get<SellerAuctionItemResponse[]>(`/api/auctions/seller/${sellerId}`, {
     params: { status },
   });
   return response.data;

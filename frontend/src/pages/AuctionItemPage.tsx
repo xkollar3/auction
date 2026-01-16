@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Clock, User, ArrowLeft, Gavel } from 'lucide-react';
 import { Header } from '../shared/Header';
@@ -101,7 +101,7 @@ export const AuctionItemPage = () => {
 
   // Check if current user is the seller
   const isSeller = user?.id === auction?.sellerId;
-  const canBid = isAuthenticated && !isSeller && auction?.status === 'OPEN';
+  const canBid = isAuthenticated && !isSeller && auction?.status === 'ACTIVE';
 
   // Calculate minimum bid (1 Kč increment)
   const minBid = auction
@@ -288,17 +288,21 @@ export const AuctionItemPage = () => {
             </div>
 
             {/* Seller Info */}
-            <div className="bg-white rounded-lg shadow-md p-4">
+            <Link
+              to={`/seller/${auction.sellerId}`}
+              className="block bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow"
+            >
               <div className="flex items-center gap-3">
-                <div className="bg-gray-200 rounded-full p-2">
-                  <User className="h-5 w-5 text-gray-600" />
+                <div className="bg-blue-100 rounded-full p-2">
+                  <User className="h-5 w-5 text-blue-600" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="text-sm text-gray-500">Seller</p>
                   <p className="font-medium text-gray-900">{auction.sellerFirstName} {auction.sellerLastName}</p>
                 </div>
+                <span className="text-blue-600 text-sm font-medium">View Shop →</span>
               </div>
-            </div>
+            </Link>
           </div>
         </div>
 
