@@ -1,6 +1,6 @@
 package edu.fi.muni.cz.marketplace.settlement.command;
 
-import edu.fi.muni.cz.marketplace.settlement.aggregate.BidSettlement;
+import edu.fi.muni.cz.marketplace.settlement.aggregate.PotentialBuyer;
 import lombok.Value;
 import org.axonframework.modelling.command.TargetAggregateIdentifier;
 
@@ -12,6 +12,5 @@ public class SelectNextBuyerCommand {
 
     @TargetAggregateIdentifier
     UUID settlementId;
-    List<BidSettlement> bidSettlementList;
 
 }
