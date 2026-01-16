@@ -188,7 +188,7 @@ class AuctionItemTest {
                 description,
                 startingPrice,
                 auctionEndTime),
-            new AuctionClosedEvent(auctionItemId, Collections.emptyList()))
+            new AuctionClosedEvent(auctionItemId, sellerId, title, Collections.emptyList()))
         .when(new PlaceBidCommand(auctionItemId, bidId, bidderId, bidAmount))
         .expectSuccessfulHandlerExecution()
         .expectEventsMatching(exactSequenceOf(
@@ -278,7 +278,7 @@ class AuctionItemTest {
             description,
             startingPrice,
             auctionEndTime))
-        .andGiven(new AuctionClosedEvent(auctionItemId, Collections.emptyList()))
+        .andGiven(new AuctionClosedEvent(auctionItemId, sellerId, title, Collections.emptyList()))
         .whenTimeElapses(Duration.ofDays(7))
         .expectTriggeredDeadlinesWithName(AUCTION_END_DEADLINE)
         .expectNoEvents()
@@ -330,7 +330,7 @@ class AuctionItemTest {
             description,
             startingPrice,
             auctionEndTime))
-        .andGiven(new AuctionClosedEvent(auctionItemId, Collections.emptyList()))
+        .andGiven(new AuctionClosedEvent(auctionItemId, sellerId, title, Collections.emptyList()))
         .whenTimeElapses(Duration.ofDays(7))
         .expectTriggeredDeadlinesWithName(AUCTION_END_DEADLINE)
         .expectNoEvents()
