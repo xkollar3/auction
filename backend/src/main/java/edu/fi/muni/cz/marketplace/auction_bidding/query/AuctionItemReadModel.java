@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.UUID;
 
 import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionItemCategory;
+import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionStatus;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -28,8 +29,8 @@ public class AuctionItemReadModel {
   @Id
   private UUID id;
 
-  @Column(nullable = false)
-  private UUID sellerId;
+  @Column(nullable = false, name = "seller_id")
+  private UUID keycloakSellerId;
 
   @Column(nullable = false)
   private String title;
@@ -43,6 +44,10 @@ public class AuctionItemReadModel {
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private AuctionItemCategory category;
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private AuctionStatus status;
 
   @Column(nullable = false)
   private Instant auctionEndTime;

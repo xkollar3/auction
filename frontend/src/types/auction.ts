@@ -56,3 +56,36 @@ export interface PlaceBidResponse {
   message?: string;
   newHighestBid?: number;
 }
+
+/**
+ * Add auction item request
+ */
+export interface AddAuctionItemRequest {
+  title: string;
+  description: string;
+  startingPrice: number;
+  category: AuctionCategory;
+  auctionEndTime: string; // ISO datetime
+}
+
+/**
+ * Add auction item response
+ */
+export interface AddAuctionItemResponse {
+  auctionItemId: string;
+}
+
+/**
+ * Seller auction item response (for dashboard)
+ */
+export interface SellerAuctionItemResponse {
+  id: string;
+  title: string;
+  description: string;
+  startingPrice: number;
+  category: AuctionCategory;
+  auctionEndTime: string;
+  status: AuctionStatus;
+  highestBidAmount: number | null;
+  bidCount: number;
+}

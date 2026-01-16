@@ -9,13 +9,18 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionItemCategory;
+import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionStatus;
 
 @Repository
-public interface AuctionItemReadModelRepository extends JpaRepository<AuctionItemReadModel, UUID>, CustomAuctionItemReadModelRepository {
+public interface AuctionItemReadModelRepository
+    extends JpaRepository<AuctionItemReadModel, UUID>, CustomAuctionItemReadModelRepository {
 
-  List<AuctionItemReadModel> findBySellerId(UUID sellerId);
+  List<AuctionItemReadModel> findByKeycloakSellerId(UUID keycloakSellerId);
 
   List<AuctionItemReadModel> findByCategory(AuctionItemCategory category);
+
+  List<AuctionItemReadModel> findByKeycloakSellerIdAndStatusOrderByAuctionEndTimeAsc(
+      UUID keycloakSellerId, AuctionStatus status);
 
   @Query(value = """
       SELECT a.*

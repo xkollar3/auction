@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { ExternalLink } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { UserProfile } from '../shared/UserProfile';
 import { BecomeSellerButton } from '../shared/BecomeSellerButton';
@@ -24,9 +25,9 @@ export const ProfilePage = () => {
 
   if (!keycloakProfile || !user) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header />
-        <div className="flex items-center justify-center py-20">
+        <div className="flex items-center justify-center py-20 flex-1">
           <div className="text-center">
             <p className="text-gray-600">Loading profile...</p>
           </div>
@@ -37,9 +38,9 @@ export const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-1 w-full">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">My Account</h1>
           <p className="text-gray-600 mt-2">Manage your profile and account settings</p>
@@ -95,6 +96,17 @@ export const ProfilePage = () => {
                         }`}>
                           {backendProfile.sellerAccountEnabled ? 'Enabled' : 'Pending Onboarding'}
                         </span>
+                        {backendProfile.stripeOnboardingLink && (
+                          <a
+                            href={backendProfile.stripeOnboardingLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm w-fit"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            Complete Stripe Onboarding
+                          </a>
+                        )}
                       </div>
                     ) : (
                       <p className="text-sm text-gray-400">Not a seller</p>

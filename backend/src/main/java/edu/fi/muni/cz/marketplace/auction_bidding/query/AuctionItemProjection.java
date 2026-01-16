@@ -8,6 +8,8 @@ import org.axonframework.queryhandling.QueryHandler;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
+import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionStatus;
+import edu.fi.muni.cz.marketplace.auction_bidding.event.AuctionClosedEvent;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.AuctionItemAddedEvent;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.HighestBidSetEvent;
 import lombok.RequiredArgsConstructor;
@@ -28,11 +30,12 @@ public class AuctionItemProjection {
 
     AuctionItemReadModel readModel = new AuctionItemReadModel();
     readModel.setId(event.getAuctionItemId());
-    readModel.setSellerId(event.getSellerId());
+    readModel.setKeycloakSellerId(event.getSellerId());
     readModel.setTitle(event.getTitle());
     readModel.setDescription(event.getDescription());
     readModel.setStartingPrice(event.getStartingPrice());
     readModel.setCategory(event.getCategory());
+    readModel.setStatus(AuctionStatus.ACTIVE);
     readModel.setAuctionEndTime(event.getAuctionEndTime());
     readModel.setCurrentPrice(event.getStartingPrice());
     readModel.setBidCount(0);
@@ -64,6 +67,19 @@ public class AuctionItemProjection {
     log.info("Saved accepted bid for auction item ID: {}", event.getAuctionItemId());
   }
 
+  @EventHandler
+  public void on(AuctionClosedEvent event) {
+    log.info("Processing AuctionClosedEvent for auction item ID: {}", event.getAuctionItemId());
+
+    AuctionItemReadModel auctionItem = repository.findById(event.getAuctionItemId())
+        .orElseThrow(() -> new IllegalStateException("Auction item not found: " + event.getAuctionItemId()));
+
+    auctionItem.setStatus(AuctionStatus.CLOSED);
+    repository.save(auctionItem);
+
+    log.info("Closed auction item ID: {}", event.getAuctionItemId());
+  }
+
   @QueryHandler
   public AuctionItemReadModel handle(FindAuctionItemByIdQuery query) {
     return repository.findById(query.getAuctionItemId()).orElse(null);
@@ -82,5 +98,13 @@ public class AuctionItemProjection {
         query.getSearchQuery(),
         query.getPage(),
         query.getSize());
+  }
+
+  @QueryHandler
+  public List<AuctionItemReadModel> handle(FindSellerAuctionItemsQuery query) {
+    log.debug("Handling seller items query: {}" + query.getKeycloakSellerId());
+    return repository.findByKeycloakSellerIdAndStatusOrderByAuctionEndTimeAsc(
+        query.getKeycloakSellerId(),
+        query.getStatus());
   }
 }

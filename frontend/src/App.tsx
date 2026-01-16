@@ -8,6 +8,8 @@ import { AuctionItemPage } from './pages/AuctionItemPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { PaymentSetupPage } from './pages/PaymentSetupPage';
 import { PaymentMethodsPage } from './pages/PaymentMethodsPage';
+import { PostAuctionItemPage } from './pages/PostAuctionItemPage';
+import { SellerDashboardPage } from './pages/SellerDashboardPage';
 import { ProtectedRoute } from './shared/ProtectedRoute';
 import { keycloak, keycloakInitConfig } from './lib/keycloak';
 import { getStripe, stripeElementsOptions } from './lib/stripe';
@@ -29,7 +31,24 @@ function App() {
             <Route path="/register" element={<div>Register Page (placeholder)</div>} />
             <Route path="/listings" element={<ListingsPage />} />
             <Route path="/auction/:id" element={<AuctionItemPage />} />
-            <Route path="/seller/dashboard" element={<div>Seller Dashboard (placeholder)</div>} />
+            <Route
+              path="/seller/dashboard"
+              element={
+                <ProtectedRoute>
+                  <SellerDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Protected seller routes */}
+            <Route
+              path="/seller/post-item"
+              element={
+                <ProtectedRoute>
+                  <PostAuctionItemPage />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Protected user management routes */}
             <Route

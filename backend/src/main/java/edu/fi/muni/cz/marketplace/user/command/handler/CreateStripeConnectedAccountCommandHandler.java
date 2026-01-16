@@ -24,30 +24,30 @@ import edu.fi.muni.cz.marketplace.user.service.dto.ConnectedAccountResponse;
 @Service
 public class CreateStripeConnectedAccountCommandHandler {
 
-    private final StripeApiClient stripeClient;
-    private final EventGateway eventGateway;
+  private final StripeApiClient stripeClient;
+  private final EventGateway eventGateway;
 
-    private final String refreshUrl;
-    private final String returnUrl;
+  private final String refreshUrl;
+  private final String returnUrl;
 
-    public CreateStripeConnectedAccountCommandHandler(
-            StripeApiClient stripeClient,
-            EventGateway eventGateway,
-            @Value("${stripe.seller.refresh-url}") String refreshUrl,
-            @Value("${stripe.seller.return-url}") String returnUrl) {
-        this.stripeClient = stripeClient;
-        this.eventGateway = eventGateway;
-        this.refreshUrl = refreshUrl;
-        this.returnUrl = returnUrl;
-    }
+  public CreateStripeConnectedAccountCommandHandler(
+      StripeApiClient stripeClient,
+      EventGateway eventGateway,
+      @Value("${stripe.seller.refresh-url}") String refreshUrl,
+      @Value("${stripe.seller.return-url}") String returnUrl) {
+    this.stripeClient = stripeClient;
+    this.eventGateway = eventGateway;
+    this.refreshUrl = refreshUrl;
+    this.returnUrl = returnUrl;
+  }
 
-    @CommandHandler
-    public String on(CreateStripeConnectedAccountCommand command) {
-        ConnectedAccountResponse accountResponse = stripeClient.createConnectedAccount(command.getId(),
-                command.getEmail());
+  @CommandHandler
+  public void on(CreateStripeConnectedAccountCommand command) {
+    ConnectedAccountResponse accountResponse = stripeClient.createConnectedAccount(command.getId(),
+        command.getEmail());
 
-        eventGateway.publish(new StripeConnectedAccountCreatedEvent(command.getId(), accountResponse.accountId()));
+    String url = stripeClient.createAccountLink(accountResponse.accountId(), refreshUrl, returnUrl);
 
-        return stripeClient.createAccountLink(accountResponse.accountId(), refreshUrl, returnUrl);
-    }
+    eventGateway.publish(new StripeConnectedAccountCreatedEvent(command.getId(), accountResponse.accountId(), url));
+  }
 }

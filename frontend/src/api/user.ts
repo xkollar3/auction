@@ -15,6 +15,7 @@ export interface UserProfileResponse {
   keycloakUserId: string;
   stripeCustomerId: string | null;
   stripeSellerAccountId: string | null;
+  stripeOnboardingLink: string | null;
   stripePaymentMethodId: string | null;
   sellerAccountEnabled: boolean;
 }

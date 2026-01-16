@@ -71,6 +71,7 @@ public class UserController {
         user.getKeycloakUserId(),
         user.getStripeCustomerId(),
         user.getStripeSellerAccountId(),
+        user.getStripeOnboardingLink(),
         user.getStripePaymentMethodId(),
         user.isSellerAccountEnabled()));
   }
@@ -110,7 +111,7 @@ public class UserController {
   }
 
   @PostMapping("/me/create-seller-account")
-  public ResponseEntity<CreateStripeConnectedAccountResponse> createStripeConnectedAccount(
+  public ResponseEntity<Void> createStripeConnectedAccount(
       @AuthenticationPrincipal Jwt jwt) {
     validateJwtClaims(jwt, "email");
 
@@ -120,14 +121,11 @@ public class UserController {
 
     log.info("Creating Stripe seller account for user aggregate: {}", user.getId());
 
-    CompletableFuture<String> future = commandGateway.send(new CreateStripeConnectedAccountCommand(
+    commandGateway.sendAndWait(new CreateStripeConnectedAccountCommand(
         user.getId(),
         email));
 
-    // We wait for the result to get the onboarding URL
-    String onboardingUrl = future.join();
-
-    return ResponseEntity.status(HttpStatus.CREATED).body(new CreateStripeConnectedAccountResponse(onboardingUrl));
+    return ResponseEntity.status(HttpStatus.CREATED).build();
   }
 
   @PostMapping("/me/setup-payment-intent")

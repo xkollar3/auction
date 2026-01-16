@@ -28,6 +28,8 @@ public class UserReadModel {
   @Column(unique = true)
   private String stripeSellerAccountId;
 
+  private String stripeOnboardingLink;
+
   @Column(unique = true)
   private String stripePaymentMethodId;
 

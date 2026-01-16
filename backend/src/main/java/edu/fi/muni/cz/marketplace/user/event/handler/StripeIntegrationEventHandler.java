@@ -22,7 +22,7 @@ public class StripeIntegrationEventHandler {
     @EventHandler
     public void on(StripeConnectedAccountCreatedEvent event) {
         log.info("Handling StripeConnectedAccountCreatedEvent for user: {}", event.getUserId());
-        commandGateway.send(new AssignStripeSellerAccountIdCommand(event.getUserId(), event.getStripeAccountId()));
+        commandGateway.send(new AssignStripeSellerAccountIdCommand(event.getUserId(), event.getStripeAccountId(), event.getStripeOnboardingLink()));
     }
 
     @EventHandler

@@ -53,6 +53,9 @@ databaseChangeLog:
                   constraints:
                     unique: true
               - column:
+                  name: stripe_onboarding_link
+                  type: varchar(1024)
+              - column:
                   name: stripe_payment_method_id
                   type: varchar(255)
                   constraints:

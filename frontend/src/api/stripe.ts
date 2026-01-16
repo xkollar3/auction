@@ -16,12 +16,15 @@ import {
  */
 export const createSellerAccount =
   async (): Promise<CreateSellerAccountResponse> => {
-    const response = await api.post<{ onboardingUrl: string }>(
-      "/api/users/me/create-seller-account"
-    );
+    // Create seller account - backend uses sendAndWait so account is ready when this returns
+    await api.post("/api/users/me/create-seller-account");
+
+    // Fetch profile to get the seller account details
+    const profile = await getUserProfile();
+
     return {
-      sellerId: "", // Will be populated after onboarding
-      onboardingUrl: response.data.onboardingUrl,
+      sellerId: profile.stripeSellerAccountId || "",
+      onboardingUrl: profile.stripeOnboardingLink || "",
       dashboardUrl: "",
     };
   };

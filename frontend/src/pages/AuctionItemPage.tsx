@@ -12,9 +12,9 @@ import type { AuctionItem } from '../types/auction';
  * Format currency in cents to display format
  */
 const formatCurrency = (cents: number): string => {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('cs-CZ', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'CZK',
     minimumFractionDigits: 0,
   }).format(cents / 100);
 };
@@ -100,7 +100,7 @@ export const AuctionItemPage = () => {
 
   // Calculate minimum bid
   const minBid = auction
-    ? (auction.highestBidAmount || auction.startingPrice) + 100 // Minimum increment of $1 (100 cents)
+    ? (auction.highestBidAmount || auction.startingPrice) + 100 // Minimum increment of 1 Kč (100 haléřů)
     : 0;
 
   const handlePlaceBid = () => {
@@ -238,7 +238,7 @@ export const AuctionItemPage = () => {
                       </label>
                       <div className="flex gap-3">
                         <div className="relative flex-1">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">Kč</span>
                           <input
                             type="number"
                             value={bidAmount}

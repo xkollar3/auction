@@ -7,6 +7,7 @@ public record UserProfileResponse(
     String keycloakUserId,
     String stripeCustomerId,
     String stripeSellerAccountId,
+    String stripeOnboardingLink,
     String stripePaymentMethodId,
-    boolean sellerAccountEnabled
-) {}
+    boolean sellerAccountEnabled) {
+}

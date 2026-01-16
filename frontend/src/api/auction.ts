@@ -1,4 +1,5 @@
-import type { AuctionItem, PlaceBidRequest, PlaceBidResponse } from '../types/auction';
+import { api } from '../lib/api';
+import type { AuctionItem, AuctionStatus, PlaceBidRequest, PlaceBidResponse, AddAuctionItemRequest, AddAuctionItemResponse, SellerAuctionItemResponse } from '../types/auction';
 
 /**
  * Mock auction item data
@@ -104,4 +105,22 @@ export const placeBid = async (request: PlaceBidRequest): Promise<PlaceBidRespon
     success: true,
     newHighestBid: request.amount,
   };
+};
+
+/**
+ * Add a new auction item
+ */
+export const addAuctionItem = async (request: AddAuctionItemRequest): Promise<AddAuctionItemResponse> => {
+  const response = await api.post<AddAuctionItemResponse>('/api/auctions', request);
+  return response.data;
+};
+
+/**
+ * Get seller's auction items by status
+ */
+export const getSellerAuctions = async (status: AuctionStatus): Promise<SellerAuctionItemResponse[]> => {
+  const response = await api.get<SellerAuctionItemResponse[]>('/api/auctions/seller/dashboard', {
+    params: { status },
+  });
+  return response.data;
 };

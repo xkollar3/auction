@@ -1,6 +1,7 @@
 package edu.fi.muni.cz.marketplace.auction_bidding.controller;
 
 import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionItemCategory;
+import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionStatus;
 import edu.fi.muni.cz.marketplace.auction_bidding.command.AddAuctionItemCommand;
 import edu.fi.muni.cz.marketplace.auction_bidding.command.PlaceBidCommand;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.AddAuctionItemRequest;
@@ -9,11 +10,14 @@ import edu.fi.muni.cz.marketplace.auction_bidding.dto.AuctionItemResponse;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.BrowseAuctionItemsResponse;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.PlaceBidRequest;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.PlaceBidResponse;
+import edu.fi.muni.cz.marketplace.auction_bidding.dto.SellerAuctionItemResponse;
 import edu.fi.muni.cz.marketplace.auction_bidding.query.AuctionItemReadModel;
 import edu.fi.muni.cz.marketplace.auction_bidding.query.AuctionSortOption;
 import edu.fi.muni.cz.marketplace.auction_bidding.query.BrowseAuctionItemsQuery;
 import edu.fi.muni.cz.marketplace.auction_bidding.query.FindAuctionItemByIdQuery;
+import edu.fi.muni.cz.marketplace.auction_bidding.query.FindSellerAuctionItemsQuery;
 import edu.fi.muni.cz.marketplace.config.exception.HttpException;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -84,6 +88,28 @@ public class AuctionController {
     }
 
     return ResponseEntity.ok(AuctionItemResponse.from(readModel));
+  }
+
+  /**
+   * Get seller's auction items filtered by status.
+   * For ACTIVE items, sorted by ending soon first.
+   */
+  @GetMapping("/seller/dashboard")
+  public ResponseEntity<List<SellerAuctionItemResponse>> getSellerAuctions(
+      @RequestParam AuctionStatus status,
+      @AuthenticationPrincipal Jwt jwt) {
+    UUID sellerId = getUserId(jwt);
+    log.info("Retrieving dashboard for seller: " + sellerId);
+
+    List<AuctionItemReadModel> items = queryGateway.query(
+        new FindSellerAuctionItemsQuery(sellerId, status),
+        ResponseTypes.multipleInstancesOf(AuctionItemReadModel.class)).join();
+
+    var response = items.stream()
+        .map(SellerAuctionItemResponse::from)
+        .toList();
+
+    return ResponseEntity.ok(response);
   }
 
   /**

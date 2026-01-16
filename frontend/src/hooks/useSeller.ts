@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createSellerAccount } from '../api/stripe';
 import { useAuthStore } from '../stores/authStore';
 
@@ -7,12 +7,15 @@ import { useAuthStore } from '../stores/authStore';
  */
 export const useSeller = () => {
   const { setSellerId } = useAuthStore();
+  const queryClient = useQueryClient();
 
   const createSellerAccountMutation = useMutation({
     mutationFn: createSellerAccount,
     onSuccess: (data) => {
       // Store seller ID in auth store
       setSellerId(data.sellerId);
+      // Invalidate profile query so the page refreshes with new data
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
       console.log('Seller account created:', data);
     },
     onError: (error) => {
