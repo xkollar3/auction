@@ -80,24 +80,31 @@ export const getAuctionItem = async (id: string): Promise<AuctionItemDetailRespo
 
 /**
  * Place a bid on an auction item
- * TODO: Replace with real API call
  */
 export const placeBid = async (request: PlaceBidRequest): Promise<PlaceBidResponse> => {
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  // Mock validation
-  if (request.amount <= (mockAuctionItem.highestBidAmount || mockAuctionItem.startingPrice)) {
+  try {
+    const response = await api.post<{ accepted: boolean; message?: string }>(
+      `/api/auctions/${request.auctionItemId}/bids`,
+      { bidAmount: request.amount }
+    );
+    return {
+      success: response.data.accepted,
+      message: response.data.message,
+      newHighestBid: request.amount,
+    };
+  } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { response?: { data?: { message?: string } } };
+      return {
+        success: false,
+        message: axiosError.response?.data?.message || 'Failed to place bid',
+      };
+    }
     return {
       success: false,
-      message: 'Bid amount must be higher than the current highest bid',
+      message: 'Failed to place bid',
     };
   }
-
-  return {
-    success: true,
-    newHighestBid: request.amount,
-  };
 };
 
 /**

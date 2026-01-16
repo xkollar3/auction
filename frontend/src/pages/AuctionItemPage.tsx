@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Clock, User, ArrowLeft, Gavel } from 'lucide-react';
 import { Header } from '../shared/Header';
 import { Footer } from '../shared/Footer';
 import { useAuth } from '../hooks/useAuth';
+import { useAuctionWebSocket, type BidUpdateMessage } from '../hooks/useAuctionWebSocket';
 import { getAuctionItem, placeBid } from '../api/auction';
 import type { AuctionItemDetailResponse } from '../types/auction';
 
@@ -25,7 +26,7 @@ const formatCurrency = (amount: number): string => {
 };
 
 /**
- * Format time remaining
+ * Format time remaining with seconds
  */
 const formatTimeRemaining = (endTime: string): string => {
   const end = new Date(endTime).getTime();
@@ -34,15 +35,21 @@ const formatTimeRemaining = (endTime: string): string => {
 
   if (diff <= 0) return 'Ended';
 
-  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-  if (hours > 24) {
-    const days = Math.floor(hours / 24);
-    return `${days}d ${hours % 24}h`;
+  if (days > 0) {
+    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
   }
-
-  return `${hours}h ${minutes}m`;
+  if (hours > 0) {
+    return `${hours}h ${minutes}m ${seconds}s`;
+  }
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`;
+  }
+  return `${seconds}s`;
 };
 
 /**
@@ -74,12 +81,77 @@ export const AuctionItemPage = () => {
   const [bidAmount, setBidAmount] = useState('');
   const [bidError, setBidError] = useState<string | null>(null);
   const [bidSuccess, setBidSuccess] = useState(false);
+  const [priceUpdated, setPriceUpdated] = useState(false);
+  const [, setTick] = useState(0);
 
   const { data: auction, isLoading, error } = useQuery({
     queryKey: ['auctionItem', id],
     queryFn: () => getAuctionItem(id!),
     enabled: !!id,
   });
+
+  // Handle real-time bid updates
+  const handleBidUpdate = useCallback(
+    (message: BidUpdateMessage) => {
+      const bidAmount = typeof message.bidAmount === 'string'
+        ? parseFloat(message.bidAmount)
+        : message.bidAmount;
+      const placedAt = message.placedAt;
+
+      // Get current data and create updated version
+      const currentData = queryClient.getQueryData<AuctionItemDetailResponse>(['auctionItem', id]);
+      if (currentData) {
+        const newData: AuctionItemDetailResponse = {
+          ...currentData,
+          currentPrice: bidAmount,
+          bidCount: currentData.bidCount + 1,
+          recentBids: [
+            { amount: bidAmount, placedAt },
+            ...currentData.recentBids.slice(0, 4),
+          ],
+        };
+        queryClient.setQueryData(['auctionItem', id], newData);
+      }
+
+      // Trigger animation
+      setPriceUpdated(true);
+      setTimeout(() => setPriceUpdated(false), 1000);
+    },
+    [queryClient, id]
+  );
+
+  // Handle auction closed event
+  const handleAuctionClosed = useCallback(
+    () => {
+      queryClient.setQueryData<AuctionItemDetailResponse>(
+        ['auctionItem', id],
+        (oldData) => {
+          if (!oldData) return oldData;
+          return { ...oldData, status: 'CLOSED' };
+        }
+      );
+    },
+    [queryClient, id]
+  );
+
+  // Connect to WebSocket for live updates (only for active auctions)
+  useAuctionWebSocket({
+    auctionItemId: id,
+    enabled: !!auction && auction.status === 'ACTIVE',
+    onBidUpdate: handleBidUpdate,
+    onAuctionClosed: handleAuctionClosed,
+  });
+
+  // Tick every second to update countdown timer
+  useEffect(() => {
+    if (!auction || auction.status !== 'ACTIVE') return;
+
+    const interval = setInterval(() => {
+      setTick((t) => t + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [auction?.status]);
 
   const placeBidMutation = useMutation({
     mutationFn: placeBid,
@@ -101,7 +173,6 @@ export const AuctionItemPage = () => {
 
   // Check if current user is the seller
   const isSeller = user?.id === auction?.sellerId;
-  const canBid = isAuthenticated && !isSeller && auction?.status === 'ACTIVE';
 
   // Calculate minimum bid (1 Kč increment)
   const minBid = auction
@@ -205,7 +276,11 @@ export const AuctionItemPage = () => {
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <p className="text-sm text-gray-500">Current Price</p>
-                  <p className="text-3xl font-bold text-gray-900">
+                  <p className={`text-3xl font-bold transition-all duration-300 ${
+                    priceUpdated
+                      ? 'text-green-600 scale-105'
+                      : 'text-gray-900 scale-100'
+                  }`}>
                     {formatCurrency(auction.currentPrice)}
                   </p>
                   <p className="text-sm text-gray-500">{auction.bidCount} bids</p>
@@ -327,17 +402,21 @@ export const AuctionItemPage = () => {
               <p className="text-gray-500 text-center py-4">No bids yet</p>
             ) : (
               <div className="space-y-3">
-                {auction.recentBids.map((bid, index) => (
+                {auction.recentBids.slice(0, 5).map((bid, index, arr) => (
                   <div
-                    key={index}
-                    className={`flex justify-between items-center py-2 ${
-                      index !== auction.recentBids.length - 1 ? 'border-b border-gray-100' : ''
-                    }`}
+                    key={`${bid.placedAt}-${bid.amount}`}
+                    className={`flex justify-between items-center py-2 transition-all duration-300 ${
+                      index !== arr.length - 1 ? 'border-b border-gray-100' : ''
+                    } ${index === 0 && priceUpdated ? 'bg-green-50 -mx-2 px-2 rounded' : ''}`}
                   >
                     <div>
                       <p className="text-xs text-gray-500">{formatRelativeTime(bid.placedAt)}</p>
                     </div>
-                    <p className={`font-semibold ${index === 0 ? 'text-green-600' : 'text-gray-700'}`}>
+                    <p className={`font-semibold transition-all duration-300 ${
+                      index === 0
+                        ? priceUpdated ? 'text-green-600 scale-110' : 'text-green-600'
+                        : 'text-gray-700'
+                    }`}>
                       {formatCurrency(bid.amount)}
                     </p>
                   </div>
