@@ -1,0 +1,162 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-1-create-auction-item-read-model-table
+      author: system
+      changes:
+        - createTable:
+            tableName: auction_item_read_model
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: seller_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: title
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: text
+              - column:
+                  name: starting_price
+                  type: decimal(19, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: category
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: auction_end_time
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: current_price
+                  type: decimal(19, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: bid_count
+                  type: int
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_bid_time
+                  type: timestamp with time zone
+        - createIndex:
+            tableName: auction_item_read_model
+            indexName: idx_auction_item_read_model_seller_id
+            columns:
+              - column:
+                  name: seller_id
+        - createIndex:
+            tableName: auction_item_read_model
+            indexName: idx_auction_item_read_model_category
+            columns:
+              - column:
+                  name: category
+        - createIndex:
+            tableName: auction_item_read_model
+            indexName: idx_auction_item_read_model_auction_end_time
+            columns:
+              - column:
+                  name: auction_end_time
+  - changeSet:
+      id: 003-2-add-search-vector-column
+      author: system
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE auction_item_read_model
+              ADD COLUMN search_vector tsvector;
+  - changeSet:
+      id: 003-3-create-search-vector-trigger-function
+      author: system
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: false
+            sql: |
+              CREATE OR REPLACE FUNCTION auction_item_search_vector_update() RETURNS trigger AS $$
+              BEGIN
+                NEW.search_vector :=
+                  setweight(to_tsvector('english', COALESCE(NEW.title, '')), 'A') ||
+                  setweight(to_tsvector('english', COALESCE(NEW.description, '')), 'B');
+                RETURN NEW;
+              END;
+              $$ LANGUAGE plpgsql;
+  - changeSet:
+      id: 003-4-create-search-vector-trigger
+      author: system
+      changes:
+        - sql:
+            sql: |
+              CREATE TRIGGER auction_item_search_vector_trigger
+              BEFORE INSERT OR UPDATE ON auction_item_read_model
+              FOR EACH ROW EXECUTE FUNCTION auction_item_search_vector_update();
+  - changeSet:
+      id: 003-5-create-search-vector-gin-index
+      author: system
+      changes:
+        - sql:
+            sql: |
+              CREATE INDEX idx_auction_item_search_vector
+              ON auction_item_read_model USING GIN(search_vector);
+  - changeSet:
+      id: 003-6-create-bid-read-model-table
+      author: system
+      changes:
+        - createTable:
+            tableName: bid_read_model
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: auction_item_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_bid_auction_item
+                    references: auction_item_read_model(id)
+              - column:
+                  name: bidder_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: bid_amount
+                  type: decimal(19, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: placed_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: bid_read_model
+            indexName: idx_bid_read_model_auction_item_id
+            columns:
+              - column:
+                  name: auction_item_id
+        - createIndex:
+            tableName: bid_read_model
+            indexName: idx_bid_read_model_placed_at
+            columns:
+              - column:
+                  name: placed_at

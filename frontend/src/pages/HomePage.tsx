@@ -9,11 +9,13 @@ import { HowItWorksStep } from '../shared/HowItWorksStep';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { mockCategories } from '../mocks/listings';
 import { fetchFeaturedListings } from '../mocks/homeApi';
+import { useAuth } from '../hooks/useAuth';
 import type { ListingCardData } from '../types/listing';
 
 export function HomePage() {
   const [featuredListings, setFeaturedListings] = useState<ListingCardData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     let cancelled = false;
@@ -61,12 +63,21 @@ export function HomePage() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Link
-                to="/register"
-                className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
-              >
-                Create Free Account
-              </Link>
+              {isAuthenticated ? (
+                <Link
+                  to="/profile"
+                  className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+                >
+                  My Account
+                </Link>
+              ) : (
+                <Link
+                  to="/register"
+                  className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+                >
+                  Create Free Account
+                </Link>
+              )}
               <Link
                 to="/listings"
                 className="border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors"
@@ -149,23 +160,25 @@ export function HomePage() {
           </div>
         </section>
 
-        {/* CTA Banner */}
-        <section className="bg-blue-600 py-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3">
-              Want to place a bid?
-            </h2>
-            <p className="text-blue-100 mb-6">
-              Create a free account to start bidding on thousands of items
-            </p>
-            <Link
-              to="/register"
-              className="inline-block bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
-            >
-              Sign Up Now - It's Free
-            </Link>
-          </div>
-        </section>
+        {/* CTA Banner - only show for non-authenticated users */}
+        {!isAuthenticated && (
+          <section className="bg-blue-600 py-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+              <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3">
+                Want to place a bid?
+              </h2>
+              <p className="text-blue-100 mb-6">
+                Create a free account to start bidding on thousands of items
+              </p>
+              <Link
+                to="/register"
+                className="inline-block bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+              >
+                Sign Up Now - It's Free
+              </Link>
+            </div>
+          </section>
+        )}
 
         {/* Browse by Category Section */}
         <section className="py-12 lg:py-16 bg-gray-50">
@@ -178,7 +191,7 @@ export function HomePage() {
             </div>
 
             {/* Categories Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 lg:gap-6">
               {mockCategories.map((category) => (
                 <CategoryCard key={category.id} category={category} />
               ))}
@@ -226,12 +239,21 @@ export function HomePage() {
 
             {/* CTA Button */}
             <div className="text-center">
-              <Link
-                to="/register"
-                className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-              >
-                Get Started Now
-              </Link>
+              {isAuthenticated ? (
+                <Link
+                  to="/listings"
+                  className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                >
+                  Start Bidding
+                </Link>
+              ) : (
+                <Link
+                  to="/register"
+                  className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                >
+                  Get Started Now
+                </Link>
+              )}
             </div>
           </div>
         </section>

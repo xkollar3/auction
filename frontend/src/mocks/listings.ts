@@ -8,7 +8,7 @@ const addDays = (days: number) => new Date(now.getTime() + days * 24 * 60 * 60 *
 const addMinutes = (minutes: number) => new Date(now.getTime() + minutes * 60 * 1000).toISOString();
 
 export const mockListings: ListingCardData[] = [
-  // Watches
+  // Jewelry - Watches
   {
     id: '1',
     title: 'Vintage Omega Seamaster Automatic Watch',
@@ -17,7 +17,7 @@ export const mockListings: ListingCardData[] = [
     startingPrice: 45000,
     endTime: addHours(2),
     bidCount: 24,
-    category: 'Watches',
+    category: 'Jewelry',
     recentBids: 8,
   },
   {
@@ -28,7 +28,7 @@ export const mockListings: ListingCardData[] = [
     startingPrice: 250000,
     endTime: addMinutes(45),
     bidCount: 52,
-    category: 'Watches',
+    category: 'Jewelry',
     recentBids: 15,
   },
   {
@@ -39,10 +39,10 @@ export const mockListings: ListingCardData[] = [
     startingPrice: 35000,
     endTime: addDays(4),
     bidCount: 11,
-    category: 'Watches',
+    category: 'Jewelry',
     recentBids: 2,
   },
-  // Cameras
+  // Electronics - Cameras
   {
     id: '2',
     title: 'Leica M6 Film Camera',
@@ -51,7 +51,7 @@ export const mockListings: ListingCardData[] = [
     startingPrice: 25000,
     endTime: addHours(5),
     bidCount: 18,
-    category: 'Cameras',
+    category: 'Electronics',
     recentBids: 5,
   },
   {
@@ -62,7 +62,7 @@ export const mockListings: ListingCardData[] = [
     startingPrice: 45000,
     endTime: addHours(6),
     bidCount: 14,
-    category: 'Cameras',
+    category: 'Electronics',
     recentBids: 3,
   },
   {
@@ -73,7 +73,7 @@ export const mockListings: ListingCardData[] = [
     startingPrice: 70000,
     endTime: addDays(1),
     bidCount: 8,
-    category: 'Cameras',
+    category: 'Electronics',
     recentBids: 1,
   },
   // Fashion
@@ -289,7 +289,7 @@ export const mockListings: ListingCardData[] = [
     startingPrice: 80000,
     endTime: addHours(7),
     bidCount: 16,
-    category: 'Watches',
+    category: 'Jewelry',
     recentBids: 4,
   },
   {
@@ -300,7 +300,7 @@ export const mockListings: ListingCardData[] = [
     startingPrice: 100000,
     endTime: addMinutes(120),
     bidCount: 21,
-    category: 'Cameras',
+    category: 'Electronics',
     recentBids: 8,
   },
   {
@@ -372,12 +372,10 @@ export const mockListings: ListingCardData[] = [
 ];
 
 export const mockCategories: CategoryData[] = [
-  { id: '1', name: 'Watches', icon: 'watch', itemCount: 1243 },
-  { id: '2', name: 'Cameras', icon: 'camera', itemCount: 856 },
-  { id: '3', name: 'Fashion', icon: 'shirt', itemCount: 2134 },
-  { id: '4', name: 'Furniture', icon: 'armchair', itemCount: 672 },
-  { id: '5', name: 'Art', icon: 'palette', itemCount: 1089 },
-  { id: '6', name: 'Jewelry', icon: 'gem', itemCount: 945 },
-  { id: '7', name: 'Electronics', icon: 'monitor', itemCount: 1567 },
-  { id: '8', name: 'Music', icon: 'music', itemCount: 432 },
+  { id: '1', name: 'Fashion', icon: 'shirt', itemCount: 2134 },
+  { id: '2', name: 'Furniture', icon: 'armchair', itemCount: 672 },
+  { id: '3', name: 'Art', icon: 'palette', itemCount: 1089 },
+  { id: '4', name: 'Jewelry', icon: 'gem', itemCount: 945 },
+  { id: '5', name: 'Electronics', icon: 'monitor', itemCount: 1567 },
+  { id: '6', name: 'Music', icon: 'music', itemCount: 432 },
 ];

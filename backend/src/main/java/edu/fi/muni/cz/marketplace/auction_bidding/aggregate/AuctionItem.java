@@ -54,6 +54,8 @@ public class AuctionItem {
   @Nonnull
   private BigDecimal startingPrice;
   @Nonnull
+  private AuctionItemCategory category;
+  @Nonnull
   private Instant auctionEndTime;
   @Nonnull
   private AuctionStatus status;
@@ -66,7 +68,8 @@ public class AuctionItem {
   private List<Bid> allBids = new LinkedList<>();
 
   /**
-   * Command handler for creating a new auction item. Triggered by a Seller after their Stripe Connect account is
+   * Command handler for creating a new auction item. Triggered by a Seller after
+   * their Stripe Connect account is
    * verified.
    */
   @CommandHandler
@@ -84,7 +87,9 @@ public class AuctionItem {
         command.getTitle(),
         command.getDescription(),
         command.getStartingPrice(),
+        command.getCategory(),
         command.getAuctionEndTime()));
+
     manager.schedule(
         command.getAuctionEndTime(),
         AUCTION_END_DEADLINE,
@@ -99,14 +104,17 @@ public class AuctionItem {
     this.description = event.getDescription();
     this.startingPrice = event.getStartingPrice();
     this.highestBidAmount = event.getStartingPrice();
+    this.category = event.getCategory();
     this.auctionEndTime = event.getAuctionEndTime();
     this.status = AuctionStatus.ACTIVE;
     log.info("Auction item {} created for seller {}", event.getAuctionItemId(), event.getSellerId());
   }
 
   /**
-   * Command handler for placing a bid. Validates the bid and either accepts it (triggering SetHighestBid) or rejects it
-   * (triggering RejectBid). Returns a result indicating whether the bid was accepted or rejected.
+   * Command handler for placing a bid. Validates the bid and either accepts it
+   * (triggering SetHighestBid) or rejects it
+   * (triggering RejectBid). Returns a result indicating whether the bid was
+   * accepted or rejected.
    */
   @CommandHandler
   public PlaceBidResponse handle(PlaceBidCommand command) {
@@ -121,7 +129,8 @@ public class AuctionItem {
           command.getAuctionItemId(),
           command.getBidId(),
           command.getBidderId(),
-          command.getBidAmount()));
+          command.getBidAmount(),
+          Instant.now()));
       return PlaceBidResponse.success();
     }
 
@@ -149,7 +158,8 @@ public class AuctionItem {
         event.getBidderId(),
         event.getBidAmount());
 
-    // Remove the bidder's previous bid if exists (each bidder can only have one bid in top 10)
+    // Remove the bidder's previous bid if exists (each bidder can only have one bid
+    // in top 10)
     allBids.removeIf(bid -> bid.bidderId().equals(event.getBidderId()));
 
     // Add the new highest bid at the front (bids are ordered by recency/amount)
@@ -163,7 +173,6 @@ public class AuctionItem {
     log.info("New highest bid for auction item {} by bidder {}: {}. Total tracked bids: {}",
         event.getAuctionItemId(), event.getBidderId(), event.getBidAmount(), allBids.size());
   }
-
 
   @EventSourcingHandler
   public void on(BidRejectedEvent event) {

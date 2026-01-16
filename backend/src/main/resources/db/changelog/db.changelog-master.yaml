@@ -5,3 +5,6 @@ databaseChangeLog:
   - include:
       file: 002-create-read-model-tables.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 003-create-auction-item-read-model-table.yaml
+      relativeToChangelogFile: true

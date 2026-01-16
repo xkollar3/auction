@@ -4,6 +4,7 @@ import { Elements } from '@stripe/react-stripe-js';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HomePage } from './pages/HomePage';
 import { ListingsPage } from './pages/ListingsPage';
+import { AuctionItemPage } from './pages/AuctionItemPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { PaymentSetupPage } from './pages/PaymentSetupPage';
 import { PaymentMethodsPage } from './pages/PaymentMethodsPage';
@@ -27,6 +28,7 @@ function App() {
             <Route path="/login" element={<div>Login Page (placeholder)</div>} />
             <Route path="/register" element={<div>Register Page (placeholder)</div>} />
             <Route path="/listings" element={<ListingsPage />} />
+            <Route path="/auction/:id" element={<AuctionItemPage />} />
             <Route path="/seller/dashboard" element={<div>Seller Dashboard (placeholder)</div>} />
 
             {/* Protected user management routes */}

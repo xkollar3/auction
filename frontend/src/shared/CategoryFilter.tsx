@@ -3,8 +3,6 @@ import { useState, useRef, useEffect } from 'react';
 
 const CATEGORIES = [
   'All',
-  'Watches',
-  'Cameras',
   'Fashion',
   'Furniture',
   'Art',

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { TrendingUp } from 'lucide-react';
 import type { ListingCardData } from '../types/listing';
 
@@ -31,20 +32,15 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-export function ListingCard({ listing, onPlaceBid }: ListingCardProps) {
-  const handlePlaceBid = () => {
-    if (onPlaceBid) {
-      onPlaceBid(listing.id);
-    } else {
-      console.log('Place bid clicked for listing:', listing.id);
-    }
-  };
-
+export function ListingCard({ listing }: ListingCardProps) {
   const timeRemaining = formatTimeRemaining(listing.endTime);
   const isEnding = timeRemaining.includes('m') && !timeRemaining.includes('h');
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+    <Link
+      to={`/auction/${listing.id}`}
+      className="block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
+    >
       {/* Image Container */}
       <div className="relative aspect-[4/3] overflow-hidden">
         <img
@@ -91,15 +87,12 @@ export function ListingCard({ listing, onPlaceBid }: ListingCardProps) {
           </div>
         </div>
 
-        {/* Place Bid Button */}
-        <button
-          onClick={handlePlaceBid}
-          className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-        >
+        {/* View Auction Button */}
+        <div className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
           <TrendingUp className="w-4 h-4" />
-          Place Bid
-        </button>
+          View Auction
+        </div>
       </div>
-    </div>
+    </Link>
   );
 }
