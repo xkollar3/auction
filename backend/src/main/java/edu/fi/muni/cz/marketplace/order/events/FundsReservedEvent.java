@@ -9,6 +9,7 @@ import lombok.Value;
 public class FundsReservedEvent {
 
   UUID orderId;
+  UUID buyerId;
   String paymentIntentId;
   String paymentMethodId;
   String deadlineId;

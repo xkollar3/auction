@@ -48,6 +48,9 @@ public class Order {
   private UUID id;
 
   @Nonnull
+  private UUID buyerId;
+
+  @Nonnull
   private OrderStatus status;
 
   @Nonnull
@@ -78,6 +81,7 @@ public class Order {
 
     apply(new FundsReservedEvent(
         command.getOrderId(),
+        command.getBuyerId(),
         command.getPaymentIntentId(),
         command.getPaymentMethodId(),
         deadlineId,
@@ -91,6 +95,7 @@ public class Order {
   public void on(FundsReservedEvent event,
       @Autowired @Value("${policy.commission-percentage}") String commissionPercentage) {
     this.id = event.getOrderId();
+    this.buyerId = event.getBuyerId();
     this.status = OrderStatus.FUNDS_RESERVED;
     this.commissionMultiplier = new BigDecimal(commissionPercentage);
     this.fundReservation = new FundReservation(
@@ -138,6 +143,11 @@ public class Order {
 
   @CommandHandler
   public void on(EnterTrackingNumberCommand command, @Autowired DeadlineManager deadlineManager) {
+    if (!this.fundReservation.getSellerId().equals(command.getEnteredByUserId())) {
+      throw new IllegalStateException(
+          "Only the seller can enter tracking number for order " + this.id);
+    }
+
     if (status != OrderStatus.FUNDS_RESERVED) {
       throw new IllegalStateException(
           "Cannot enter tracking number for order " + this.id + " in state: " + status);

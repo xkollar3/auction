@@ -34,6 +34,7 @@ public class ReserveFundsCommandHandler {
 
     commandGateway.send(new AssignFundReservationCommand(
         command.getId(),
+        command.getBuyerId(),
         result.paymentIntentId(),
         command.getPaymentMethodId(),
         result.grossAmount(),

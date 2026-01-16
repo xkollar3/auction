@@ -11,6 +11,7 @@ public class AssignFundReservationCommand {
 
   @TargetAggregateIdentifier
   UUID orderId;
+  UUID buyerId;
   String paymentIntentId;
   String paymentMethodId;
   BigDecimal grossAmount;
