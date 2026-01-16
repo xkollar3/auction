@@ -65,6 +65,43 @@ services:
       timeout: 5s
       retries: 5
 
+  minio:
+    image: minio/minio:latest
+    container_name: auction-minio
+    hostname: auction-minio
+    ports:
+      - "9002:9000"
+      - "9003:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --console-address ":9001"
+    networks:
+      - auction-network
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: auction-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      mc mb myminio/auction-images --ignore-existing;
+      mc anonymous set download myminio/auction-images;
+      exit 0;
+      "
+    networks:
+      - auction-network
+
 networks:
   auction-network:
     driver: bridge
@@ -75,3 +112,4 @@ volumes:
   axonserver-config:
   keycloak-data:
   postgres-data:
+  minio-data:

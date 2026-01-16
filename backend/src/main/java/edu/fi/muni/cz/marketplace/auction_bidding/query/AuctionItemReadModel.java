@@ -9,11 +9,14 @@ import java.util.UUID;
 import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionItemCategory;
 import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionStatus;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
@@ -70,4 +73,7 @@ public class AuctionItemReadModel {
   @OneToMany(mappedBy = "auctionItem", cascade = CascadeType.ALL, orphanRemoval = true)
   @OrderBy("placedAt DESC")
   private List<BidReadModel> bids = new ArrayList<>();
+
+  @Column(name = "image_url")
+  private String imageUrl;
 }

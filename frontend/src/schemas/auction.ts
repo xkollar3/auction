@@ -13,7 +13,7 @@ export const addAuctionItemSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters').max(100, 'Title must be at most 100 characters'),
   description: z.string().min(10, 'Description must be at least 10 characters').max(2000, 'Description must be at most 2000 characters'),
   startingPrice: z.coerce.number().min(1, 'Starting price must be at least 1 Kč'),
-  category: z.enum(AUCTION_CATEGORIES, { errorMap: () => ({ message: 'Please select a category' }) }),
+  category: z.enum(AUCTION_CATEGORIES, { message: 'Please select a category' }),
   auctionEndTime: z.string().optional(),
 });
 

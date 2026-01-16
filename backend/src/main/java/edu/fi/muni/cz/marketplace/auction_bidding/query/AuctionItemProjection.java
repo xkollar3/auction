@@ -14,6 +14,7 @@ import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionStatus;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.AuctionClosedEvent;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.AuctionItemAddedEvent;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.HighestBidSetEvent;
+import edu.fi.muni.cz.marketplace.auction_item.event.ImagesAddedToAuctionEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -82,6 +83,20 @@ public class AuctionItemProjection {
     repository.save(auctionItem);
 
     log.info("Closed auction item ID: {}", event.getAuctionItemId());
+  }
+
+  @EventHandler
+  public void on(ImagesAddedToAuctionEvent event) {
+    log.info("Processing ImagesAddedToAuctionEvent for auction item ID: {}", event.getAuctionItemId());
+
+    AuctionItemReadModel auctionItem = repository.findById(event.getAuctionItemId())
+        .orElseThrow(() -> new IllegalStateException("Auction item not found: " + event.getAuctionItemId()));
+
+    if (auctionItem.getImageUrl() == null && !event.getImageUrls().isEmpty()) {
+      auctionItem.setImageUrl(event.getImageUrls().getFirst());
+      repository.save(auctionItem);
+      log.info("Set preview image for auction item ID: {}", event.getAuctionItemId());
+    }
   }
 
   @QueryHandler

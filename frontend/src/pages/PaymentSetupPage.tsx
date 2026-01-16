@@ -22,7 +22,7 @@ import { CheckCircle } from 'lucide-react';
 export const PaymentSetupPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { createCustomer, isCreating, customerData } = useCustomer();
+  const { createCustomer, isCreating } = useCustomer();
   const {
     createSetupIntent,
     isCreatingSetupIntent,

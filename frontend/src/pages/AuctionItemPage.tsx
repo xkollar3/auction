@@ -1,18 +1,16 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Clock, User, ArrowLeft, Gavel } from 'lucide-react';
+import { Clock, User, ArrowLeft, Gavel, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Header } from '../shared/Header';
 import { Footer } from '../shared/Footer';
 import { useAuth } from '../hooks/useAuth';
 import { useAuctionWebSocket, type BidUpdateMessage } from '../hooks/useAuctionWebSocket';
-import { getAuctionItem, placeBid } from '../api/auction';
+import { getAuctionItem, placeBid, getAuctionImages } from '../api/auction';
 import type { AuctionItemDetailResponse } from '../types/auction';
 
-// Generate a consistent image URL based on item ID
-const getImageUrl = (id: string): string => {
-  return `https://picsum.photos/seed/${id}/800/600`;
-};
+// Placeholder image for items without images
+const PLACEHOLDER_IMAGE_URL = 'https://placehold.co/800x600/e2e8f0/64748b?text=No+Image';
 
 /**
  * Format currency to display format
@@ -83,12 +81,40 @@ export const AuctionItemPage = () => {
   const [bidSuccess, setBidSuccess] = useState(false);
   const [priceUpdated, setPriceUpdated] = useState(false);
   const [, setTick] = useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const { data: auction, isLoading, error } = useQuery({
     queryKey: ['auctionItem', id],
     queryFn: () => getAuctionItem(id!),
     enabled: !!id,
   });
+
+  const { data: imagesData } = useQuery({
+    queryKey: ['auctionImages', id],
+    queryFn: () => getAuctionImages(id!),
+    enabled: !!id,
+  });
+
+  // Filter out empty/invalid URLs
+  const images = (imagesData?.images || []).filter(url => url && url.trim().length > 0);
+
+  // Reset index if it's out of bounds when images change
+  useEffect(() => {
+    if (images.length > 0 && currentImageIndex >= images.length) {
+      setCurrentImageIndex(0);
+    }
+  }, [images.length, currentImageIndex]);
+
+  const handlePrevImage = () => {
+    setCurrentImageIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
+  };
+
+  // Get current image URL - use fetched images if available, otherwise fallback to placeholder
+  const currentImageUrl = images[currentImageIndex] || PLACEHOLDER_IMAGE_URL;
 
   // Handle real-time bid updates
   const handleBidUpdate = useCallback(
@@ -242,14 +268,60 @@ export const AuctionItemPage = () => {
           Back
         </button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Image */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <img
-              src={getImageUrl(auction.id)}
-              alt={auction.title}
-              className="w-full h-96 object-cover"
-            />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          {/* Image Gallery */}
+          <div className="rounded-lg shadow-md overflow-hidden bg-gray-100">
+            <div className="relative bg-gray-100">
+              <img
+                src={currentImageUrl}
+                alt={auction.title}
+                className="block w-full h-96 object-cover"
+              />
+
+              {/* Navigation Arrows - only show if more than 1 image */}
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={handlePrevImage}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+                  >
+                    <ChevronLeft className="h-6 w-6" />
+                  </button>
+                  <button
+                    onClick={handleNextImage}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+                  >
+                    <ChevronRight className="h-6 w-6" />
+                  </button>
+
+                  {/* Image Counter */}
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1 bg-black/50 text-white text-sm rounded-full">
+                    {currentImageIndex + 1} / {images.length}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Thumbnail Strip - only show if more than 1 image */}
+            {images.length > 1 && (
+              <div className="flex gap-2 p-3 overflow-x-auto bg-white border-t">
+                {images.map((url, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentImageIndex(index)}
+                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
+                      index === currentImageIndex ? 'border-blue-600' : 'border-transparent hover:border-gray-300'
+                    }`}
+                  >
+                    <img
+                      src={url}
+                      alt={`Thumbnail ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Details */}

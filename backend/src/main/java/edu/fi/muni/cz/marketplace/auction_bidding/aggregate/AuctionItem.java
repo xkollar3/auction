@@ -11,9 +11,12 @@ import edu.fi.muni.cz.marketplace.auction_bidding.event.AuctionItemAddedEvent;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.BidPlacedEvent;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.BidRejectedEvent;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.HighestBidSetEvent;
+import edu.fi.muni.cz.marketplace.auction_item.command.AddImagesToAuctionCommand;
+import edu.fi.muni.cz.marketplace.auction_item.event.ImagesAddedToAuctionEvent;
 import jakarta.annotation.Nonnull;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -66,6 +69,9 @@ public class AuctionItem {
 
   // List of recent bids (max 10), ordered by recency with highest bids at front
   private List<Bid> allBids = new LinkedList<>();
+
+  // Image URLs for the auction item
+  private List<String> imageUrls = new ArrayList<>();
 
   /**
    * Command handler for creating a new auction item. Triggered by a Seller after
@@ -195,5 +201,18 @@ public class AuctionItem {
   public void on(AuctionClosedEvent event) {
     this.status = AuctionStatus.CLOSED;
     log.info("Auction item {} closed", event.getAuctionItemId());
+  }
+
+  @CommandHandler
+  public void handle(AddImagesToAuctionCommand command) {
+    log.info("Adding {} images to auction item {}", command.getImageUrls().size(), command.getAuctionItemId());
+    apply(new ImagesAddedToAuctionEvent(command.getAuctionItemId(), command.getImageUrls()));
+  }
+
+  @EventSourcingHandler
+  public void on(ImagesAddedToAuctionEvent event) {
+    this.imageUrls.addAll(event.getImageUrls());
+    log.info("Added {} images to auction item {}, total images: {}",
+        event.getImageUrls().size(), event.getAuctionItemId(), this.imageUrls.size());
   }
 }

@@ -115,6 +115,7 @@ export interface SellerAuctionItemResponse {
   status: AuctionStatus;
   highestBidAmount: number | null;
   bidCount: number;
+  imageUrl: string | null;
 }
 
 /**
@@ -135,6 +136,7 @@ export interface BrowseAuctionItemResponse {
   bidCount: number;
   category: AuctionCategory;
   auctionEndTime: string;
+  imageUrl: string | null;
 }
 
 /**
@@ -157,4 +159,11 @@ export interface BrowseAuctionsParams {
   search?: string;
   page?: number;
   size?: number;
+}
+
+/**
+ * Auction item images response
+ */
+export interface AuctionItemImagesResponse {
+  images: string[];
 }

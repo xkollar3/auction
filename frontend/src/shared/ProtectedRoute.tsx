@@ -1,9 +1,8 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useAuth } from '../hooks/useAuth';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  redirectTo?: string;
 }
 
 /**
@@ -13,7 +12,7 @@ interface ProtectedRouteProps {
  * Redirects to Keycloak login if user is not authenticated
  * Shows loading/error states during backend registration
  */
-export const ProtectedRoute = ({ children, redirectTo = '/' }: ProtectedRouteProps) => {
+export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const {
     isAuthenticated,
     isReady,

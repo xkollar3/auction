@@ -4,6 +4,11 @@ import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionItemCategory;
 import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionStatus;
 import edu.fi.muni.cz.marketplace.auction_bidding.command.AddAuctionItemCommand;
 import edu.fi.muni.cz.marketplace.auction_bidding.command.PlaceBidCommand;
+import edu.fi.muni.cz.marketplace.auction_item.command.AddImagesToAuctionCommand;
+import edu.fi.muni.cz.marketplace.auction_item.service.StorageService;
+import edu.fi.muni.cz.marketplace.auction_item.dto.AuctionItemImagesResponse;
+import edu.fi.muni.cz.marketplace.auction_item.query.AuctionItemImageReadModel;
+import edu.fi.muni.cz.marketplace.auction_item.query.FindAuctionItemImagesQuery;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.AddAuctionItemRequest;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.AddAuctionItemResponse;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.AuctionItemDetailResponse;
@@ -12,7 +17,6 @@ import edu.fi.muni.cz.marketplace.auction_bidding.dto.BrowseAuctionItemsResponse
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.BrowseAuctionItemsResult;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.PlaceBidRequest;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.PlaceBidResponse;
-import edu.fi.muni.cz.marketplace.auction_bidding.dto.SellerAuctionItemResponse;
 import edu.fi.muni.cz.marketplace.auction_bidding.query.AuctionItemReadModel;
 import edu.fi.muni.cz.marketplace.auction_bidding.query.AuctionSortOption;
 import edu.fi.muni.cz.marketplace.auction_bidding.query.BrowseAuctionItemsQuery;
@@ -20,6 +24,8 @@ import edu.fi.muni.cz.marketplace.auction_bidding.query.FindAuctionItemByIdQuery
 import edu.fi.muni.cz.marketplace.auction_bidding.query.FindBidderAuctionItemsQuery;
 import edu.fi.muni.cz.marketplace.auction_bidding.query.FindSellerAuctionItemsQuery;
 import edu.fi.muni.cz.marketplace.config.exception.HttpException;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +44,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @RestController
@@ -45,8 +52,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuctionController {
 
+  private static final String AUCTION_IMAGES_FOLDER = "auctions";
+
   private final CommandGateway commandGateway;
   private final QueryGateway queryGateway;
+  private final StorageService storageService;
 
   /**
    * Browse auction items with filtering, sorting, and pagination.
@@ -97,7 +107,7 @@ public class AuctionController {
    * For ACTIVE items, sorted by ending soon first.
    */
   @GetMapping("/seller/{sellerId}")
-  public ResponseEntity<List<SellerAuctionItemResponse>> getSellerAuctions(
+  public ResponseEntity<List<AuctionItemResponse>> getSellerAuctions(
       @PathVariable UUID sellerId,
       @RequestParam AuctionStatus status) {
     log.info("Retrieving auctions for seller: {}", sellerId);
@@ -107,7 +117,7 @@ public class AuctionController {
         ResponseTypes.multipleInstancesOf(AuctionItemReadModel.class)).join();
 
     var response = items.stream()
-        .map(SellerAuctionItemResponse::from)
+        .map(AuctionItemResponse::from)
         .toList();
 
     return ResponseEntity.ok(response);
@@ -186,6 +196,46 @@ public class AuctionController {
     }
 
     return ResponseEntity.accepted().body(result);
+  }
+
+  /**
+   * Upload images for an auction item.
+   */
+  @PostMapping("/{auctionItemId}/images")
+  public ResponseEntity<Void> uploadImages(
+      @PathVariable UUID auctionItemId,
+      @RequestParam("files") List<MultipartFile> files,
+      @AuthenticationPrincipal Jwt jwt) throws IOException {
+
+    log.info("Uploading {} images for auction {}", files.size(), auctionItemId);
+
+    List<String> imageUrls = new ArrayList<>();
+    for (MultipartFile file : files) {
+      String url = storageService.uploadFile(file, AUCTION_IMAGES_FOLDER + "/" + auctionItemId);
+      imageUrls.add(url);
+    }
+
+    commandGateway.sendAndWait(new AddImagesToAuctionCommand(auctionItemId, imageUrls));
+
+    return ResponseEntity.accepted().build();
+  }
+
+  /**
+   * Get images for an auction item.
+   */
+  @GetMapping("/{auctionItemId}/images")
+  public ResponseEntity<AuctionItemImagesResponse> getImages(@PathVariable UUID auctionItemId) {
+    log.info("Getting images for auction {}", auctionItemId);
+
+    List<AuctionItemImageReadModel> images = queryGateway.query(
+        new FindAuctionItemImagesQuery(auctionItemId),
+        ResponseTypes.multipleInstancesOf(AuctionItemImageReadModel.class)).join();
+
+    List<String> imageUrls = images.stream()
+        .map(AuctionItemImageReadModel::getImageUrl)
+        .toList();
+
+    return ResponseEntity.ok(new AuctionItemImagesResponse(imageUrls));
   }
 
   private UUID getUserId(Jwt jwt) {

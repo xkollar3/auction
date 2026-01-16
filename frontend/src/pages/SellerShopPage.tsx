@@ -31,10 +31,8 @@ const formatPrice = (price: number): string => {
   }).format(price);
 };
 
-// Generate a consistent image URL based on item ID
-const getImageUrl = (id: string): string => {
-  return `https://picsum.photos/seed/${id}/400/300`;
-};
+// Placeholder image for items without images
+const PLACEHOLDER_IMAGE_URL = 'https://placehold.co/400x300/e2e8f0/64748b?text=No+Image';
 
 export const SellerShopPage = () => {
   const { sellerId } = useParams<{ sellerId: string }>();
@@ -124,7 +122,7 @@ export const SellerShopPage = () => {
               >
                 <div className="aspect-[4/3] overflow-hidden">
                   <img
-                    src={getImageUrl(auction.id)}
+                    src={auction.imageUrl || PLACEHOLDER_IMAGE_URL}
                     alt={auction.title}
                     className="w-full h-full object-cover"
                   />

@@ -76,6 +76,12 @@ ship24:
   api-key: ${SHIP24_API_KEY}
   webhook-secret: ${SHIP24_WEBHOOK_SECRET}
 
+minio:
+  endpoint: http://localhost:9002
+  access-key: minioadmin
+  secret-key: minioadmin
+  bucket: auction-images
+
 logging:
   level:
     edu.fi.muni.cz.marketplace: DEBUG

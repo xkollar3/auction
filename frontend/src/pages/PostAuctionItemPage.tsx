@@ -1,13 +1,13 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useRef, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Clock, Sun, Calendar, CalendarDays } from 'lucide-react';
+import { Clock, Sun, Calendar, CalendarDays, ImagePlus, X } from 'lucide-react';
 import { Header } from '../shared/Header';
 import { Footer } from '../shared/Footer';
 import { getUserProfile } from '../api/user';
-import { addAuctionItem } from '../api/auction';
+import { addAuctionItem, uploadAuctionImages } from '../api/auction';
 import { addAuctionItemSchema, AUCTION_CATEGORIES, type AddAuctionItemFormData } from '../schemas/auction';
 
 type AuctionDuration = 'one_hour' | 'one_day' | 'one_week' | 'end_of_month';
@@ -49,6 +49,9 @@ export const PostAuctionItemPage = () => {
   const navigate = useNavigate();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<AuctionDuration | ''>('');
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['userProfile'],
@@ -64,13 +67,43 @@ export const PostAuctionItemPage = () => {
 
   const mutation = useMutation({
     mutationFn: addAuctionItem,
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
+      // Upload images if any were selected
+      if (selectedImages.length > 0) {
+        setIsUploadingImages(true);
+        try {
+          await uploadAuctionImages(data.auctionItemId, selectedImages);
+        } catch (error) {
+          console.error('Failed to upload images:', error);
+          // Still navigate even if image upload fails - item was created
+        } finally {
+          setIsUploadingImages(false);
+        }
+      }
       navigate(`/auction/${data.auctionItemId}`);
     },
     onError: (error) => {
       setSubmitError(error instanceof Error ? error.message : 'Failed to create auction item');
     },
   });
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newFiles = Array.from(files).filter(
+        file => file.type.startsWith('image/')
+      );
+      setSelectedImages(prev => [...prev, ...newFiles]);
+    }
+    // Reset input so the same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+  };
 
   const onSubmit = (data: AddAuctionItemFormData) => {
     if (!selectedDuration) {
@@ -251,10 +284,56 @@ export const PostAuctionItemPage = () => {
               )}
             </div>
 
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-600">
-                <span className="font-medium">Note:</span> A random product image will be assigned to your listing automatically.
-              </p>
+            {/* Image Upload Section */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Product Images (Optional)
+              </label>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                accept="image/*"
+                multiple
+                className="hidden"
+              />
+
+              {/* Image Preview Grid */}
+              {selectedImages.length > 0 && (
+                <div className="grid grid-cols-4 gap-3 mb-4">
+                  {selectedImages.map((file, index) => (
+                    <div key={index} className="relative group aspect-square">
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-full object-cover rounded-lg border border-gray-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add Images Button */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 hover:bg-blue-50 transition-colors"
+              >
+                <ImagePlus className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-600">
+                  {selectedImages.length > 0 ? 'Add more images' : 'Click to add images'}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  PNG, JPG up to 10MB each
+                </p>
+              </button>
             </div>
 
             {submitError && (
@@ -267,16 +346,17 @@ export const PostAuctionItemPage = () => {
               <button
                 type="button"
                 onClick={() => navigate(-1)}
-                className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={mutation.isPending || isUploadingImages}
+                className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                disabled={mutation.isPending}
+                disabled={mutation.isPending || isUploadingImages}
                 className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {mutation.isPending ? 'Creating...' : 'Create Auction'}
+                {mutation.isPending ? 'Creating...' : isUploadingImages ? 'Uploading Images...' : 'Create Auction'}
               </button>
             </div>
           </form>

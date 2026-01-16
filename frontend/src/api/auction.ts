@@ -1,74 +1,5 @@
 import { api } from '../lib/api';
-import type { AuctionItem, AuctionStatus, PlaceBidRequest, PlaceBidResponse, AddAuctionItemRequest, AddAuctionItemResponse, SellerAuctionItemResponse, BrowseAuctionsParams, BrowseAuctionsResponse, BrowseAuctionItemResponse, AuctionItemDetailResponse } from '../types/auction';
-
-/**
- * Mock auction item data
- * TODO: Replace with real API call
- */
-const mockAuctionItem: AuctionItem = {
-  id: '550e8400-e29b-41d4-a716-446655440000',
-  sellerId: 'seller-123',
-  sellerName: 'John Seller',
-  title: 'Vintage Fender Stratocaster 1965 Original',
-  description: `This is a stunning 1965 Fender Stratocaster in excellent condition.
-
-Features:
-- Original sunburst finish with natural aging
-- All original electronics and pickups
-- Original case included
-- Serial number verified authentic
-- Minor wear consistent with age
-
-This guitar has been professionally maintained and plays beautifully. A true collector's piece with incredible tone that only comes from decades of aging.
-
-Shipping: Insured worldwide shipping available. Local pickup in Los Angeles also available.`,
-  imageUrl: 'https://picsum.photos/800/600?random=guitar',
-  startingPrice: 150000,
-  category: 'MUSIC',
-  auctionEndTime: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(), // 4 hours from now
-  status: 'ACTIVE',
-  highestBidderId: 'bidder-456',
-  highestBidderName: 'Jane Bidder',
-  highestBidAmount: 185000,
-  bidCount: 17,
-  recentBids: [
-    {
-      id: 'bid-1',
-      bidderId: 'bidder-456',
-      bidderName: 'Jane B.',
-      amount: 185000,
-      placedAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 'bid-2',
-      bidderId: 'bidder-789',
-      bidderName: 'Mike S.',
-      amount: 180000,
-      placedAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 'bid-3',
-      bidderId: 'bidder-456',
-      bidderName: 'Jane B.',
-      amount: 175000,
-      placedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 'bid-4',
-      bidderId: 'bidder-101',
-      bidderName: 'Alex K.',
-      amount: 170000,
-      placedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 'bid-5',
-      bidderId: 'bidder-202',
-      bidderName: 'Sam W.',
-      amount: 165000,
-      placedAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-    },
-  ],
-};
+import type { AuctionStatus, PlaceBidRequest, PlaceBidResponse, AddAuctionItemRequest, AddAuctionItemResponse, SellerAuctionItemResponse, BrowseAuctionsParams, BrowseAuctionsResponse, BrowseAuctionItemResponse, AuctionItemDetailResponse, AuctionItemImagesResponse } from '../types/auction';
 
 /**
  * Get auction item by ID
@@ -164,5 +95,29 @@ export const getMyPurchases = async (): Promise<BrowseAuctionItemResponse[]> => 
  */
 export const getMySales = async (): Promise<SellerAuctionItemResponse[]> => {
   const response = await api.get<SellerAuctionItemResponse[]>('/api/auctions/my-sales');
+  return response.data;
+};
+
+/**
+ * Upload images for an auction item
+ */
+export const uploadAuctionImages = async (auctionItemId: string, files: File[]): Promise<void> => {
+  const formData = new FormData();
+  files.forEach(file => {
+    formData.append('files', file);
+  });
+
+  await api.post(`/api/auctions/${auctionItemId}/images`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+
+/**
+ * Get images for an auction item
+ */
+export const getAuctionImages = async (auctionItemId: string): Promise<AuctionItemImagesResponse> => {
+  const response = await api.get<AuctionItemImagesResponse>(`/api/auctions/${auctionItemId}/images`);
   return response.data;
 };

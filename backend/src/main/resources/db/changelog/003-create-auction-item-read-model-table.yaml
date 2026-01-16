@@ -70,6 +70,9 @@ databaseChangeLog:
               - column:
                   name: last_bid_time
                   type: timestamp with time zone
+              - column:
+                  name: image_url
+                  type: varchar(1024)
         - createIndex:
             tableName: auction_item_read_model
             indexName: idx_auction_item_read_model_seller_id

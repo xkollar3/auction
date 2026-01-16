@@ -24,10 +24,8 @@ const mapSortOption = (sort: SortOption): AuctionSortOption => {
   }
 };
 
-// Generate a consistent random image URL based on item ID
-const getImageUrl = (id: string): string => {
-  return `https://picsum.photos/seed/${id}/400/300`;
-};
+// Placeholder image for items without images
+const PLACEHOLDER_IMAGE_URL = 'https://placehold.co/400x300/e2e8f0/64748b?text=No+Image';
 
 export function ListingsPage() {
   const { filters, setQuery, setCategory, setSortBy, nextPage } = useListingsFilter();
@@ -62,7 +60,7 @@ export function ListingsPage() {
           const mappedListings: ListingCardData[] = result.items.map((item) => ({
             id: item.id,
             title: item.title,
-            imageUrl: getImageUrl(item.id),
+            imageUrl: item.imageUrl || PLACEHOLDER_IMAGE_URL,
             currentBid: item.currentPrice,
             startingPrice: item.startingPrice,
             endTime: item.auctionEndTime,
@@ -105,7 +103,7 @@ export function ListingsPage() {
       const mappedListings: ListingCardData[] = result.items.map((item) => ({
         id: item.id,
         title: item.title,
-        imageUrl: getImageUrl(item.id),
+        imageUrl: item.imageUrl || PLACEHOLDER_IMAGE_URL,
         currentBid: item.currentPrice,
         startingPrice: item.startingPrice,
         endTime: item.auctionEndTime,

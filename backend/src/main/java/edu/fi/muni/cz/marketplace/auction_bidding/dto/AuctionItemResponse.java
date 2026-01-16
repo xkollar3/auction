@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionItemCategory;
+import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionStatus;
 import edu.fi.muni.cz.marketplace.auction_bidding.query.AuctionItemReadModel;
 
 public record AuctionItemResponse(
@@ -16,7 +17,9 @@ public record AuctionItemResponse(
     BigDecimal currentPrice,
     int bidCount,
     AuctionItemCategory category,
-    Instant auctionEndTime) {
+    AuctionStatus status,
+    Instant auctionEndTime,
+    String imageUrl) {
 
   public static AuctionItemResponse from(AuctionItemReadModel readModel) {
     return new AuctionItemResponse(
@@ -28,6 +31,8 @@ public record AuctionItemResponse(
         readModel.getCurrentPrice(),
         readModel.getBidCount(),
         readModel.getCategory(),
-        readModel.getAuctionEndTime());
+        readModel.getStatus(),
+        readModel.getAuctionEndTime(),
+        readModel.getImageUrl());
   }
 }
