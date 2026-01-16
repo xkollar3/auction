@@ -35,7 +35,7 @@ public class SecurityConfig {
     http
         .csrf(csrf -> csrf.disable())
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/actuator/**", "/health/**", "/error")
+            .requestMatchers("/actuator/**", "/health/**", "/error", "/ws/**")
             .permitAll()
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/auctions", "/api/auctions/**")
             .permitAll()

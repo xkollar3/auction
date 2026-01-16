@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionItemCategory;
+import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionStatus;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +52,7 @@ public class CustomAuctionItemReadModelRepositoryImpl implements CustomAuctionIt
     }
 
     List<String> conditions = new ArrayList<>();
+    conditions.add("a.status = :status");
 
     if (hasCategory) {
       conditions.add("a.category = :category");
@@ -60,11 +62,9 @@ public class CustomAuctionItemReadModelRepositoryImpl implements CustomAuctionIt
       conditions.add("(LOWER(a.title) LIKE LOWER(:searchPattern) OR LOWER(a.description) LIKE LOWER(:searchPattern))");
     }
 
-    if (!conditions.isEmpty()) {
-      String whereClause = "WHERE " + String.join(" AND ", conditions) + " ";
-      queryBuilder.append(whereClause);
-      countBuilder.append(whereClause);
-    }
+    String whereClause = "WHERE " + String.join(" AND ", conditions) + " ";
+    queryBuilder.append(whereClause);
+    countBuilder.append(whereClause);
 
     if (isHotSort) {
       queryBuilder.append("GROUP BY a ");
@@ -79,6 +79,9 @@ public class CustomAuctionItemReadModelRepositoryImpl implements CustomAuctionIt
 
     TypedQuery<AuctionItemReadModel> query = entityManager.createQuery(queryBuilder.toString(), AuctionItemReadModel.class);
     TypedQuery<Long> countQuery = entityManager.createQuery(countBuilder.toString(), Long.class);
+
+    query.setParameter("status", AuctionStatus.ACTIVE);
+    countQuery.setParameter("status", AuctionStatus.ACTIVE);
 
     if (isHotSort) {
       Instant oneHourAgo = Instant.now().minus(1, ChronoUnit.HOURS);
