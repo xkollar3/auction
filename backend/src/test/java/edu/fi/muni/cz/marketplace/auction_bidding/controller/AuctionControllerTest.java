@@ -83,7 +83,10 @@ class AuctionControllerTest {
 
     mockMvc.perform(post(AUCTIONS_ENDPOINT)
             .with(csrf())
-            .with(jwt().jwt(builder -> builder.subject(TEST_USER_ID.toString())))
+            .with(jwt().jwt(builder -> builder
+                .subject(TEST_USER_ID.toString())
+                .claim("given_name", "John")
+                .claim("family_name", "Doe")))
             .contentType(MediaType.APPLICATION_JSON)
             .content(payload))
         .andExpect(status().isCreated())
@@ -95,6 +98,8 @@ class AuctionControllerTest {
 
     AddAuctionItemCommand command = commandCaptor.getValue();
     assertEquals(TEST_USER_ID, command.getSellerId());
+    assertEquals("John", command.getSellerFirstName());
+    assertEquals("Doe", command.getSellerLastName());
     assertEquals("Vintage Watch", command.getTitle());
     assertEquals("A beautiful vintage watch from 1960", command.getDescription());
     assertEquals(new BigDecimal("100.00"), command.getStartingPrice());

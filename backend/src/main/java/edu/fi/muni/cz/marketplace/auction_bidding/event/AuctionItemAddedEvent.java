@@ -12,6 +12,8 @@ public class AuctionItemAddedEvent {
 
   UUID auctionItemId;
   UUID sellerId;
+  String sellerFirstName;
+  String sellerLastName;
   String title;
   String description;
   BigDecimal startingPrice;

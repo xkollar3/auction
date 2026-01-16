@@ -9,7 +9,34 @@ export type AuctionStatus = 'OPEN' | 'CLOSED' | 'CANCELLED';
 export type AuctionCategory = 'FASHION' | 'FURNITURE' | 'ART' | 'JEWELRY' | 'ELECTRONICS' | 'MUSIC';
 
 /**
- * Bid information
+ * Bid response from API
+ */
+export interface BidResponse {
+  amount: number;
+  placedAt: string; // ISO datetime
+}
+
+/**
+ * Auction item detail response from API
+ */
+export interface AuctionItemDetailResponse {
+  id: string;
+  sellerId: string;
+  sellerFirstName: string;
+  sellerLastName: string;
+  title: string;
+  description: string;
+  startingPrice: number;
+  currentPrice: number;
+  bidCount: number;
+  category: AuctionCategory;
+  status: AuctionStatus;
+  auctionEndTime: string; // ISO datetime
+  recentBids: BidResponse[];
+}
+
+/**
+ * Legacy Bid interface (for backwards compatibility)
  */
 export interface Bid {
   id: string;
@@ -20,7 +47,7 @@ export interface Bid {
 }
 
 /**
- * Full auction item details
+ * Legacy AuctionItem interface (for backwards compatibility)
  */
 export interface AuctionItem {
   id: string;
@@ -88,4 +115,46 @@ export interface SellerAuctionItemResponse {
   status: AuctionStatus;
   highestBidAmount: number | null;
   bidCount: number;
+}
+
+/**
+ * Backend sort options
+ */
+export type AuctionSortOption = 'ENDING_SOON' | 'HOT' | 'PRICE_HIGH_TO_LOW' | 'PRICE_LOW_TO_HIGH';
+
+/**
+ * Browse auction item response (from API)
+ */
+export interface BrowseAuctionItemResponse {
+  id: string;
+  sellerId: string;
+  title: string;
+  description: string;
+  startingPrice: number;
+  currentPrice: number;
+  bidCount: number;
+  category: AuctionCategory;
+  auctionEndTime: string;
+}
+
+/**
+ * Browse auctions paginated response
+ */
+export interface BrowseAuctionsResponse {
+  items: BrowseAuctionItemResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+/**
+ * Browse auctions request params
+ */
+export interface BrowseAuctionsParams {
+  category?: AuctionCategory;
+  sort?: AuctionSortOption;
+  search?: string;
+  page?: number;
+  size?: number;
 }

@@ -6,8 +6,10 @@ import edu.fi.muni.cz.marketplace.auction_bidding.command.AddAuctionItemCommand;
 import edu.fi.muni.cz.marketplace.auction_bidding.command.PlaceBidCommand;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.AddAuctionItemRequest;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.AddAuctionItemResponse;
+import edu.fi.muni.cz.marketplace.auction_bidding.dto.AuctionItemDetailResponse;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.AuctionItemResponse;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.BrowseAuctionItemsResponse;
+import edu.fi.muni.cz.marketplace.auction_bidding.dto.BrowseAuctionItemsResult;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.PlaceBidRequest;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.PlaceBidResponse;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.SellerAuctionItemResponse;
@@ -24,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.messaging.responsetypes.ResponseTypes;
 import org.axonframework.queryhandling.QueryGateway;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -56,29 +57,29 @@ public class AuctionController {
       @RequestParam(required = false) String search,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size) {
+    log.info("Searching for auctions in browse endpoint");
 
-    @SuppressWarnings("unchecked")
-    Page<AuctionItemReadModel> result = queryGateway.query(
+    BrowseAuctionItemsResult result = queryGateway.query(
         new BrowseAuctionItemsQuery(category, sort, search, page, size),
-        ResponseTypes.instanceOf(Page.class)).join();
+        BrowseAuctionItemsResult.class).join();
 
-    var items = result.getContent().stream()
+    var items = result.getItems().stream()
         .map(AuctionItemResponse::from)
         .toList();
 
     return ResponseEntity.ok(new BrowseAuctionItemsResponse(
         items,
-        result.getNumber(),
+        result.getPage(),
         result.getSize(),
         result.getTotalElements(),
         result.getTotalPages()));
   }
 
   /**
-   * Get an auction item by ID.
+   * Get an auction item by ID with recent bids.
    */
   @GetMapping("/{auctionItemId}")
-  public ResponseEntity<AuctionItemResponse> getAuctionItem(@PathVariable UUID auctionItemId) {
+  public ResponseEntity<AuctionItemDetailResponse> getAuctionItem(@PathVariable UUID auctionItemId) {
     AuctionItemReadModel readModel = queryGateway.query(
         new FindAuctionItemByIdQuery(auctionItemId),
         AuctionItemReadModel.class).join();
@@ -87,7 +88,7 @@ public class AuctionController {
       return ResponseEntity.notFound().build();
     }
 
-    return ResponseEntity.ok(AuctionItemResponse.from(readModel));
+    return ResponseEntity.ok(AuctionItemDetailResponse.from(readModel));
   }
 
   /**
@@ -123,12 +124,16 @@ public class AuctionController {
 
     UUID userId = getUserId(jwt);
     UUID auctionItemId = UUID.randomUUID();
+    String firstName = jwt.getClaimAsString("given_name");
+    String lastName = jwt.getClaimAsString("family_name");
 
     // Todo: check stripe id from jwt
     log.info("Creating auction item for seller: {}", userId);
     commandGateway.sendAndWait(new AddAuctionItemCommand(
         auctionItemId,
         userId,
+        firstName,
+        lastName,
         request.title(),
         request.description(),
         request.startingPrice(),

@@ -1,22 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Clock, User, Tag, ArrowLeft, Gavel } from 'lucide-react';
+import { Clock, User, ArrowLeft, Gavel } from 'lucide-react';
 import { Header } from '../shared/Header';
 import { Footer } from '../shared/Footer';
 import { useAuth } from '../hooks/useAuth';
 import { getAuctionItem, placeBid } from '../api/auction';
-import type { AuctionItem } from '../types/auction';
+import type { AuctionItemDetailResponse } from '../types/auction';
+
+// Generate a consistent image URL based on item ID
+const getImageUrl = (id: string): string => {
+  return `https://picsum.photos/seed/${id}/800/600`;
+};
 
 /**
- * Format currency in cents to display format
+ * Format currency to display format
  */
-const formatCurrency = (cents: number): string => {
+const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('cs-CZ', {
     style: 'currency',
     currency: 'CZK',
     minimumFractionDigits: 0,
-  }).format(cents / 100);
+  }).format(amount);
 };
 
 /**
@@ -98,15 +103,15 @@ export const AuctionItemPage = () => {
   const isSeller = user?.id === auction?.sellerId;
   const canBid = isAuthenticated && !isSeller && auction?.status === 'OPEN';
 
-  // Calculate minimum bid
+  // Calculate minimum bid (1 Kč increment)
   const minBid = auction
-    ? (auction.highestBidAmount || auction.startingPrice) + 100 // Minimum increment of 1 Kč (100 haléřů)
+    ? auction.currentPrice + 1
     : 0;
 
   const handlePlaceBid = () => {
     if (!auction || !bidAmount) return;
 
-    const amount = Math.round(parseFloat(bidAmount) * 100); // Convert to cents
+    const amount = parseFloat(bidAmount);
     if (isNaN(amount) || amount < minBid) {
       setBidError(`Minimum bid is ${formatCurrency(minBid)}`);
       return;
@@ -170,7 +175,7 @@ export const AuctionItemPage = () => {
           {/* Image */}
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <img
-              src={auction.imageUrl}
+              src={getImageUrl(auction.id)}
               alt={auction.title}
               className="w-full h-96 object-cover"
             />
@@ -199,13 +204,17 @@ export const AuctionItemPage = () => {
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <p className="text-sm text-gray-500">Current Bid</p>
+                  <p className="text-sm text-gray-500">Current Price</p>
                   <p className="text-3xl font-bold text-gray-900">
-                    {formatCurrency(auction.highestBidAmount || auction.startingPrice)}
+                    {formatCurrency(auction.currentPrice)}
                   </p>
                   <p className="text-sm text-gray-500">{auction.bidCount} bids</p>
                 </div>
                 <div className="text-right">
+                  <p className="text-sm text-gray-500">Starting Price</p>
+                  <p className="text-lg font-medium text-gray-600 mb-2">
+                    {formatCurrency(auction.startingPrice)}
+                  </p>
                   <p className="text-sm text-gray-500">Time Remaining</p>
                   <p className={`text-xl font-semibold ${isEnded ? 'text-gray-500' : 'text-orange-600'}`}>
                     <Clock className="inline h-5 w-5 mr-1" />
@@ -243,10 +252,10 @@ export const AuctionItemPage = () => {
                             type="number"
                             value={bidAmount}
                             onChange={(e) => setBidAmount(e.target.value)}
-                            placeholder={(minBid / 100).toFixed(2)}
-                            step="0.01"
-                            min={(minBid / 100).toFixed(2)}
-                            className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder={minBid.toString()}
+                            step="1"
+                            min={minBid}
+                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
                         </div>
                         <button
@@ -269,11 +278,10 @@ export const AuctionItemPage = () => {
                 </div>
               )}
 
-              {isEnded && auction.highestBidderName && (
+              {isEnded && auction.bidCount > 0 && (
                 <div className="border-t pt-4">
                   <p className="text-center text-gray-600">
-                    Won by <span className="font-semibold">{auction.highestBidderName}</span> for{' '}
-                    <span className="font-semibold">{formatCurrency(auction.highestBidAmount!)}</span>
+                    Auction ended at <span className="font-semibold">{formatCurrency(auction.currentPrice)}</span>
                   </p>
                 </div>
               )}
@@ -287,7 +295,7 @@ export const AuctionItemPage = () => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Seller</p>
-                  <p className="font-medium text-gray-900">{auction.sellerName}</p>
+                  <p className="font-medium text-gray-900">{auction.sellerFirstName} {auction.sellerLastName}</p>
                 </div>
               </div>
             </div>
@@ -317,13 +325,12 @@ export const AuctionItemPage = () => {
               <div className="space-y-3">
                 {auction.recentBids.map((bid, index) => (
                   <div
-                    key={bid.id}
+                    key={index}
                     className={`flex justify-between items-center py-2 ${
                       index !== auction.recentBids.length - 1 ? 'border-b border-gray-100' : ''
                     }`}
                   >
                     <div>
-                      <p className="font-medium text-gray-900">{bid.bidderName}</p>
                       <p className="text-xs text-gray-500">{formatRelativeTime(bid.placedAt)}</p>
                     </div>
                     <p className={`font-semibold ${index === 0 ? 'text-green-600' : 'text-gray-700'}`}>

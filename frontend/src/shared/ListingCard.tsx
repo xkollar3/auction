@@ -63,14 +63,20 @@ export function ListingCard({ listing }: ListingCardProps) {
 
         {/* Price */}
         <div className="mb-3">
-          <p className="text-lg font-bold text-gray-900">
-            {formatCurrency(listing.currentBid ?? listing.startingPrice)}
-          </p>
-          {listing.currentBid && listing.currentBid > listing.startingPrice && (
-            <p className="text-xs text-gray-500">
-              Started at {formatCurrency(listing.startingPrice)}
-            </p>
-          )}
+          <div className="flex items-baseline justify-between">
+            <div>
+              <p className="text-xs text-gray-500">Current price</p>
+              <p className="text-lg font-bold text-gray-900">
+                {formatCurrency(listing.currentBid ?? listing.startingPrice)}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-gray-500">Starting price</p>
+              <p className="text-sm font-medium text-gray-600">
+                {formatCurrency(listing.startingPrice)}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Timer and Bids */}

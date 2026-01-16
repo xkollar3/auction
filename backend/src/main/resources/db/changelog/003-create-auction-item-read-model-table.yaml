@@ -18,6 +18,16 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
+                  name: seller_first_name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: seller_last_name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
                   name: title
                   type: varchar(255)
                   constraints:

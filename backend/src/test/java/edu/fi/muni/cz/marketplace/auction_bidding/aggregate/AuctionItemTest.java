@@ -52,6 +52,8 @@ class AuctionItemTest {
         .when(new AddAuctionItemCommand(
             auctionItemId,
             sellerId,
+            "John",
+            "Doe",
             title,
             description,
             startingPrice,
@@ -90,6 +92,8 @@ class AuctionItemTest {
     fixture.given(new AuctionItemAddedEvent(
         auctionItemId,
         sellerId,
+        "John",
+        "Doe",
         title,
         description,
         startingPrice,
@@ -123,6 +127,8 @@ class AuctionItemTest {
     fixture.given(new AuctionItemAddedEvent(
         auctionItemId,
         sellerId,
+        "John",
+        "Doe",
         title,
         description,
         startingPrice,
@@ -155,6 +161,8 @@ class AuctionItemTest {
     fixture.given(new AuctionItemAddedEvent(
         auctionItemId,
         sellerId,
+        "John",
+        "Doe",
         title,
         description,
         startingPrice,
@@ -190,6 +198,8 @@ class AuctionItemTest {
         new AuctionItemAddedEvent(
             auctionItemId,
             sellerId,
+            "John",
+            "Doe",
             title,
             description,
             startingPrice,
@@ -222,6 +232,8 @@ class AuctionItemTest {
         new AuctionItemAddedEvent(
             auctionItemId,
             sellerId,
+            "John",
+            "Doe",
             title,
             description,
             startingPrice,
@@ -255,6 +267,8 @@ class AuctionItemTest {
         .andGivenCommands(new AddAuctionItemCommand(
             auctionItemId,
             sellerId,
+            "John",
+            "Doe",
             title,
             description,
             startingPrice,
@@ -284,6 +298,8 @@ class AuctionItemTest {
         .andGivenCommands(new AddAuctionItemCommand(
             auctionItemId,
             sellerId,
+            "John",
+            "Doe",
             title,
             description,
             startingPrice,
@@ -309,6 +325,8 @@ class AuctionItemTest {
         .andGivenCommands(new AddAuctionItemCommand(
             auctionItemId,
             sellerId,
+            "John",
+            "Doe",
             title,
             description,
             startingPrice,
@@ -338,6 +356,8 @@ class AuctionItemTest {
         .andGivenCommands(new AddAuctionItemCommand(
             auctionItemId,
             sellerId,
+            "John",
+            "Doe",
             title,
             description,
             startingPrice,
@@ -369,6 +389,8 @@ class AuctionItemTest {
         .andGivenCommands(new AddAuctionItemCommand(
             auctionItemId,
             sellerId,
+            "John",
+            "Doe",
             title,
             description,
             startingPrice,
@@ -408,7 +430,7 @@ class AuctionItemTest {
 
     // Set up the auction with 10 initial bids (amounts 110-200)
     fixture.given(
-        new AuctionItemAddedEvent(auctionItemId, sellerId, title, description, startingPrice,
+        new AuctionItemAddedEvent(auctionItemId, sellerId, "John", "Doe", title, description, startingPrice,
             AuctionItemCategory.ELECTRONICS, auctionEndTime),
         // Bids with amounts 110, 120, 130, ..., 200
         new BidPlacedEvent(auctionItemId, bidIds[0], bidderIds[0], new BigDecimal("110.00")),
@@ -470,7 +492,7 @@ class AuctionItemTest {
 
     // Set up the auction with 10 bids (amounts 110-200)
     fixture.given(
-        new AuctionItemAddedEvent(auctionItemId, sellerId, title, description, startingPrice,
+        new AuctionItemAddedEvent(auctionItemId, sellerId, "John", "Doe", title, description, startingPrice,
             AuctionItemCategory.ELECTRONICS, auctionEndTime),
         new BidPlacedEvent(auctionItemId, bidIds[0], bidderIds[0], new BigDecimal("110.00")),
         new HighestBidSetEvent(auctionItemId, bidIds[0], bidderIds[0], new BigDecimal("110.00"), Instant.now()),
@@ -524,7 +546,7 @@ class AuctionItemTest {
     Instant auctionEndTime = FIXED_TIME.plus(Duration.ofDays(7));
 
     fixture.given(
-        new AuctionItemAddedEvent(auctionItemId, sellerId, title, description, startingPrice,
+        new AuctionItemAddedEvent(auctionItemId, sellerId, "John", "Doe", title, description, startingPrice,
             AuctionItemCategory.ELECTRONICS, auctionEndTime),
         new BidPlacedEvent(auctionItemId, bidId1, bidderId1, new BigDecimal("150.00")),
         new HighestBidSetEvent(auctionItemId, bidId1, bidderId1, new BigDecimal("150.00"), Instant.now()),

@@ -84,6 +84,8 @@ public class AuctionItem {
     apply(new AuctionItemAddedEvent(
         command.getAuctionItemId(),
         command.getSellerId(),
+        command.getSellerFirstName(),
+        command.getSellerLastName(),
         command.getTitle(),
         command.getDescription(),
         command.getStartingPrice(),

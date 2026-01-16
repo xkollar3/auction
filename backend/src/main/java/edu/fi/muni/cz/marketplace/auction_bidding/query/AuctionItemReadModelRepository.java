@@ -1,6 +1,7 @@
 package edu.fi.muni.cz.marketplace.auction_bidding.query;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,6 +22,9 @@ public interface AuctionItemReadModelRepository
 
   List<AuctionItemReadModel> findByKeycloakSellerIdAndStatusOrderByAuctionEndTimeAsc(
       UUID keycloakSellerId, AuctionStatus status);
+
+  @Query("SELECT a FROM AuctionItemReadModel a LEFT JOIN FETCH a.bids WHERE a.id = :id")
+  Optional<AuctionItemReadModel> findByIdWithBids(@Param("id") UUID id);
 
   @Query(value = """
       SELECT a.*

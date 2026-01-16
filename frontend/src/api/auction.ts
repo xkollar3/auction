@@ -1,5 +1,5 @@
 import { api } from '../lib/api';
-import type { AuctionItem, AuctionStatus, PlaceBidRequest, PlaceBidResponse, AddAuctionItemRequest, AddAuctionItemResponse, SellerAuctionItemResponse } from '../types/auction';
+import type { AuctionItem, AuctionStatus, PlaceBidRequest, PlaceBidResponse, AddAuctionItemRequest, AddAuctionItemResponse, SellerAuctionItemResponse, BrowseAuctionsParams, BrowseAuctionsResponse, AuctionItemDetailResponse } from '../types/auction';
 
 /**
  * Mock auction item data
@@ -72,17 +72,10 @@ Shipping: Insured worldwide shipping available. Local pickup in Los Angeles also
 
 /**
  * Get auction item by ID
- * TODO: Replace with real API call
  */
-export const getAuctionItem = async (id: string): Promise<AuctionItem> => {
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  // Return mock data (in real implementation, fetch from API)
-  return {
-    ...mockAuctionItem,
-    id,
-  };
+export const getAuctionItem = async (id: string): Promise<AuctionItemDetailResponse> => {
+  const response = await api.get<AuctionItemDetailResponse>(`/api/auctions/${id}`);
+  return response.data;
 };
 
 /**
@@ -121,6 +114,22 @@ export const addAuctionItem = async (request: AddAuctionItemRequest): Promise<Ad
 export const getSellerAuctions = async (status: AuctionStatus): Promise<SellerAuctionItemResponse[]> => {
   const response = await api.get<SellerAuctionItemResponse[]>('/api/auctions/seller/dashboard', {
     params: { status },
+  });
+  return response.data;
+};
+
+/**
+ * Browse auction items with filtering, sorting, and pagination
+ */
+export const browseAuctions = async (params: BrowseAuctionsParams): Promise<BrowseAuctionsResponse> => {
+  const response = await api.get<BrowseAuctionsResponse>('/api/auctions', {
+    params: {
+      category: params.category,
+      sort: params.sort || 'ENDING_SOON',
+      search: params.search,
+      page: params.page || 0,
+      size: params.size || 20,
+    },
   });
   return response.data;
 };

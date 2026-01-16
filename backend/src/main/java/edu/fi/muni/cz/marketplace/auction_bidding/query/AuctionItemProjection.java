@@ -8,6 +8,8 @@ import org.axonframework.queryhandling.QueryHandler;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
+import edu.fi.muni.cz.marketplace.auction_bidding.dto.BrowseAuctionItemsResult;
+
 import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionStatus;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.AuctionClosedEvent;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.AuctionItemAddedEvent;
@@ -31,6 +33,8 @@ public class AuctionItemProjection {
     AuctionItemReadModel readModel = new AuctionItemReadModel();
     readModel.setId(event.getAuctionItemId());
     readModel.setKeycloakSellerId(event.getSellerId());
+    readModel.setSellerFirstName(event.getSellerFirstName());
+    readModel.setSellerLastName(event.getSellerLastName());
     readModel.setTitle(event.getTitle());
     readModel.setDescription(event.getDescription());
     readModel.setStartingPrice(event.getStartingPrice());
@@ -82,7 +86,7 @@ public class AuctionItemProjection {
 
   @QueryHandler
   public AuctionItemReadModel handle(FindAuctionItemByIdQuery query) {
-    return repository.findById(query.getAuctionItemId()).orElse(null);
+    return repository.findByIdWithBids(query.getAuctionItemId()).orElse(null);
   }
 
   @QueryHandler
@@ -91,13 +95,22 @@ public class AuctionItemProjection {
   }
 
   @QueryHandler
-  public Page<AuctionItemReadModel> handle(BrowseAuctionItemsQuery query) {
-    return repository.browse(
+  public BrowseAuctionItemsResult handle(BrowseAuctionItemsQuery query) {
+    log.info("Browsing auction items: {}", query);
+
+    Page<AuctionItemReadModel> page = repository.browse(
         query.getCategory(),
         query.getSortOption(),
         query.getSearchQuery(),
         query.getPage(),
         query.getSize());
+
+    return new BrowseAuctionItemsResult(
+        new java.util.ArrayList<>(page.getContent()),
+        page.getNumber(),
+        page.getSize(),
+        page.getTotalElements(),
+        page.getTotalPages());
   }
 
   @QueryHandler

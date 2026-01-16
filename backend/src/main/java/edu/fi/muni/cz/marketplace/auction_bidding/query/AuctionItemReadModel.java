@@ -33,6 +33,12 @@ public class AuctionItemReadModel {
   private UUID keycloakSellerId;
 
   @Column(nullable = false)
+  private String sellerFirstName;
+
+  @Column(nullable = false)
+  private String sellerLastName;
+
+  @Column(nullable = false)
   private String title;
 
   @Column(columnDefinition = "text")

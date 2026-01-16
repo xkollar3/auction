@@ -9,8 +9,25 @@ import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { EmptyState } from '../shared/EmptyState';
 import { useListingsFilter } from '../hooks/useListingsFilter';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
-import { fetchListings } from '../mocks/listingsApi';
-import type { ListingCardData } from '../types/listing';
+import { browseAuctions } from '../api/auction';
+import type { ListingCardData, SortOption } from '../types/listing';
+import type { AuctionSortOption, AuctionCategory } from '../types/auction';
+
+// Map frontend sort options to backend sort options
+const mapSortOption = (sort: SortOption): AuctionSortOption => {
+  switch (sort) {
+    case 'ending_soon': return 'ENDING_SOON';
+    case 'price_asc': return 'PRICE_LOW_TO_HIGH';
+    case 'price_desc': return 'PRICE_HIGH_TO_LOW';
+    case 'hot': return 'HOT';
+    default: return 'ENDING_SOON';
+  }
+};
+
+// Generate a consistent random image URL based on item ID
+const getImageUrl = (id: string): string => {
+  return `https://picsum.photos/seed/${id}/400/300`;
+};
 
 export function ListingsPage() {
   const { filters, setQuery, setCategory, setSortBy, nextPage } = useListingsFilter();
@@ -32,13 +49,29 @@ export function ListingsPage() {
 
     const loadListings = async () => {
       setIsLoading(true);
-      currentPageRef.current = 1;
+      currentPageRef.current = 0;
       try {
-        const result = await fetchListings({ query, category, sortBy, page: 1 });
+        const result = await browseAuctions({
+          search: query || undefined,
+          category: category ? (category.toUpperCase() as AuctionCategory) : undefined,
+          sort: mapSortOption(sortBy),
+          page: 0,
+          size: 20,
+        });
         if (!cancelled) {
-          setListings(result.listings);
-          setHasMore(result.hasMore);
-          setTotalCount(result.totalCount);
+          const mappedListings: ListingCardData[] = result.items.map((item) => ({
+            id: item.id,
+            title: item.title,
+            imageUrl: getImageUrl(item.id),
+            currentBid: item.currentPrice,
+            startingPrice: item.startingPrice,
+            endTime: item.auctionEndTime,
+            bidCount: item.bidCount,
+            category: item.category,
+          }));
+          setListings(mappedListings);
+          setHasMore(result.page < result.totalPages - 1);
+          setTotalCount(result.totalElements);
         }
       } catch (error) {
         console.error('Failed to fetch listings:', error);
@@ -62,9 +95,25 @@ export function ListingsPage() {
     setIsLoadingMore(true);
     const nextPageNum = currentPageRef.current + 1;
     try {
-      const result = await fetchListings({ query, category, sortBy, page: nextPageNum });
-      setListings((prev) => [...prev, ...result.listings]);
-      setHasMore(result.hasMore);
+      const result = await browseAuctions({
+        search: query || undefined,
+        category: category ? (category.toUpperCase() as AuctionCategory) : undefined,
+        sort: mapSortOption(sortBy),
+        page: nextPageNum,
+        size: 20,
+      });
+      const mappedListings: ListingCardData[] = result.items.map((item) => ({
+        id: item.id,
+        title: item.title,
+        imageUrl: getImageUrl(item.id),
+        currentBid: item.currentPrice,
+        startingPrice: item.startingPrice,
+        endTime: item.auctionEndTime,
+        bidCount: item.bidCount,
+        category: item.category,
+      }));
+      setListings((prev) => [...prev, ...mappedListings]);
+      setHasMore(result.page < result.totalPages - 1);
       currentPageRef.current = nextPageNum;
       nextPage();
     } catch (error) {

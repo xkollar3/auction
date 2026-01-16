@@ -29,7 +29,7 @@ const formatPrice = (price: number): string => {
     style: 'currency',
     currency: 'CZK',
     minimumFractionDigits: 0,
-  }).format(price / 100);
+  }).format(price);
 };
 
 export const SellerDashboardPage = () => {
