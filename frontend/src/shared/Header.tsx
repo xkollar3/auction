@@ -24,10 +24,6 @@ export function Header() {
     console.log('Notification bell clicked');
   };
 
-  const handleCategoriesClick = () => {
-    console.log('Categories clicked');
-  };
-
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -42,13 +38,7 @@ export function Header() {
           </Link>
 
           {/* Navigation */}
-          <nav className="hidden md:flex items-center gap-6">
-            <button
-              onClick={handleCategoriesClick}
-              className="text-gray-600 hover:text-gray-900 font-medium"
-            >
-              Categories
-            </button>
+          <nav className="hidden md:flex items-center gap-6 ml-8">
             <Link
               to="/#how-it-works"
               className="text-gray-600 hover:text-gray-900 font-medium"

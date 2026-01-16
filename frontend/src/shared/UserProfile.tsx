@@ -12,7 +12,7 @@ interface UserProfileProps {
  */
 export const UserProfile = ({ profile }: UserProfileProps) => {
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 max-w-2xl">
+    <div className="bg-white rounded-lg shadow-md p-6">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">Profile Information</h2>
 
       <div className="space-y-4">

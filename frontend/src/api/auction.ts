@@ -1,5 +1,5 @@
 import { api } from '../lib/api';
-import type { AuctionItem, AuctionStatus, PlaceBidRequest, PlaceBidResponse, AddAuctionItemRequest, AddAuctionItemResponse, SellerAuctionItemResponse, BrowseAuctionsParams, BrowseAuctionsResponse, AuctionItemDetailResponse } from '../types/auction';
+import type { AuctionItem, AuctionStatus, PlaceBidRequest, PlaceBidResponse, AddAuctionItemRequest, AddAuctionItemResponse, SellerAuctionItemResponse, BrowseAuctionsParams, BrowseAuctionsResponse, BrowseAuctionItemResponse, AuctionItemDetailResponse } from '../types/auction';
 
 /**
  * Mock auction item data
@@ -138,5 +138,31 @@ export const browseAuctions = async (params: BrowseAuctionsParams): Promise<Brow
       size: params.size || 20,
     },
   });
+  return response.data;
+};
+
+/**
+ * Get auction items the current user has bid on
+ */
+export const getMyBids = async (status: AuctionStatus): Promise<BrowseAuctionItemResponse[]> => {
+  const response = await api.get<BrowseAuctionItemResponse[]>('/api/auctions/my-bids', {
+    params: { status },
+  });
+  return response.data;
+};
+
+/**
+ * Get auction items won by the current user
+ */
+export const getMyPurchases = async (): Promise<BrowseAuctionItemResponse[]> => {
+  const response = await api.get<BrowseAuctionItemResponse[]>('/api/auctions/my-purchases');
+  return response.data;
+};
+
+/**
+ * Get current user's sold auction items
+ */
+export const getMySales = async (): Promise<SellerAuctionItemResponse[]> => {
+  const response = await api.get<SellerAuctionItemResponse[]>('/api/auctions/my-sales');
   return response.data;
 };

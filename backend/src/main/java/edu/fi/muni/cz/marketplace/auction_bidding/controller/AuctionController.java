@@ -17,6 +17,7 @@ import edu.fi.muni.cz.marketplace.auction_bidding.query.AuctionItemReadModel;
 import edu.fi.muni.cz.marketplace.auction_bidding.query.AuctionSortOption;
 import edu.fi.muni.cz.marketplace.auction_bidding.query.BrowseAuctionItemsQuery;
 import edu.fi.muni.cz.marketplace.auction_bidding.query.FindAuctionItemByIdQuery;
+import edu.fi.muni.cz.marketplace.auction_bidding.query.FindBidderAuctionItemsQuery;
 import edu.fi.muni.cz.marketplace.auction_bidding.query.FindSellerAuctionItemsQuery;
 import edu.fi.muni.cz.marketplace.config.exception.HttpException;
 import java.util.List;
@@ -107,6 +108,23 @@ public class AuctionController {
 
     var response = items.stream()
         .map(SellerAuctionItemResponse::from)
+        .toList();
+
+    return ResponseEntity.ok(response);
+  }
+
+  @GetMapping("/my-bids")
+  public ResponseEntity<List<AuctionItemResponse>> getMyBids(
+      @RequestParam AuctionStatus status,
+      @AuthenticationPrincipal Jwt jwt) {
+    UUID userId = getUserId(jwt);
+
+    List<AuctionItemReadModel> items = queryGateway.query(
+        new FindBidderAuctionItemsQuery(userId, status),
+        ResponseTypes.multipleInstancesOf(AuctionItemReadModel.class)).join();
+
+    var response = items.stream()
+        .map(AuctionItemResponse::from)
         .toList();
 
     return ResponseEntity.ok(response);

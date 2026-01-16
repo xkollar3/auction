@@ -120,4 +120,9 @@ public class AuctionItemProjection {
         query.getKeycloakSellerId(),
         query.getStatus());
   }
+
+  @QueryHandler
+  public List<AuctionItemReadModel> handle(FindBidderAuctionItemsQuery query) {
+    return bidRepository.findAuctionItemsByBidderIdAndStatus(query.getBidderId(), query.getStatus());
+  }
 }

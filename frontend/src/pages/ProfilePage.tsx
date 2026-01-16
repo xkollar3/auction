@@ -46,12 +46,11 @@ export const ProfilePage = () => {
           <p className="text-gray-600 mt-2">Manage your profile and account settings</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Profile Information */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+          {/* Left Column: Profile Information + Account Details */}
           <div className="lg:col-span-2 space-y-6">
             <UserProfile profile={keycloakProfile} />
 
-            {/* Backend Profile Details */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Account Details</h2>
 
@@ -96,7 +95,7 @@ export const ProfilePage = () => {
                         }`}>
                           {backendProfile.sellerAccountEnabled ? 'Enabled' : 'Pending Onboarding'}
                         </span>
-                        {backendProfile.stripeOnboardingLink && (
+                        {backendProfile.stripeOnboardingLink && !backendProfile.sellerAccountEnabled && (
                           <a
                             href={backendProfile.stripeOnboardingLink}
                             target="_blank"
@@ -117,8 +116,8 @@ export const ProfilePage = () => {
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="space-y-4">
+          {/* Right Column: Quick Actions + Account Status */}
+          <div className="space-y-6">
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
               <div className="space-y-2">
@@ -141,16 +140,29 @@ export const ProfilePage = () => {
                   </button>
                 )}
                 {!backendProfile?.stripeSellerAccountId && <BecomeSellerButton />}
-                <button className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                <button
+                  onClick={() => navigate('/my-bids')}
+                  className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                >
                   My Bids
                 </button>
-                <button className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-                  My Orders
+                <button
+                  onClick={() => navigate('/my-purchases')}
+                  className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  My Purchases
                 </button>
+                {backendProfile?.sellerAccountEnabled && (
+                  <button
+                    onClick={() => navigate('/my-sales')}
+                    className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    My Sales
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* Account Status */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Status</h3>
               <div className="space-y-3">

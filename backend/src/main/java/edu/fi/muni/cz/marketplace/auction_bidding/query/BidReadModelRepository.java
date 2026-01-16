@@ -16,4 +16,7 @@ public interface BidReadModelRepository extends JpaRepository<BidReadModel, UUID
 
   @Query("SELECT COUNT(b) FROM BidReadModel b WHERE b.auctionItem.id = :auctionItemId AND b.placedAt >= :since")
   long countRecentBids(@Param("auctionItemId") UUID auctionItemId, @Param("since") Instant since);
+
+  @Query("SELECT DISTINCT b.auctionItem FROM BidReadModel b WHERE b.bidderId = :bidderId AND b.auctionItem.status = :status ORDER BY b.auctionItem.auctionEndTime ASC")
+  List<AuctionItemReadModel> findAuctionItemsByBidderIdAndStatus(@Param("bidderId") UUID bidderId, @Param("status") edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionStatus status);
 }
