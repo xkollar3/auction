@@ -121,3 +121,11 @@ export const getAuctionImages = async (auctionItemId: string): Promise<AuctionIt
   const response = await api.get<AuctionItemImagesResponse>(`/api/auctions/${auctionItemId}/images`);
   return response.data;
 };
+
+/**
+ * Get featured auctions for the front page (8 auctions ending soonest)
+ */
+export const getFeaturedAuctions = async (): Promise<BrowseAuctionItemResponse[]> => {
+  const response = await api.get<BrowseAuctionItemResponse[]>('/api/auctions/featured');
+  return response.data;
+};

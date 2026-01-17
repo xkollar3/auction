@@ -34,4 +34,6 @@ public interface AuctionItemReadModelRepository
       LIMIT :limit
       """, nativeQuery = true)
   List<AuctionItemReadModel> searchByText(@Param("query") String query, @Param("limit") int limit);
+
+  List<AuctionItemReadModel> findTop8ByStatusOrderByAuctionEndTimeAsc(AuctionStatus status);
 }

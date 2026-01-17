@@ -20,6 +20,7 @@ import edu.fi.muni.cz.marketplace.auction_bidding.dto.PlaceBidResponse;
 import edu.fi.muni.cz.marketplace.auction_bidding.query.AuctionItemReadModel;
 import edu.fi.muni.cz.marketplace.auction_bidding.query.AuctionSortOption;
 import edu.fi.muni.cz.marketplace.auction_bidding.query.BrowseAuctionItemsQuery;
+import edu.fi.muni.cz.marketplace.auction_bidding.query.FeaturedAuctionsQuery;
 import edu.fi.muni.cz.marketplace.auction_bidding.query.FindAuctionItemByIdQuery;
 import edu.fi.muni.cz.marketplace.auction_bidding.query.FindBidderAuctionItemsQuery;
 import edu.fi.muni.cz.marketplace.auction_bidding.query.FindSellerAuctionItemsQuery;
@@ -84,6 +85,24 @@ public class AuctionController {
         result.getSize(),
         result.getTotalElements(),
         result.getTotalPages()));
+  }
+
+  /**
+   * Get featured auctions for the front page - 8 auctions ending soonest.
+   */
+  @GetMapping("/featured")
+  public ResponseEntity<List<AuctionItemResponse>> getFeaturedAuctions() {
+    log.info("Fetching featured auctions");
+
+    List<AuctionItemReadModel> items = queryGateway.query(
+        new FeaturedAuctionsQuery(),
+        ResponseTypes.multipleInstancesOf(AuctionItemReadModel.class)).join();
+
+    var response = items.stream()
+        .map(AuctionItemResponse::from)
+        .toList();
+
+    return ResponseEntity.ok(response);
   }
 
   /**

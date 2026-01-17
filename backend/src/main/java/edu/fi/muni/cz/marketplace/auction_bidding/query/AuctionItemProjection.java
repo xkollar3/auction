@@ -140,4 +140,9 @@ public class AuctionItemProjection {
   public List<AuctionItemReadModel> handle(FindBidderAuctionItemsQuery query) {
     return bidRepository.findAuctionItemsByBidderIdAndStatus(query.getBidderId(), query.getStatus());
   }
+
+  @QueryHandler
+  public List<AuctionItemReadModel> handle(FeaturedAuctionsQuery query) {
+    return repository.findTop8ByStatusOrderByAuctionEndTimeAsc(AuctionStatus.ACTIVE);
+  }
 }

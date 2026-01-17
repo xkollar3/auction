@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { UserPlus, Search, TrendingUp, Gift } from 'lucide-react';
 import { Header } from '../shared/Header';
 import { Footer } from '../shared/Footer';
@@ -8,38 +8,31 @@ import { CategoryCard } from '../shared/CategoryCard';
 import { HowItWorksStep } from '../shared/HowItWorksStep';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { mockCategories } from '../mocks/listings';
-import { fetchFeaturedListings } from '../mocks/homeApi';
+import { getFeaturedAuctions } from '../api/auction';
 import { useAuth } from '../hooks/useAuth';
 import type { ListingCardData } from '../types/listing';
+import type { BrowseAuctionItemResponse } from '../types/auction';
+
+const mapAuctionToListing = (auction: BrowseAuctionItemResponse): ListingCardData => ({
+  id: auction.id,
+  title: auction.title,
+  imageUrl: auction.imageUrl || '/placeholder-image.jpg',
+  currentBid: auction.currentPrice,
+  startingPrice: auction.startingPrice,
+  endTime: auction.auctionEndTime,
+  bidCount: auction.bidCount,
+  category: auction.category,
+});
 
 export function HomePage() {
-  const [featuredListings, setFeaturedListings] = useState<ListingCardData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const { isAuthenticated } = useAuth();
 
-  useEffect(() => {
-    let cancelled = false;
+  const { data: auctions, isLoading } = useQuery({
+    queryKey: ['featuredAuctions'],
+    queryFn: getFeaturedAuctions,
+  });
 
-    const loadFeaturedListings = async () => {
-      try {
-        const listings = await fetchFeaturedListings();
-        if (!cancelled) {
-          setFeaturedListings(listings);
-        }
-      } catch (error) {
-        console.error('Failed to fetch featured listings:', error);
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadFeaturedListings();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const featuredListings = auctions?.map(mapAuctionToListing) ?? [];
 
   const handlePlaceBid = (listingId: string) => {
     console.log('Place bid clicked for listing:', listingId);
