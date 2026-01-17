@@ -186,7 +186,9 @@ export const AuctionItemPage = () => {
         setBidSuccess(true);
         setBidError(null);
         setBidAmount('');
-        queryClient.invalidateQueries({ queryKey: ['auctionItem', id] });
+        // Don't invalidate queries - WebSocket provides real-time updates
+        // Invalidating could cause a race condition where stale server data
+        // overwrites the WebSocket update
         setTimeout(() => setBidSuccess(false), 3000);
       } else {
         setBidError(response.message || 'Failed to place bid');

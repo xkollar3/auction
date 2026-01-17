@@ -14,6 +14,7 @@ import org.axonframework.eventhandling.tokenstore.TokenStore;
 import org.axonframework.eventhandling.tokenstore.jdbc.JdbcTokenStore;
 import org.axonframework.messaging.ScopeAwareProvider;
 import org.axonframework.serialization.Serializer;
+import org.axonframework.serialization.json.JacksonSerializer;
 import org.axonframework.spring.jdbc.SpringDataSourceConnectionProvider;
 import org.axonframework.tracing.SpanFactory;
 import org.springframework.beans.factory.annotation.Qualifier;

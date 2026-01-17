@@ -70,6 +70,7 @@ public class Order {
       @Autowired DeadlineManager deadlineManager,
       @Autowired Clock clock,
       @Autowired @Value("${policy.refund-deadline-days}") Long refundPeriodDays) {
+    log.debug("Order being created");
     Instant shippingDeadlineTime = clock.instant().plus(refundPeriodDays,
         ChronoUnit.DAYS);
     String deadlineId = deadlineManager.schedule(shippingDeadlineTime,

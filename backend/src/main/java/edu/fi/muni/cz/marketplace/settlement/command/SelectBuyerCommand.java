@@ -10,12 +10,11 @@ import java.util.UUID;
 @Value
 public class SelectBuyerCommand {
 
-    @TargetAggregateIdentifier
-    UUID settlementId;
-    UUID auctionItemId;
-    List<PotentialBuyer> potentialBuyerList;
-    List<UUID> biddersIdList;
-    UUID sellerId;
-    String title;
+  @TargetAggregateIdentifier
+  UUID settlementId;
+  UUID auctionItemId;
+  List<PotentialBuyer> potentialBuyerList;
+  UUID sellerId;
+  String title;
 
 }

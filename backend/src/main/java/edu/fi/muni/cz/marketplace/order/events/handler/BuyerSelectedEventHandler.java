@@ -20,17 +20,19 @@ import lombok.extern.slf4j.Slf4j;
 public class BuyerSelectedEventHandler {
 
   private final CommandGateway commandGateway;
+  // fixme: this module should not access the user module read models, no time to
+  // fix rn
   private final UserReadModelRepository userReadModelRepository;
 
   @EventHandler
   public void on(BuyerSelectedEvent event) {
     PotentialBuyer selectedBuyer = event.getSelectedPotentialBuyer();
 
-    UserReadModel buyerProfile = userReadModelRepository.findById(selectedBuyer.bidderId())
+    UserReadModel buyerProfile = userReadModelRepository.findByKeycloakUserId(selectedBuyer.getBidderId().toString())
         .orElseThrow(() -> new IllegalStateException(
-            "Buyer not found in read model: " + selectedBuyer.bidderId()));
+            "Buyer not found in read model: " + selectedBuyer.getBidderId()));
 
-    UserReadModel sellerProfile = userReadModelRepository.findById(event.getSellerId())
+    UserReadModel sellerProfile = userReadModelRepository.findByKeycloakUserId(event.getSellerId().toString())
         .orElseThrow(() -> new IllegalStateException(
             "Seller not found in read model: " + event.getSellerId()));
 
@@ -39,14 +41,14 @@ public class BuyerSelectedEventHandler {
     commandGateway.send(new ReserveFundsCommand(
         orderId,
         event.getSettlementId(),
-        selectedBuyer.bidderId(),
+        selectedBuyer.getBidderId(),
         buyerProfile.getStripeCustomerId(),
         buyerProfile.getStripePaymentMethodId(),
-        selectedBuyer.bidAmount(),
+        selectedBuyer.getBidAmount(),
         event.getSellerId(),
         sellerProfile.getStripeSellerAccountId()));
 
     log.debug("Policy to reserve funds fired for order: {}, buyer: {}, amount: {}",
-        orderId, selectedBuyer.bidderId(), selectedBuyer.bidAmount());
+        orderId, selectedBuyer.getBidderId(), selectedBuyer.getBidAmount());
   }
 }

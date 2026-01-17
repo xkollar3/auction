@@ -7,7 +7,6 @@ import edu.fi.muni.cz.marketplace.order.events.OrderCompletedEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderDeliveredEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderRefundScheduledEvent;
 import edu.fi.muni.cz.marketplace.order.events.TrackingNumberAssignedToOrderEvent;
-import edu.fi.muni.cz.marketplace.order.events.TrackingNumberEnteredEvent;
 import edu.fi.muni.cz.marketplace.order.events.TrackingStatusUpdatedEvent;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

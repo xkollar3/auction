@@ -3,23 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Clock, Sun, Calendar, CalendarDays, ImagePlus, X } from 'lucide-react';
+import { Clock, Sun, Calendar, CalendarDays, ImagePlus, X, Bug } from 'lucide-react';
 import { Header } from '../shared/Header';
 import { Footer } from '../shared/Footer';
 import { getUserProfile } from '../api/user';
 import { addAuctionItem, uploadAuctionImages } from '../api/auction';
 import { addAuctionItemSchema, AUCTION_CATEGORIES, type AddAuctionItemFormData } from '../schemas/auction';
 
-type AuctionDuration = 'one_hour' | 'one_day' | 'one_week' | 'end_of_month';
+type AuctionDuration = 'one_hour' | 'one_day' | 'one_week' | 'end_of_month' | 'debug';
 
 const AUCTION_DURATIONS: { value: AuctionDuration; label: string; shortDesc: string; description: string; icon: ReactNode }[] = [
   { value: 'one_hour', label: '1 Hour', shortDesc: 'Quick auction', description: 'Ends in exactly one hour from now', icon: <Clock className="w-5 h-5" /> },
   { value: 'one_day', label: '1 Day', shortDesc: 'Until tomorrow', description: 'Ends at midnight tomorrow', icon: <Sun className="w-5 h-5" /> },
   { value: 'one_week', label: '1 Week', shortDesc: '7 days', description: 'Ends in one week at midnight', icon: <Calendar className="w-5 h-5" /> },
   { value: 'end_of_month', label: 'End of Month', shortDesc: 'This month', description: 'Ends on the last day of this month at midnight', icon: <CalendarDays className="w-5 h-5" /> },
+  { value: 'debug', label: 'Debug', shortDesc: 'Custom seconds', description: 'For testing - specify duration in seconds', icon: <Bug className="w-5 h-5" /> },
 ];
 
-const calculateEndTime = (duration: AuctionDuration): string => {
+const calculateEndTime = (duration: AuctionDuration, debugSeconds?: number): string => {
   const now = new Date();
 
   switch (duration) {
@@ -42,6 +43,10 @@ const calculateEndTime = (duration: AuctionDuration): string => {
       endOfMonth.setHours(23, 59, 59, 999);
       return endOfMonth.toISOString();
     }
+    case 'debug': {
+      const seconds = debugSeconds || 60;
+      return new Date(now.getTime() + seconds * 1000).toISOString();
+    }
   }
 };
 
@@ -49,6 +54,7 @@ export const PostAuctionItemPage = () => {
   const navigate = useNavigate();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<AuctionDuration | ''>('');
+  const [debugSeconds, setDebugSeconds] = useState<number>(60);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -110,10 +116,14 @@ export const PostAuctionItemPage = () => {
       setSubmitError('Please select an auction duration');
       return;
     }
+    if (selectedDuration === 'debug' && (!debugSeconds || debugSeconds < 1)) {
+      setSubmitError('Please enter a valid number of seconds (minimum 1)');
+      return;
+    }
     setSubmitError(null);
     mutation.mutate({
       ...data,
-      auctionEndTime: calculateEndTime(selectedDuration),
+      auctionEndTime: calculateEndTime(selectedDuration, debugSeconds),
     });
   };
 
@@ -281,6 +291,27 @@ export const PostAuctionItemPage = () => {
               </div>
               {!selectedDuration && submitError?.includes('duration') && (
                 <p className="mt-2 text-sm text-red-600">Please select an auction duration</p>
+              )}
+
+              {/* Debug seconds input */}
+              {selectedDuration === 'debug' && (
+                <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <label htmlFor="debugSeconds" className="block text-sm font-medium text-yellow-800 mb-2">
+                    Duration in seconds
+                  </label>
+                  <input
+                    type="number"
+                    id="debugSeconds"
+                    min="1"
+                    value={debugSeconds}
+                    onChange={(e) => setDebugSeconds(parseInt(e.target.value) || 0)}
+                    className="w-full px-4 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white"
+                    placeholder="60"
+                  />
+                  <p className="mt-1 text-xs text-yellow-700">
+                    Auction will end {debugSeconds} second{debugSeconds !== 1 ? 's' : ''} after creation
+                  </p>
+                </div>
               )}
             </div>
 

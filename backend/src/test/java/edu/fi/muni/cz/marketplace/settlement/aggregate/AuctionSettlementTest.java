@@ -48,7 +48,6 @@ class AuctionSettlementTest {
             settlementId,
             auctionItemId,
             allBids,
-            List.of(bidder1, bidder2),
             sellerId,
             title))
         .expectSuccessfulHandlerExecution()
@@ -67,8 +66,8 @@ class AuctionSettlementTest {
           assertEquals(title, settlement.getTitle());
 
           assertNotNull(settlement.getCurrentBuyer());
-          assertEquals(bidder1, settlement.getCurrentBuyer().bidderId());
-          assertEquals(new BigDecimal("100.00"), settlement.getCurrentBuyer().bidAmount());
+          assertEquals(bidder1, settlement.getCurrentBuyer().getBidderId());
+          assertEquals(new BigDecimal("100.00"), settlement.getCurrentBuyer().getBidAmount());
           assertEquals(0, settlement.getCurrentBuyerIndex());
         });
   }
@@ -84,7 +83,6 @@ class AuctionSettlementTest {
         .when(new SelectBuyerCommand(
             settlementId,
             auctionItemId,
-            Collections.emptyList(),
             Collections.emptyList(),
             sellerId,
             title))
@@ -219,7 +217,8 @@ class AuctionSettlementTest {
 
     List<PotentialBuyer> allBids = List.of(winner, backup);
 
-    // Simulate: winner selected -> fund reservation fails -> backup selected -> backup confirms
+    // Simulate: winner selected -> fund reservation fails -> backup selected ->
+    // backup confirms
     fixture.given(
         new BuyerSelectedEvent(settlementId, auctionItemId, allBids, 0, sellerId, title),
         new BackupBuyerCandidateSelectedEvent(settlementId, backup))

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import SockJS from 'sockjs-client';
 import { Client, type IMessage } from '@stomp/stompjs';
 import { useAuth } from './useAuth';
@@ -41,24 +41,17 @@ export const useAuctionWebSocket = ({
   const clientRef = useRef<Client | null>(null);
   const connectedRef = useRef(false);
 
-  const handleMessage = useCallback(
-    (message: IMessage) => {
-      try {
-        const parsed: AuctionWebSocketMessage = JSON.parse(message.body);
+  // Use refs to store the latest callbacks to avoid stale closures
+  // This prevents WebSocket reconnection when callbacks change
+  const onBidUpdateRef = useRef(onBidUpdate);
+  const onAuctionClosedRef = useRef(onAuctionClosed);
 
-        if (isBidUpdate(parsed)) {
-          console.log('Received bid update:', parsed);
-          onBidUpdate?.(parsed);
-        } else if (isAuctionClosed(parsed)) {
-          console.log('Received auction closed:', parsed);
-          onAuctionClosed?.(parsed);
-        }
-      } catch (error) {
-        console.error('Failed to parse WebSocket message:', error);
-      }
-    },
-    [onBidUpdate, onAuctionClosed]
-  );
+  // Update refs synchronously using useLayoutEffect to avoid race conditions
+  // useLayoutEffect runs synchronously after DOM updates, before browser yields
+  useLayoutEffect(() => {
+    onBidUpdateRef.current = onBidUpdate;
+    onAuctionClosedRef.current = onAuctionClosed;
+  });
 
   useEffect(() => {
     if (!auctionItemId || !enabled) {
@@ -74,8 +67,6 @@ export const useAuctionWebSocket = ({
         console.log('[STOMP]', str);
       },
       reconnectDelay: 5000,
-      // STOMP heartbeats negotiated with server during CONNECT
-      // Format: [client-send-interval, client-receive-interval]
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
     });
@@ -86,7 +77,21 @@ export const useAuctionWebSocket = ({
 
       client.subscribe(
         `/topic/auction/${auctionItemId}`,
-        handleMessage,
+        (message: IMessage) => {
+          try {
+            const parsed: AuctionWebSocketMessage = JSON.parse(message.body);
+
+            if (isBidUpdate(parsed)) {
+              console.log('Received bid update:', parsed);
+              onBidUpdateRef.current?.(parsed);
+            } else if (isAuctionClosed(parsed)) {
+              console.log('Received auction closed:', parsed);
+              onAuctionClosedRef.current?.(parsed);
+            }
+          } catch (error) {
+            console.error('Failed to parse WebSocket message:', error);
+          }
+        },
         { auctionItemId }
       );
     };
@@ -117,7 +122,7 @@ export const useAuctionWebSocket = ({
         connectedRef.current = false;
       }
     };
-  }, [auctionItemId, enabled, token, handleMessage]);
+  }, [auctionItemId, enabled, token]);
 
   return {
     isConnected: connectedRef.current,

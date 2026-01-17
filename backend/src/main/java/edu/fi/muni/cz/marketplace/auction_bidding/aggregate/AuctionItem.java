@@ -194,7 +194,7 @@ public class AuctionItem {
   public void onAuctionEndDeadline(CloseAuctionCommand payload) {
     log.info("Auction end deadline reached for auction item ID: {}", payload.getAuctionItemId());
     if (status != AuctionStatus.CLOSED) {
-      apply(new AuctionClosedEvent(id, sellerId, title, allBids.stream().map(bid -> new WinningBid(bid)).toList()));
+      apply(new AuctionClosedEvent(id, sellerId, title, new ArrayList<>(allBids.stream().map(bid -> new WinningBid(bid)).toList())));
     }
   }
 

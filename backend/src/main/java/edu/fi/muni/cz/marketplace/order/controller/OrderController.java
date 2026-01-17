@@ -2,12 +2,9 @@ package edu.fi.muni.cz.marketplace.order.controller;
 
 import edu.fi.muni.cz.marketplace.config.exception.HttpException;
 import edu.fi.muni.cz.marketplace.order.command.EnterTrackingNumberCommand;
-import edu.fi.muni.cz.marketplace.order.command.ReserveFundsCommand;
 import edu.fi.muni.cz.marketplace.order.dto.EnterTrackingNumberRequest;
 import edu.fi.muni.cz.marketplace.order.dto.EnterTrackingNumberResponse;
 import edu.fi.muni.cz.marketplace.order.dto.OrderResponse;
-import edu.fi.muni.cz.marketplace.order.dto.ReserveFundsRequest;
-import edu.fi.muni.cz.marketplace.order.dto.ReserveFundsResponse;
 import edu.fi.muni.cz.marketplace.order.query.FindOrdersByBuyerIdQuery;
 import edu.fi.muni.cz.marketplace.order.query.FindOrdersBySellerIdQuery;
 import edu.fi.muni.cz.marketplace.order.query.FindUserIdByKeycloakIdQuery;
@@ -19,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.messaging.responsetypes.ResponseTypes;
 import org.axonframework.queryhandling.QueryGateway;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -44,19 +40,11 @@ public class OrderController {
       @PathVariable UUID orderId,
       @RequestBody EnterTrackingNumberRequest request,
       @AuthenticationPrincipal Jwt jwt) {
-
     String keycloakUserId = jwt.getSubject();
-    UUID userId = queryGateway.query(
-        new FindUserIdByKeycloakIdQuery(keycloakUserId),
-        ResponseTypes.instanceOf(UUID.class)).join();
-
-    if (userId == null) {
-      throw new HttpException(404, "User not found");
-    }
 
     commandGateway.sendAndWait(new EnterTrackingNumberCommand(
         orderId,
-        userId,
+        UUID.fromString(keycloakUserId),
         request.trackingNumber()));
 
     return ResponseEntity.ok(new EnterTrackingNumberResponse(orderId));
@@ -67,16 +55,8 @@ public class OrderController {
     String keycloakUserId = jwt.getSubject();
     log.info("Fetching sales for Keycloak user ID: {}", keycloakUserId);
 
-    UUID userId = queryGateway.query(
-        new FindUserIdByKeycloakIdQuery(keycloakUserId),
-        ResponseTypes.instanceOf(UUID.class)).join();
-
-    if (userId == null) {
-      throw new HttpException(404, "User not found");
-    }
-
     List<OrderReadModel> orders = queryGateway.query(
-        new FindOrdersBySellerIdQuery(userId),
+        new FindOrdersBySellerIdQuery(UUID.fromString(keycloakUserId)),
         ResponseTypes.multipleInstancesOf(OrderReadModel.class)).join();
 
     return ResponseEntity.ok(mapToOrderResponses(orders));
@@ -87,16 +67,8 @@ public class OrderController {
     String keycloakUserId = jwt.getSubject();
     log.info("Fetching purchases for Keycloak user ID: {}", keycloakUserId);
 
-    UUID userId = queryGateway.query(
-        new FindUserIdByKeycloakIdQuery(keycloakUserId),
-        ResponseTypes.instanceOf(UUID.class)).join();
-
-    if (userId == null) {
-      throw new HttpException(404, "User not found");
-    }
-
     List<OrderReadModel> orders = queryGateway.query(
-        new FindOrdersByBuyerIdQuery(userId),
+        new FindOrdersByBuyerIdQuery(UUID.fromString(keycloakUserId)),
         ResponseTypes.multipleInstancesOf(OrderReadModel.class)).join();
 
     return ResponseEntity.ok(mapToOrderResponses(orders));

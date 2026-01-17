@@ -12,6 +12,8 @@ import { PostAuctionItemPage } from './pages/PostAuctionItemPage';
 import { SellerDashboardPage } from './pages/SellerDashboardPage';
 import { SellerShopPage } from './pages/SellerShopPage';
 import { MyBidsPage } from './pages/MyBidsPage';
+import { MySalesPage } from './pages/MySalesPage';
+import { MyPurchasesPage } from './pages/MyPurchasesPage';
 import { ProtectedRoute } from './shared/ProtectedRoute';
 import { keycloak, keycloakInitConfig } from './lib/keycloak';
 import { getStripe, stripeElementsOptions } from './lib/stripe';
@@ -84,6 +86,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <MyBidsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-sales"
+              element={
+                <ProtectedRoute>
+                  <MySalesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-purchases"
+              element={
+                <ProtectedRoute>
+                  <MyPurchasesPage />
                 </ProtectedRoute>
               }
             />
