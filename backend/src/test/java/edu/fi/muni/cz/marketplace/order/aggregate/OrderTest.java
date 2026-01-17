@@ -18,21 +18,21 @@ import org.axonframework.test.aggregate.FixtureConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import edu.fi.muni.cz.marketplace.order.command.AssignFundReservationCommand;
-import edu.fi.muni.cz.marketplace.order.command.AssignTrackingInfoCommand;
+import edu.fi.muni.cz.marketplace.order.command.AssignFundReservationInformationCommand;
+import edu.fi.muni.cz.marketplace.order.command.AssignTrackingNumberToOrderCommand;
 import edu.fi.muni.cz.marketplace.order.command.EnterTrackingNumberCommand;
 import edu.fi.muni.cz.marketplace.order.command.CompleteOrderCommand;
-import edu.fi.muni.cz.marketplace.order.command.FinishRefundCommand;
+import edu.fi.muni.cz.marketplace.order.command.CancelOrderCommand;
 import edu.fi.muni.cz.marketplace.order.command.UpdateTrackingStatusCommand;
 import edu.fi.muni.cz.marketplace.order.deadline.ShippingDeadline;
 import edu.fi.muni.cz.marketplace.order.deadline.ShippingDeadlineNotMetPayload;
-import edu.fi.muni.cz.marketplace.order.events.FundsReservedEvent;
+import edu.fi.muni.cz.marketplace.order.events.FundReservationInformationAssignedEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderCancelledEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderCompletedEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderDeliveredEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderRefundScheduledEvent;
+import edu.fi.muni.cz.marketplace.order.events.TrackingNumberAssignedToOrderEvent;
 import edu.fi.muni.cz.marketplace.order.events.TrackingNumberEnteredEvent;
-import edu.fi.muni.cz.marketplace.order.events.TrackingNumberProvidedEvent;
 import edu.fi.muni.cz.marketplace.order.events.TrackingStatusUpdatedEvent;
 
 class OrderTest {
@@ -63,7 +63,7 @@ class OrderTest {
     String sellerStripeAccountId = "acct_seller123";
 
     fixture.givenCurrentTime(FIXED_TIME)
-        .when(new AssignFundReservationCommand(
+        .when(new AssignFundReservationInformationCommand(
             orderId,
             paymentIntentId,
             paymentMethodId,
@@ -73,7 +73,7 @@ class OrderTest {
             sellerStripeAccountId))
         .expectSuccessfulHandlerExecution()
         .expectEventsMatching(exactSequenceOf(
-            messageWithPayload(instanceOf(FundsReservedEvent.class))))
+            messageWithPayload(instanceOf(FundReservationInformationAssignedEvent.class))))
         .expectScheduledDeadline(
             Duration.ofDays(REFUND_DEADLINE_DAYS),
             new ShippingDeadlineNotMetPayload(orderId, paymentIntentId))
@@ -104,7 +104,7 @@ class OrderTest {
     String sellerStripeAccountId = "acct_seller123";
 
     fixture.givenCurrentTime(FIXED_TIME)
-        .andGivenCommands(new AssignFundReservationCommand(
+        .andGivenCommands(new AssignFundReservationInformationCommand(
             orderId,
             paymentIntentId,
             paymentMethodId,
@@ -134,7 +134,7 @@ class OrderTest {
     String refundId = "refund-456";
 
     fixture.given(
-        new FundsReservedEvent(
+        new FundReservationInformationAssignedEvent(
             orderId,
             paymentIntentId,
             paymentMethodId,
@@ -144,7 +144,7 @@ class OrderTest {
             sellerId,
             sellerAccountId),
         new OrderRefundScheduledEvent(orderId, paymentIntentId))
-        .when(new FinishRefundCommand(orderId, refundId))
+        .when(new CancelOrderCommand(orderId, refundId))
         .expectSuccessfulHandlerExecution()
         .expectEventsMatching(exactSequenceOf(
             messageWithPayload(instanceOf(OrderCancelledEvent.class))))
@@ -163,11 +163,12 @@ class OrderTest {
     BigDecimal amount = new BigDecimal("100.00");
     Instant reservedAt = FIXED_TIME;
     UUID sellerId = UUID.randomUUID();
+    String ship24TrackerId = "ship24-tracker-789";
     String sellerStripeAccountId = "acct_seller123";
     String trackingNumber = "TRACK123";
 
     fixture.givenCurrentTime(FIXED_TIME)
-        .andGivenCommands(new AssignFundReservationCommand(
+        .andGivenCommands(new AssignFundReservationInformationCommand(
             orderId,
             paymentIntentId,
             paymentMethodId,
@@ -175,12 +176,12 @@ class OrderTest {
             reservedAt,
             sellerId,
             sellerStripeAccountId))
-        .andGiven(new TrackingNumberProvidedEvent(orderId, trackingNumber))
+        .andGiven(new TrackingNumberAssignedToOrderEvent(orderId, trackingNumber, ship24TrackerId, FIXED_TIME))
         .whenTimeElapses(Duration.ofDays(REFUND_DEADLINE_DAYS))
         .expectSuccessfulHandlerExecution()
         .expectNoEvents()
         .expectState(order -> {
-          assertEquals(OrderStatus.TRACKING_NUMBER_PROVIDED, order.getStatus());
+          assertEquals(OrderStatus.TRACKING_IN_PROGRESS, order.getStatus());
         });
   }
 
@@ -197,7 +198,7 @@ class OrderTest {
     String refundId = "refund-456";
 
     fixture.given(
-        new FundsReservedEvent(
+        new FundReservationInformationAssignedEvent(
             orderId,
             paymentIntentId,
             paymentMethodId,
@@ -206,66 +207,7 @@ class OrderTest {
             reservedAt,
             sellerId,
             sellerAccountId))
-        .when(new FinishRefundCommand(orderId, refundId))
-        .expectException(IllegalStateException.class)
-        .expectNoEvents();
-  }
-
-  @Test
-  void enterTrackingNumber_orderInFundsReservedState_shouldEmitEventAndCancelDeadline() {
-    UUID orderId = UUID.randomUUID();
-    String paymentIntentId = "pi_test123";
-    String paymentMethodId = "pm_test456";
-    BigDecimal amount = new BigDecimal("100.00");
-    Instant reservedAt = FIXED_TIME;
-    UUID sellerId = UUID.randomUUID();
-    String sellerStripeAccountId = "acct_seller123";
-    String trackingNumber = "TRACK123456";
-
-    fixture.givenCurrentTime(FIXED_TIME)
-        .andGivenCommands(
-            new AssignFundReservationCommand(
-                orderId,
-                paymentIntentId,
-                paymentMethodId,
-                amount,
-                reservedAt,
-                sellerId,
-                sellerStripeAccountId),
-            new EnterTrackingNumberCommand(orderId, trackingNumber))
-        .whenTimeElapses(Duration.ofDays(REFUND_DEADLINE_DAYS))
-        .expectNoScheduledDeadlines()
-        .expectNoEvents()
-        .expectState(order -> {
-          assertEquals(orderId, order.getId());
-          assertEquals(OrderStatus.TRACKING_NUMBER_PROVIDED, order.getStatus());
-        });
-  }
-
-  @Test
-  void enterTrackingNumber_orderNotInFundsReservedState_shouldThrowException() {
-    UUID orderId = UUID.randomUUID();
-    String paymentIntentId = "pi_test123";
-    String paymentMethodId = "pm_test456";
-    String deadlineId = "deadline-123";
-    BigDecimal amount = new BigDecimal("100.00");
-    Instant reservedAt = FIXED_TIME;
-    UUID sellerId = UUID.randomUUID();
-    String sellerAccountId = "acct_seller123";
-    String trackingNumber = "TRACK123456";
-
-    fixture.given(
-        new FundsReservedEvent(
-            orderId,
-            paymentIntentId,
-            paymentMethodId,
-            deadlineId,
-            amount,
-            reservedAt,
-            sellerId,
-            sellerAccountId),
-        new OrderRefundScheduledEvent(orderId, paymentIntentId))
-        .when(new EnterTrackingNumberCommand(orderId, trackingNumber))
+        .when(new CancelOrderCommand(orderId, refundId))
         .expectException(IllegalStateException.class)
         .expectNoEvents();
   }
@@ -285,44 +227,7 @@ class OrderTest {
     Instant enteredAt = FIXED_TIME.plusSeconds(3600);
 
     fixture.given(
-        new FundsReservedEvent(
-            orderId,
-            paymentIntentId,
-            paymentMethodId,
-            deadlineId,
-            amount,
-            reservedAt,
-            sellerId,
-            sellerAccountId),
-        new TrackingNumberProvidedEvent(orderId, trackingNumber))
-        .when(new AssignTrackingInfoCommand(orderId, trackingNumber, ship24TrackerId, enteredAt))
-        .expectSuccessfulHandlerExecution()
-        .expectEvents(new TrackingNumberEnteredEvent(orderId, trackingNumber, ship24TrackerId, enteredAt))
-        .expectState(order -> {
-          assertEquals(orderId, order.getId());
-          assertEquals(OrderStatus.TRACKING_IN_PROGRESS, order.getStatus());
-          assertNotNull(order.getTrackingInfo());
-          assertEquals(trackingNumber, order.getTrackingInfo().getTrackingNumber());
-          assertEquals(ship24TrackerId, order.getTrackingInfo().getShip24TrackerId());
-        });
-  }
-
-  @Test
-  void assignTrackingInfo_orderNotInTrackingNumberProvidedState_shouldThrowException() {
-    UUID orderId = UUID.randomUUID();
-    String paymentIntentId = "pi_test123";
-    String paymentMethodId = "pm_test456";
-    String deadlineId = "deadline-123";
-    BigDecimal amount = new BigDecimal("100.00");
-    Instant reservedAt = FIXED_TIME;
-    UUID sellerId = UUID.randomUUID();
-    String sellerAccountId = "acct_seller123";
-    String trackingNumber = "TRACK123456";
-    String ship24TrackerId = "ship24-tracker-789";
-    Instant enteredAt = FIXED_TIME.plusSeconds(3600);
-
-    fixture.given(
-        new FundsReservedEvent(
+        new FundReservationInformationAssignedEvent(
             orderId,
             paymentIntentId,
             paymentMethodId,
@@ -331,9 +236,16 @@ class OrderTest {
             reservedAt,
             sellerId,
             sellerAccountId))
-        .when(new AssignTrackingInfoCommand(orderId, trackingNumber, ship24TrackerId, enteredAt))
-        .expectException(IllegalStateException.class)
-        .expectNoEvents();
+        .when(new AssignTrackingNumberToOrderCommand(orderId, trackingNumber, ship24TrackerId, enteredAt))
+        .expectSuccessfulHandlerExecution()
+        .expectEvents(new TrackingNumberAssignedToOrderEvent(orderId, trackingNumber, ship24TrackerId, enteredAt))
+        .expectState(order -> {
+          assertEquals(orderId, order.getId());
+          assertEquals(OrderStatus.TRACKING_IN_PROGRESS, order.getStatus());
+          assertNotNull(order.getTrackingInfo());
+          assertEquals(trackingNumber, order.getTrackingInfo().getTrackingNumber());
+          assertEquals(ship24TrackerId, order.getTrackingInfo().getShip24TrackerId());
+        });
   }
 
   @Test
@@ -353,11 +265,10 @@ class OrderTest {
     Instant eventOccurredAt = FIXED_TIME.plusSeconds(7200);
 
     fixture.given(
-        new FundsReservedEvent(
+        new FundReservationInformationAssignedEvent(
             orderId, paymentIntentId, paymentMethodId, deadlineId,
             amount, reservedAt, sellerId, sellerAccountId),
-        new TrackingNumberProvidedEvent(orderId, trackingNumber),
-        new TrackingNumberEnteredEvent(orderId, trackingNumber, ship24TrackerId, enteredAt))
+        new TrackingNumberAssignedToOrderEvent(orderId, trackingNumber, ship24TrackerId, enteredAt))
         .when(new UpdateTrackingStatusCommand(
             orderId, eventId, TrackingStatusMilestone.IN_TRANSIT, "In transit", eventOccurredAt))
         .expectSuccessfulHandlerExecution()
@@ -387,11 +298,10 @@ class OrderTest {
     Instant eventOccurredAt = FIXED_TIME.plusSeconds(7200);
 
     fixture.given(
-        new FundsReservedEvent(
+        new FundReservationInformationAssignedEvent(
             orderId, paymentIntentId, paymentMethodId, deadlineId,
             amount, reservedAt, sellerId, sellerAccountId),
-        new TrackingNumberProvidedEvent(orderId, trackingNumber),
-        new TrackingNumberEnteredEvent(orderId, trackingNumber, ship24TrackerId, enteredAt))
+        new TrackingNumberAssignedToOrderEvent(orderId, trackingNumber, ship24TrackerId, enteredAt))
         .when(new UpdateTrackingStatusCommand(
             orderId, eventId, TrackingStatusMilestone.DELIVERED, "Delivered", eventOccurredAt))
         .expectSuccessfulHandlerExecution()
@@ -426,11 +336,10 @@ class OrderTest {
     Instant eventOccurredAt = FIXED_TIME.plusSeconds(7200);
 
     fixture.given(
-        new FundsReservedEvent(
+        new FundReservationInformationAssignedEvent(
             orderId, paymentIntentId, paymentMethodId, deadlineId,
             amount, reservedAt, sellerId, sellerAccountId),
-        new TrackingNumberProvidedEvent(orderId, trackingNumber),
-        new TrackingNumberEnteredEvent(orderId, trackingNumber, ship24TrackerId, enteredAt))
+        new TrackingNumberAssignedToOrderEvent(orderId, trackingNumber, ship24TrackerId, enteredAt))
         .when(new UpdateTrackingStatusCommand(
             orderId, eventId, TrackingStatusMilestone.EXCEPTION, "Delivery exception", eventOccurredAt))
         .expectSuccessfulHandlerExecution()
@@ -459,7 +368,7 @@ class OrderTest {
     String commissionTransferId = "transfer-commission-456";
 
     fixture.given(
-        new FundsReservedEvent(
+        new FundReservationInformationAssignedEvent(
             orderId, paymentIntentId, paymentMethodId, deadlineId,
             amount, reservedAt, sellerId, sellerAccountId),
         new OrderDeliveredEvent(
@@ -494,7 +403,7 @@ class OrderTest {
     String commissionTransferId = "transfer-commission-456";
 
     fixture.given(
-        new FundsReservedEvent(
+        new FundReservationInformationAssignedEvent(
             orderId, paymentIntentId, paymentMethodId, deadlineId,
             amount, reservedAt, sellerId, sellerAccountId))
         .when(new CompleteOrderCommand(orderId, paymentTransferId, commissionTransferId))

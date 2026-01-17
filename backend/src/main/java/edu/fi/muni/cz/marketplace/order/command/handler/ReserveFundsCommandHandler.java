@@ -2,13 +2,14 @@ package edu.fi.muni.cz.marketplace.order.command.handler;
 
 import edu.fi.muni.cz.marketplace.order.client.StripeFundsApiClient;
 import edu.fi.muni.cz.marketplace.order.client.dto.FundReservationResult;
-import edu.fi.muni.cz.marketplace.order.command.AssignFundReservationCommand;
 import edu.fi.muni.cz.marketplace.order.command.ReserveFundsCommand;
+import edu.fi.muni.cz.marketplace.order.events.FundsReservedEvent;
+
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.axonframework.commandhandling.CommandHandler;
-import org.axonframework.commandhandling.gateway.CommandGateway;
+import org.axonframework.eventhandling.gateway.EventGateway;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -17,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class ReserveFundsCommandHandler {
 
   private final StripeFundsApiClient stripeFundsApiClient;
-  private final CommandGateway commandGateway;
+  private final EventGateway eventGateway;
 
   @CommandHandler
   public void on(ReserveFundsCommand command) {
@@ -32,7 +33,7 @@ public class ReserveFundsCommandHandler {
     log.debug("Successfully reserved funds on Stripe. PaymentIntent: {}, gross amount: {} CZK",
         result.paymentIntentId(), result.grossAmount());
 
-    commandGateway.send(new AssignFundReservationCommand(
+    eventGateway.publish(new FundsReservedEvent(
         command.getId(),
         command.getBuyerId(),
         result.paymentIntentId(),

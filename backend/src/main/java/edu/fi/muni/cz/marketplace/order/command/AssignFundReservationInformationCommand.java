@@ -7,9 +7,8 @@ import lombok.Value;
 import org.axonframework.modelling.command.TargetAggregateIdentifier;
 
 @Value
-public class AssignFundReservationCommand {
+public class AssignFundReservationInformationCommand {
 
-  @TargetAggregateIdentifier
   UUID orderId;
   UUID buyerId;
   String paymentIntentId;

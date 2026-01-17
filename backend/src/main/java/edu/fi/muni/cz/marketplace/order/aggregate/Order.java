@@ -2,21 +2,19 @@ package edu.fi.muni.cz.marketplace.order.aggregate;
 
 import static org.axonframework.modelling.command.AggregateLifecycle.apply;
 
-import edu.fi.muni.cz.marketplace.order.command.AssignFundReservationCommand;
-import edu.fi.muni.cz.marketplace.order.command.AssignTrackingInfoCommand;
+import edu.fi.muni.cz.marketplace.order.command.AssignFundReservationInformationCommand;
+import edu.fi.muni.cz.marketplace.order.command.AssignTrackingNumberToOrderCommand;
+import edu.fi.muni.cz.marketplace.order.command.CancelOrderCommand;
 import edu.fi.muni.cz.marketplace.order.command.CompleteOrderCommand;
-import edu.fi.muni.cz.marketplace.order.command.EnterTrackingNumberCommand;
-import edu.fi.muni.cz.marketplace.order.command.FinishRefundCommand;
 import edu.fi.muni.cz.marketplace.order.command.UpdateTrackingStatusCommand;
 import edu.fi.muni.cz.marketplace.order.deadline.ShippingDeadline;
 import edu.fi.muni.cz.marketplace.order.deadline.ShippingDeadlineNotMetPayload;
-import edu.fi.muni.cz.marketplace.order.events.FundsReservedEvent;
+import edu.fi.muni.cz.marketplace.order.events.FundReservationInformationAssignedEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderCancelledEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderCompletedEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderDeliveredEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderRefundScheduledEvent;
-import edu.fi.muni.cz.marketplace.order.events.TrackingNumberEnteredEvent;
-import edu.fi.muni.cz.marketplace.order.events.TrackingNumberProvidedEvent;
+import edu.fi.muni.cz.marketplace.order.events.TrackingNumberAssignedToOrderEvent;
 import edu.fi.muni.cz.marketplace.order.events.TrackingStatusUpdatedEvent;
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -69,7 +67,7 @@ public class Order {
   private String refundId;
 
   @CommandHandler
-  public Order(AssignFundReservationCommand command,
+  public Order(AssignFundReservationInformationCommand command,
       @Autowired DeadlineManager deadlineManager,
       @Autowired Clock clock,
       @Autowired @Value("${policy.refund-deadline-days}") Long refundPeriodDays) {
@@ -79,7 +77,7 @@ public class Order {
         ShippingDeadline.SHIPING_DEADLINE_NOT_MET,
         new ShippingDeadlineNotMetPayload(command.getOrderId(), command.getPaymentIntentId()));
 
-    apply(new FundsReservedEvent(
+    apply(new FundReservationInformationAssignedEvent(
         command.getOrderId(),
         command.getBuyerId(),
         command.getPaymentIntentId(),
@@ -92,7 +90,7 @@ public class Order {
   }
 
   @EventSourcingHandler
-  public void on(FundsReservedEvent event,
+  public void on(FundReservationInformationAssignedEvent event,
       @Autowired @Value("${policy.commission-percentage}") String commissionPercentage) {
     this.id = event.getOrderId();
     this.buyerId = event.getBuyerId();
@@ -127,7 +125,7 @@ public class Order {
   }
 
   @CommandHandler
-  public void on(FinishRefundCommand command) {
+  public void on(CancelOrderCommand command) {
     if (status != OrderStatus.REFUND_PENDING) {
       throw new IllegalStateException("Trying to cancel a unrefunded order: " + this.id);
     }
@@ -142,37 +140,19 @@ public class Order {
   }
 
   @CommandHandler
-  public void on(EnterTrackingNumberCommand command, @Autowired DeadlineManager deadlineManager) {
+  public void on(AssignTrackingNumberToOrderCommand command, @Autowired DeadlineManager deadlineManager) {
     if (!this.fundReservation.getSellerId().equals(command.getEnteredByUserId())) {
       throw new IllegalStateException(
           "Only the seller can enter tracking number for order " + this.id);
     }
-
     if (status != OrderStatus.FUNDS_RESERVED) {
-      throw new IllegalStateException(
-          "Cannot enter tracking number for order " + this.id + " in state: " + status);
-    }
-
-    log.info("Cancelling order deadline, the tracking info is now provided: " + this.id);
-    deadlineManager.cancelSchedule(ShippingDeadline.SHIPING_DEADLINE_NOT_MET,
-        this.fundReservation.getDeadlineId());
-
-    apply(new TrackingNumberProvidedEvent(command.getOrderId(), command.getTrackingNumber()));
-  }
-
-  @EventSourcingHandler
-  public void on(TrackingNumberProvidedEvent event) {
-    this.status = OrderStatus.TRACKING_NUMBER_PROVIDED;
-  }
-
-  @CommandHandler
-  public void on(AssignTrackingInfoCommand command) {
-    if (status != OrderStatus.TRACKING_NUMBER_PROVIDED) {
       throw new IllegalStateException(
           "Cannot assign tracking info for order " + this.id + " in state: " + status);
     }
 
-    apply(new TrackingNumberEnteredEvent(
+    deadlineManager.cancelSchedule(ShippingDeadline.SHIPING_DEADLINE_NOT_MET, this.fundReservation.getDeadlineId());
+
+    apply(new TrackingNumberAssignedToOrderEvent(
         command.getOrderId(),
         command.getTrackingNumber(),
         command.getShip24TrackerId(),
@@ -180,7 +160,7 @@ public class Order {
   }
 
   @EventSourcingHandler
-  public void on(TrackingNumberEnteredEvent event) {
+  public void on(TrackingNumberAssignedToOrderEvent event) {
     this.status = OrderStatus.TRACKING_IN_PROGRESS;
     this.trackingInfo = new TrackingInfo(
         event.getTrackingNumber(),

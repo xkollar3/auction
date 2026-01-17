@@ -6,7 +6,7 @@ import lombok.Value;
 import org.axonframework.modelling.command.TargetAggregateIdentifier;
 
 @Value
-public class AssignTrackingInfoCommand {
+public class AssignTrackingNumberToOrderCommand {
 
   @TargetAggregateIdentifier
   UUID orderId;

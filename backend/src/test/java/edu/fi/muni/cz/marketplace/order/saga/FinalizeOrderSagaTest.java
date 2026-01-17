@@ -14,11 +14,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import edu.fi.muni.cz.marketplace.order.command.CompleteOrderCommand;
-import edu.fi.muni.cz.marketplace.order.command.DeductCommissionCommand;
-import edu.fi.muni.cz.marketplace.order.command.TransferPaymentCommand;
-import edu.fi.muni.cz.marketplace.order.events.CommissionDeductedEvent;
+import edu.fi.muni.cz.marketplace.order.command.TransferPlatformCommissionCommand;
+import edu.fi.muni.cz.marketplace.order.command.TransferSellerPayoutCommand;
+import edu.fi.muni.cz.marketplace.order.events.PlatformCommissionTransferredEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderDeliveredEvent;
-import edu.fi.muni.cz.marketplace.order.events.PaymentTransferredEvent;
+import edu.fi.muni.cz.marketplace.order.events.SellerPayoutTransferredEvent;
 
 class FinalizeOrderSagaTest {
 
@@ -46,8 +46,8 @@ class FinalizeOrderSagaTest {
             deliveredAt))
         .expectActiveSagas(1)
         .expectDispatchedCommands(
-            new DeductCommissionCommand(orderId, commission),
-            new TransferPaymentCommand(orderId, sellerStripeAccountId, payoutAmount));
+            new TransferPlatformCommissionCommand(orderId, commission),
+            new TransferSellerPayoutCommand(orderId, sellerStripeAccountId, payoutAmount));
   }
 
   @Test
@@ -65,7 +65,7 @@ class FinalizeOrderSagaTest {
         payoutAmount,
         commission,
         deliveredAt))
-        .whenPublishingA(new CommissionDeductedEvent(orderId, commissionTransferId))
+        .whenPublishingA(new PlatformCommissionTransferredEvent(orderId, commissionTransferId))
         .expectActiveSagas(1)
         .expectNoDispatchedCommands();
   }
@@ -85,7 +85,7 @@ class FinalizeOrderSagaTest {
         payoutAmount,
         commission,
         deliveredAt))
-        .whenPublishingA(new PaymentTransferredEvent(orderId, paymentTransferId))
+        .whenPublishingA(new SellerPayoutTransferredEvent(orderId, paymentTransferId))
         .expectActiveSagas(1)
         .expectNoDispatchedCommands();
   }
@@ -106,8 +106,8 @@ class FinalizeOrderSagaTest {
             payoutAmount,
             commission,
             deliveredAt))
-        .andThenAPublished(new CommissionDeductedEvent(orderId, commissionTransferId))
-        .whenPublishingA(new PaymentTransferredEvent(orderId, paymentTransferId))
+        .andThenAPublished(new PlatformCommissionTransferredEvent(orderId, commissionTransferId))
+        .whenPublishingA(new SellerPayoutTransferredEvent(orderId, paymentTransferId))
         .expectActiveSagas(0)
         .expectDispatchedCommands(
             new CompleteOrderCommand(orderId, paymentTransferId, commissionTransferId));
@@ -129,8 +129,8 @@ class FinalizeOrderSagaTest {
             payoutAmount,
             commission,
             deliveredAt))
-        .andThenAPublished(new PaymentTransferredEvent(orderId, paymentTransferId))
-        .whenPublishingA(new CommissionDeductedEvent(orderId, commissionTransferId))
+        .andThenAPublished(new SellerPayoutTransferredEvent(orderId, paymentTransferId))
+        .whenPublishingA(new PlatformCommissionTransferredEvent(orderId, commissionTransferId))
         .expectActiveSagas(0)
         .expectDispatchedCommands(
             new CompleteOrderCommand(orderId, paymentTransferId, commissionTransferId));
@@ -154,15 +154,15 @@ class FinalizeOrderSagaTest {
             commission,
             deliveredAt))
         .expectDispatchedCommandsMatching(exactSequenceOf(
-            messageWithPayload(instanceOf(DeductCommissionCommand.class)),
-            messageWithPayload(instanceOf(TransferPaymentCommand.class)),
+            messageWithPayload(instanceOf(TransferPlatformCommissionCommand.class)),
+            messageWithPayload(instanceOf(TransferSellerPayoutCommand.class)),
             andNoMore()));
 
-    fixture.whenPublishingA(new CommissionDeductedEvent(orderId, commissionTransferId))
+    fixture.whenPublishingA(new PlatformCommissionTransferredEvent(orderId, commissionTransferId))
         .expectActiveSagas(1)
         .expectNoDispatchedCommands();
 
-    fixture.whenPublishingA(new PaymentTransferredEvent(orderId, paymentTransferId))
+    fixture.whenPublishingA(new SellerPayoutTransferredEvent(orderId, paymentTransferId))
         .expectActiveSagas(0)
         .expectDispatchedCommandsMatching(exactSequenceOf(
             messageWithPayload(instanceOf(CompleteOrderCommand.class)),
@@ -187,15 +187,15 @@ class FinalizeOrderSagaTest {
             commission,
             deliveredAt))
         .expectDispatchedCommandsMatching(exactSequenceOf(
-            messageWithPayload(instanceOf(DeductCommissionCommand.class)),
-            messageWithPayload(instanceOf(TransferPaymentCommand.class)),
+            messageWithPayload(instanceOf(TransferPlatformCommissionCommand.class)),
+            messageWithPayload(instanceOf(TransferSellerPayoutCommand.class)),
             andNoMore()));
 
-    fixture.whenPublishingA(new PaymentTransferredEvent(orderId, paymentTransferId))
+    fixture.whenPublishingA(new SellerPayoutTransferredEvent(orderId, paymentTransferId))
         .expectActiveSagas(1)
         .expectNoDispatchedCommands();
 
-    fixture.whenPublishingA(new CommissionDeductedEvent(orderId, commissionTransferId))
+    fixture.whenPublishingA(new PlatformCommissionTransferredEvent(orderId, commissionTransferId))
         .expectActiveSagas(0)
         .expectDispatchedCommandsMatching(exactSequenceOf(
             messageWithPayload(instanceOf(CompleteOrderCommand.class)),

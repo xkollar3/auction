@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionItemCategory;
 import edu.fi.muni.cz.marketplace.auction_bidding.command.AddAuctionItemCommand;
 import edu.fi.muni.cz.marketplace.auction_bidding.command.CloseAuctionCommand;
 import edu.fi.muni.cz.marketplace.auction_bidding.command.PlaceBidCommand;
@@ -205,7 +204,7 @@ class AuctionItemTest {
             startingPrice,
             AuctionItemCategory.ELECTRONICS,
             auctionEndTime),
-        new AuctionClosedEvent(auctionItemId, Collections.emptyList()))
+        new AuctionClosedEvent(auctionItemId, sellerId, title, Collections.emptyList()))
         .when(new PlaceBidCommand(auctionItemId, bidId, bidderId, bidAmount))
         .expectSuccessfulHandlerExecution()
         .expectEventsMatching(exactSequenceOf(
@@ -305,7 +304,7 @@ class AuctionItemTest {
             startingPrice,
             AuctionItemCategory.ELECTRONICS,
             auctionEndTime))
-        .andGiven(new AuctionClosedEvent(auctionItemId, Collections.emptyList()))
+        .andGiven(new AuctionClosedEvent(auctionItemId, sellerId, title, Collections.emptyList()))
         .whenTimeElapses(Duration.ofDays(7))
         .expectTriggeredDeadlinesWithName(AUCTION_END_DEADLINE)
         .expectNoEvents()
@@ -363,7 +362,7 @@ class AuctionItemTest {
             startingPrice,
             AuctionItemCategory.ELECTRONICS,
             auctionEndTime))
-        .andGiven(new AuctionClosedEvent(auctionItemId, Collections.emptyList()))
+        .andGiven(new AuctionClosedEvent(auctionItemId, sellerId, title, Collections.emptyList()))
         .whenTimeElapses(Duration.ofDays(7))
         .expectTriggeredDeadlinesWithName(AUCTION_END_DEADLINE)
         .expectNoEvents()
