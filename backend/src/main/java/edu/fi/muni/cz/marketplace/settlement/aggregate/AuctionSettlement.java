@@ -1,7 +1,5 @@
 package edu.fi.muni.cz.marketplace.settlement.aggregate;
 
-import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.Bid;
-import edu.fi.muni.cz.marketplace.order.command.ReserveFundsCommand;
 import edu.fi.muni.cz.marketplace.settlement.command.ConfirmPurchaseCommand;
 import edu.fi.muni.cz.marketplace.settlement.command.MarkAuctionUnsuccessfulCommand;
 import edu.fi.muni.cz.marketplace.settlement.command.RejectPurchaseCommand;
@@ -16,12 +14,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.axonframework.commandhandling.CommandHandler;
-import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.modelling.command.AggregateIdentifier;
 import org.axonframework.spring.stereotype.Aggregate;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -41,21 +37,21 @@ public class AuctionSettlement {
     private SettlementStatus status;
     private UUID sellerId;
     private String title;
-
-    private List<BidSettlement> bidSettlementList;
-    private BidSettlement winningBid;
+    private List<PotentialBuyer> potentialBuyerList;
+    private PotentialBuyer currentBuyer;
 
     @CommandHandler
     public AuctionSettlement(SelectBuyerCommand command) {
         log.debug("Handling SelectBuyerCommand: settlementId=" + command.getSettlementId());
-        List<BidSettlement> bidSettlements = command.getBidSettlementList();
-        if (Objects.isNull(bidSettlements) || bidSettlements.isEmpty()) {
+        List<PotentialBuyer> potentialBuyers = command.getPotentialBuyerList();
+        if (Objects.isNull(potentialBuyers) || potentialBuyers.isEmpty()) {
             apply(new AuctionMarkedUnsuccessfulEvent(command.getSettlementId(), command.getAuctionItemId()));
             return;
         }
-        BidSettlement selectedWinningBid = command.getBidSettlementList().getFirst();
-        command.getBidSettlementList().removeFirst();
-        apply(new BuyerSelectedEvent(command.getSettlementId(), command.getAuctionItemId(), selectedWinningBid, command.getBidSettlementList(), command.getSellerId(), command.getTitle()));
+        List<PotentialBuyer> potentialBuyersList = new ArrayList<>(command.getPotentialBuyerList());
+        PotentialBuyer selectedCurrentBuyer = potentialBuyersList.getFirst();
+        potentialBuyersList.removeFirst();
+        apply(new BuyerSelectedEvent(command.getSettlementId(), command.getAuctionItemId(), selectedCurrentBuyer, potentialBuyersList, command.getSellerId(), command.getTitle()));
     }
 
     @EventSourcingHandler
@@ -65,32 +61,31 @@ public class AuctionSettlement {
         this.status = SettlementStatus.BUYER_SELECTED;
         this.sellerId = event.getSellerId();
         this.title = event.getTitle();
-        this.bidSettlementList = event.getBidSettlementList();
-        this.winningBid = event.getWinningBid();
+        this.potentialBuyerList = event.getPotentialBuyerList();
+        this.currentBuyer = event.getSelectedPotentialBuyer();
     }
 
     @CommandHandler
     public void handle(SelectNextBuyerCommand command) {
-        if (Objects.isNull(bidSettlementList) || bidSettlementList.isEmpty()) {
+        if (Objects.isNull(potentialBuyerList) || potentialBuyerList.isEmpty()) {
             apply(new AuctionMarkedUnsuccessfulEvent(command.getSettlementId(), auctionItemId));
             return;
         }
-        BidSettlement selectedWinningBid = command.getBidSettlementList().getFirst();
-        command.getBidSettlementList().removeFirst();
-        apply(new NextBuyerSelectedEvent(command.getSettlementId(), selectedWinningBid, command.getBidSettlementList()));
+        PotentialBuyer selectedPotentialBuyer = this.getPotentialBuyerList().getFirst();
+        apply(new NextBuyerSelectedEvent(command.getSettlementId(), selectedPotentialBuyer));
     }
 
     @EventSourcingHandler
     public void on(NextBuyerSelectedEvent event) {
         this.settlementId = event.getSettlementId();
-        this.winningBid = event.getWinningBid();
-        this.bidSettlementList = new ArrayList<>(event.getBidSettlementList());
+        this.currentBuyer = event.getSelectedPotentialBuyer();
+        this.potentialBuyerList.remove(event.getSelectedPotentialBuyer());
         this.status = SettlementStatus.BUYER_SELECTED;
     }
 
     @CommandHandler
     public void handle(ConfirmPurchaseCommand command) {
-        apply(new PurchaseConfirmedEvent(settlementId, winningBid, sellerId));
+        apply(new PurchaseConfirmedEvent(settlementId, currentBuyer, sellerId));
     }
 
     @EventSourcingHandler
@@ -100,13 +95,12 @@ public class AuctionSettlement {
 
     @CommandHandler
     public void handle(RejectPurchaseCommand command) {
-        apply(new PurchaseRejectedEvent(command.getSettlementId(), bidSettlementList));
+        apply(new PurchaseRejectedEvent(command.getSettlementId()));
     }
 
     @EventSourcingHandler
     public void on(PurchaseRejectedEvent event) {
-        this.settlementId = event.getSettlementId();
-        this.winningBid = null;
+        this.currentBuyer = null;
         this.status = SettlementStatus.PENDING;
     }
 
@@ -119,7 +113,7 @@ public class AuctionSettlement {
     public void on(AuctionMarkedUnsuccessfulEvent event) {
         this.settlementId = event.getSettlementId();
         this.auctionItemId = event.getAuctionItemId();
-        this.winningBid = null;
+        this.currentBuyer = null;
         this.status = SettlementStatus.UNSUCCESSFUL;
     }
 

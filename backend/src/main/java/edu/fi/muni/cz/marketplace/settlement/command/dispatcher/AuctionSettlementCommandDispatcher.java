@@ -24,9 +24,9 @@ public class AuctionSettlementCommandDispatcher {
     public void on(BuyerSelectedEvent event) {
         commandGateway.send(new ReserveFundsCommand(
                 UUID.randomUUID(),
-                event.getWinningBid().bidderId().toString(),
+                event.getSelectedPotentialBuyer().bidderId().toString(),
                 "paymentMethodId",
-                event.getWinningBid().bidAmount(),
+                event.getSelectedPotentialBuyer().bidAmount(),
                 event.getSellerId(),
                 "sellerStripeAccountId"
         ));
@@ -34,14 +34,13 @@ public class AuctionSettlementCommandDispatcher {
 
     @EventHandler
     public void on(PurchaseConfirmedEvent event) {
-        commandGateway.send(new ReserveFundsCommand(UUID.randomUUID(), event.getWinningBid().bidderId().toString(), "paymentMethodId", event.getWinningBid().bidAmount(), event.getSellerId(), "sellerStripeAccountId"));
+        commandGateway.send(new ReserveFundsCommand(UUID.randomUUID(), event.getPotentialBuyer().bidderId().toString(), "paymentMethodId", event.getPotentialBuyer().bidAmount(), event.getSellerId(), "sellerStripeAccountId"));
     }
 
     @EventHandler
     public void on(PurchaseRejectedEvent event) {
          commandGateway.send(new SelectNextBuyerCommand(
-             event.getSettlementId(),
-             event.getBidSettlementList()
+             event.getSettlementId()
          ));
     }
 }

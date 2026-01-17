@@ -1,6 +1,6 @@
 package edu.fi.muni.cz.marketplace.settlement.events;
 
-import edu.fi.muni.cz.marketplace.settlement.aggregate.BidSettlement;
+import edu.fi.muni.cz.marketplace.settlement.aggregate.PotentialBuyer;
 import lombok.Value;
 
 import java.util.UUID;
@@ -9,7 +9,7 @@ import java.util.UUID;
 public class PurchaseConfirmedEvent {
 
     UUID settlementId;
-    BidSettlement winningBid;
+    PotentialBuyer potentialBuyer;
     UUID sellerId;
 
 }

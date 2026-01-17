@@ -40,14 +40,14 @@ class AuctionSettlementTest {
         UUID sellerId = UUID.randomUUID();
         String title = "Auction Item Title";
 
-        BidSettlement bid1 = new BidSettlement(bidder1, new BigDecimal("100.00"));
-        BidSettlement bid2 = new BidSettlement(bidder2, new BigDecimal("90.00"));
+        PotentialBuyer bid1 = new PotentialBuyer(bidder1, new BigDecimal("100.00"));
+        PotentialBuyer bid2 = new PotentialBuyer(bidder2, new BigDecimal("90.00"));
 
-        List<BidSettlement> initialBids = new ArrayList<>();
+        List<PotentialBuyer> initialBids = new ArrayList<>();
         initialBids.add(bid1);
         initialBids.add(bid2);
 
-        List<BidSettlement> expectedRemaining = new ArrayList<>();
+        List<PotentialBuyer> expectedRemaining = new ArrayList<>();
         expectedRemaining.add(bid2);
 
         fixture.givenNoPriorActivity()
@@ -75,13 +75,13 @@ class AuctionSettlementTest {
                     assertEquals(sellerId, settlement.getSellerId());
                     assertEquals(title, settlement.getTitle());
 
-                    assertNotNull(settlement.getWinningBid());
-                    assertEquals(bidder1, settlement.getWinningBid().bidderId());
-                    assertEquals(new BigDecimal("100.00"), settlement.getWinningBid().bidAmount());
+                    assertNotNull(settlement.getCurrentBuyer());
+                    assertEquals(bidder1, settlement.getCurrentBuyer().bidderId());
+                    assertEquals(new BigDecimal("100.00"), settlement.getCurrentBuyer().bidAmount());
 
-                    assertNotNull(settlement.getBidSettlementList());
-                    assertEquals(1, settlement.getBidSettlementList().size());
-                    assertEquals(bidder2, settlement.getBidSettlementList().getFirst().bidderId());
+                    assertNotNull(settlement.getPotentialBuyerList());
+                    assertEquals(1, settlement.getPotentialBuyerList().size());
+                    assertEquals(bidder2, settlement.getPotentialBuyerList().getFirst().bidderId());
                 });
     }
 
@@ -114,8 +114,8 @@ class AuctionSettlementTest {
         UUID sellerId = UUID.randomUUID();
         String title = "Auction Item Title";
 
-        BidSettlement winningBid = new BidSettlement(bidder1, new BigDecimal("120.00"));
-        List<BidSettlement> remaining = Collections.emptyList();
+        PotentialBuyer winningBid = new PotentialBuyer(bidder1, new BigDecimal("120.00"));
+        List<PotentialBuyer> remaining = Collections.emptyList();
 
         fixture.given(new BuyerSelectedEvent(
                         settlementId,
@@ -130,7 +130,7 @@ class AuctionSettlementTest {
                 .expectEvents(new PurchaseConfirmedEvent(settlementId, winningBid, sellerId))
                 .expectState(settlement -> {
                     assertEquals(SettlementStatus.BUYER_SELECTED, settlement.getStatus());
-                    assertEquals(winningBid, settlement.getWinningBid());
+                    assertEquals(winningBid, settlement.getCurrentBuyer());
                 });
     }
 
@@ -143,10 +143,10 @@ class AuctionSettlementTest {
         UUID sellerId = UUID.randomUUID();
         String title = "Auction Item Title";
 
-        BidSettlement winningBid = new BidSettlement(bidder1, new BigDecimal("150.00"));
-        BidSettlement nextBid = new BidSettlement(bidder2, new BigDecimal("140.00"));
+        PotentialBuyer winningBid = new PotentialBuyer(bidder1, new BigDecimal("150.00"));
+        PotentialBuyer nextBid = new PotentialBuyer(bidder2, new BigDecimal("140.00"));
 
-        List<BidSettlement> remaining = new ArrayList<>();
+        List<PotentialBuyer> remaining = new ArrayList<>();
         remaining.add(nextBid);
 
         fixture.given(new BuyerSelectedEvent(
@@ -159,10 +159,10 @@ class AuctionSettlementTest {
                 ))
                 .when(new RejectPurchaseCommand(settlementId))
                 .expectSuccessfulHandlerExecution()
-                .expectEvents(new PurchaseRejectedEvent(settlementId, remaining))
+                .expectEvents(new PurchaseRejectedEvent(settlementId))
                 .expectState(settlement -> {
                     assertEquals(SettlementStatus.PENDING, settlement.getStatus());
-                    assertNull(settlement.getWinningBid());
+                    assertNull(settlement.getCurrentBuyer());
                 });
     }
 
@@ -175,10 +175,10 @@ class AuctionSettlementTest {
         UUID sellerId = UUID.randomUUID();
         String title = "Auction Item Title";
 
-        BidSettlement firstWinner = new BidSettlement(bidder1, new BigDecimal("200.00"));
-        BidSettlement nextWinner = new BidSettlement(bidder2, new BigDecimal("180.00"));
+        PotentialBuyer firstWinner = new PotentialBuyer(bidder1, new BigDecimal("200.00"));
+        PotentialBuyer nextWinner = new PotentialBuyer(bidder2, new BigDecimal("180.00"));
 
-        List<BidSettlement> remainingAfterFirst = new ArrayList<>();
+        List<PotentialBuyer> remainingAfterFirst = new ArrayList<>();
         remainingAfterFirst.add(nextWinner);
 
         fixture.given(new BuyerSelectedEvent(
@@ -189,14 +189,14 @@ class AuctionSettlementTest {
                         sellerId,
                         title
                 ))
-                .when(new SelectNextBuyerCommand(settlementId,  new ArrayList<>(remainingAfterFirst)))
+                .when(new SelectNextBuyerCommand(settlementId))
                 .expectSuccessfulHandlerExecution()
-                .expectEvents(new NextBuyerSelectedEvent(settlementId, nextWinner, Collections.emptyList()))
+                .expectEvents(new NextBuyerSelectedEvent(settlementId, nextWinner))
                 .expectState(settlement -> {
                     assertEquals(SettlementStatus.BUYER_SELECTED, settlement.getStatus());
-                    assertEquals(nextWinner, settlement.getWinningBid());
-                    assertNotNull(settlement.getBidSettlementList());
-                    assertTrue(settlement.getBidSettlementList().isEmpty());
+                    assertEquals(nextWinner, settlement.getCurrentBuyer());
+                    assertNotNull(settlement.getPotentialBuyerList());
+                    assertTrue(settlement.getPotentialBuyerList().isEmpty());
                 });
     }
 
@@ -208,7 +208,7 @@ class AuctionSettlementTest {
         UUID bidder = UUID.randomUUID();
         UUID sellerId = UUID.randomUUID();
         String title = "Auction Item Title";
-        BidSettlement winningBid = new BidSettlement(bidder, new BigDecimal("50.00"));
+        PotentialBuyer winningBid = new PotentialBuyer(bidder, new BigDecimal("50.00"));
 
         fixture.given(new BuyerSelectedEvent(
                         settlementId,
@@ -218,7 +218,7 @@ class AuctionSettlementTest {
                         sellerId,
                         title
                 ))
-                .when(new SelectNextBuyerCommand(settlementId, Collections.emptyList()))
+                .when(new SelectNextBuyerCommand(settlementId))
                 .expectSuccessfulHandlerExecution()
                 .expectEvents(new AuctionMarkedUnsuccessfulEvent(settlementId, auctionItemId))
                 .expectState(settlement -> assertEquals(SettlementStatus.UNSUCCESSFUL, settlement.getStatus()));

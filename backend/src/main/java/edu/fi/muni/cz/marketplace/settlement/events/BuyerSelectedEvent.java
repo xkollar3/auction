@@ -1,9 +1,8 @@
 package edu.fi.muni.cz.marketplace.settlement.events;
 
-import edu.fi.muni.cz.marketplace.settlement.aggregate.BidSettlement;
+import edu.fi.muni.cz.marketplace.settlement.aggregate.PotentialBuyer;
 import lombok.Value;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -12,8 +11,8 @@ public class BuyerSelectedEvent {
 
     UUID settlementId;
     UUID auctionItemId;
-    BidSettlement winningBid;
-    List<BidSettlement> bidSettlementList;
+    PotentialBuyer selectedPotentialBuyer;
+    List<PotentialBuyer> potentialBuyerList;
     UUID sellerId;
     String title;
 
