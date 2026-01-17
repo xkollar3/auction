@@ -18,17 +18,18 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuctionClosedEventHandler {
 
-    private final CommandGateway commandGateway;
+  private final CommandGateway commandGateway;
 
-    @EventHandler
-    public void on(AuctionClosedEvent event) {
-        log.info("AuctionClosedEvent AuctionItem ID: {}", event.getAuctionItemId());
-        List<PotentialBuyer> potentialBuyerList = event.getWinningBids() == null
-                ? Collections.emptyList()
-                : event.getWinningBids().stream()
-                .map(bid -> new PotentialBuyer(bid.bidderId(), bid.bidAmount()))
-                .toList();
-        commandGateway.send(new SelectBuyerCommand(UUID.randomUUID(), event.getAuctionItemId(), potentialBuyerList, List.of(), event.getSellerId(), event.getTitle()));
-    }
+  @EventHandler
+  public void on(AuctionClosedEvent event) {
+    log.info("AuctionClosedEvent AuctionItem ID: {}", event.getAuctionItemId());
+    List<PotentialBuyer> potentialBuyerList = event.getWinningBids() == null
+        ? Collections.emptyList()
+        : event.getWinningBids().stream()
+            .map(bid -> new PotentialBuyer(bid.getBidderId(), bid.getBidAmount()))
+            .toList();
+    commandGateway.send(new SelectBuyerCommand(UUID.randomUUID(), event.getAuctionItemId(), potentialBuyerList,
+        List.of(), event.getSellerId(), event.getTitle()));
+  }
 
 }

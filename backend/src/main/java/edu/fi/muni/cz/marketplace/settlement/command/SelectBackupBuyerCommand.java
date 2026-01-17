@@ -1,14 +1,13 @@
 package edu.fi.muni.cz.marketplace.settlement.command;
 
-import edu.fi.muni.cz.marketplace.settlement.aggregate.PotentialBuyer;
 import lombok.Value;
 import org.axonframework.modelling.command.TargetAggregateIdentifier;
 
-import java.util.List;
 import java.util.UUID;
 
 @Value
-public class SelectNextBuyerCommand {
+public class SelectBackupBuyerCommand
+{
 
     @TargetAggregateIdentifier
     UUID settlementId;

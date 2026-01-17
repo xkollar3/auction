@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.Value;
-import org.axonframework.modelling.command.TargetAggregateIdentifier;
 
 @Value
 public class AssignFundReservationInformationCommand {

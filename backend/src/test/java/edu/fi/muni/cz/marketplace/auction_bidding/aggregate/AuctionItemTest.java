@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 
 class AuctionItemTest {
 
-  private static final Instant FIXED_TIME = Instant.parse("2026-01-10T12:00:00Z");
+  private static final Instant FIXED_TIME = Instant.parse("2046-01-10T12:00:00Z");
   private static final String AUCTION_END_DEADLINE = "auction-end-deadline";
 
   private FixtureConfiguration<AuctionItem> fixture;

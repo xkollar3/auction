@@ -4,10 +4,9 @@ import java.util.UUID;
 import lombok.Value;
 
 @Value
-public class TrackingNumberEnteredEvent {
+public class TrackingNumberSubmittedEvent {
 
   UUID orderId;
   UUID enteredByUserId;
   String trackingNumber;
-  String trackerId;
 }

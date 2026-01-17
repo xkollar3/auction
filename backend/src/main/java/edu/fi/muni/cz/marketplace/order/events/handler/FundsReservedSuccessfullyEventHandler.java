@@ -21,6 +21,7 @@ public class FundsReservedSuccessfullyEventHandler {
 
     commandGateway.send(new AssignFundReservationInformationCommand(
         event.getOrderId(),
+        event.getBuyerId(),
         event.getPaymentIntentId(),
         event.getPaymentMethodId(),
         event.getGrossAmount(),

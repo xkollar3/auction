@@ -10,6 +10,7 @@ public class AssignTrackingNumberToOrderCommand {
 
   @TargetAggregateIdentifier
   UUID orderId;
+  UUID enteredByUserId;
   String trackingNumber;
   String ship24TrackerId;
   Instant enteredAt;

@@ -11,6 +11,7 @@ import edu.fi.muni.cz.marketplace.auction_bidding.event.AuctionItemAddedEvent;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.BidPlacedEvent;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.BidRejectedEvent;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.HighestBidSetEvent;
+import edu.fi.muni.cz.marketplace.auction_bidding.event.AuctionClosedEvent.WinningBid;
 import edu.fi.muni.cz.marketplace.auction_item.command.AddImagesToAuctionCommand;
 import edu.fi.muni.cz.marketplace.auction_item.event.ImagesAddedToAuctionEvent;
 import jakarta.annotation.Nonnull;
@@ -193,7 +194,7 @@ public class AuctionItem {
   public void onAuctionEndDeadline(CloseAuctionCommand payload) {
     log.info("Auction end deadline reached for auction item ID: {}", payload.getAuctionItemId());
     if (status != AuctionStatus.CLOSED) {
-      apply(new AuctionClosedEvent(id, sellerId, title, allBids));
+      apply(new AuctionClosedEvent(id, sellerId, title, allBids.stream().map(bid -> new WinningBid(bid)).toList()));
     }
   }
 

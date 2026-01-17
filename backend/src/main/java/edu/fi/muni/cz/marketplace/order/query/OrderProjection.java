@@ -6,8 +6,8 @@ import edu.fi.muni.cz.marketplace.order.events.OrderCancelledEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderCompletedEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderDeliveredEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderRefundScheduledEvent;
+import edu.fi.muni.cz.marketplace.order.events.TrackingNumberAssignedToOrderEvent;
 import edu.fi.muni.cz.marketplace.order.events.TrackingNumberEnteredEvent;
-import edu.fi.muni.cz.marketplace.order.events.TrackingNumberProvidedEvent;
 import edu.fi.muni.cz.marketplace.order.events.TrackingStatusUpdatedEvent;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -34,10 +34,10 @@ public class OrderProjection {
         event.getBuyerId(),
         OrderStatus.FUNDS_RESERVED,
         event.getPaymentIntentId(),
-        event.getAmount(),
+        event.getGrossAmount(),
         event.getReservedAt(),
         event.getSellerId(),
-        event.getSellerAccountId(),
+        event.getSellerStripeAccountId(),
         null,
         null,
         null,
@@ -53,20 +53,7 @@ public class OrderProjection {
   }
 
   @EventHandler
-  public void on(TrackingNumberProvidedEvent event) {
-    log.info("Processing TrackingNumberProvidedEvent for order ID: {}", event.getOrderId());
-
-    repository.findById(event.getOrderId()).ifPresent(order -> {
-      order.setStatus(OrderStatus.TRACKING_NUMBER_PROVIDED);
-      order.setTrackingNumber(event.getTrackingNumber());
-      repository.save(order);
-      log.info("Updated order status to TRACKING_NUMBER_PROVIDED for order ID: {}",
-          event.getOrderId());
-    });
-  }
-
-  @EventHandler
-  public void on(TrackingNumberEnteredEvent event) {
+  public void on(TrackingNumberAssignedToOrderEvent event) {
     log.info("Processing TrackingNumberEnteredEvent for order ID: {}", event.getOrderId());
 
     repository.findById(event.getOrderId()).ifPresent(order -> {

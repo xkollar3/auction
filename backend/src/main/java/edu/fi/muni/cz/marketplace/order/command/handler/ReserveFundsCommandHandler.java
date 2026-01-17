@@ -1,8 +1,10 @@
 package edu.fi.muni.cz.marketplace.order.command.handler;
 
 import edu.fi.muni.cz.marketplace.order.client.StripeFundsApiClient;
+import edu.fi.muni.cz.marketplace.order.client.StripeFundsApiClientException;
 import edu.fi.muni.cz.marketplace.order.client.dto.FundReservationResult;
 import edu.fi.muni.cz.marketplace.order.command.ReserveFundsCommand;
+import edu.fi.muni.cz.marketplace.order.events.FundReservationNotPossibleEvent;
 import edu.fi.muni.cz.marketplace.order.events.FundsReservedEvent;
 
 import java.time.Instant;
@@ -24,25 +26,33 @@ public class ReserveFundsCommandHandler {
   public void on(ReserveFundsCommand command) {
     log.info("Handling ReserveFundsCommand for order: {}", command.getId());
 
-    FundReservationResult result = stripeFundsApiClient.reserveFunds(
-        command.getCustomerId(),
-        command.getPaymentMethodId(),
-        command.getAmount(),
-        command.getId());
+    try {
+      FundReservationResult result = stripeFundsApiClient.reserveFunds(
+          command.getCustomerId(),
+          command.getPaymentMethodId(),
+          command.getAmount(),
+          command.getId());
 
-    log.debug("Successfully reserved funds on Stripe. PaymentIntent: {}, gross amount: {} CZK",
-        result.paymentIntentId(), result.grossAmount());
+      log.debug("Successfully reserved funds on Stripe. PaymentIntent: {}, gross amount: {} CZK",
+          result.paymentIntentId(), result.grossAmount());
 
-    eventGateway.publish(new FundsReservedEvent(
-        command.getId(),
-        command.getBuyerId(),
-        result.paymentIntentId(),
-        command.getPaymentMethodId(),
-        result.grossAmount(),
-        Instant.now(),
-        command.getSellerId(),
-        command.getSellerStripeAccountId()));
-
-    log.debug("Successfully assigned fund reservation to order: {}", command.getId());
+      eventGateway.publish(new FundsReservedEvent(
+          command.getId(),
+          command.getBuyerId(),
+          result.paymentIntentId(),
+          command.getPaymentMethodId(),
+          result.grossAmount(),
+          Instant.now(),
+          command.getSellerId(),
+          command.getSellerStripeAccountId()));
+      log.debug("Successfully assigned fund reservation to order: {}", command.getId());
+    } catch (StripeFundsApiClientException e) {
+      log.warn("Fund reservation failed for buyer: {}, settlement: {}, reason: {}",
+          command.getBuyerId(), command.getSettlementId(), e.getMessage());
+      eventGateway.publish(new FundReservationNotPossibleEvent(
+          command.getSettlementId(),
+          command.getBuyerId(),
+          e.getMessage()));
+    }
   }
 }
