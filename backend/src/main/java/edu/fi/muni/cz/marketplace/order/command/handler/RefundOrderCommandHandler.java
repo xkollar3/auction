@@ -1,7 +1,7 @@
 package edu.fi.muni.cz.marketplace.order.command.handler;
 
 import edu.fi.muni.cz.marketplace.order.client.StripeFundsApiClient;
-import edu.fi.muni.cz.marketplace.order.command.FinishRefundCommand;
+import edu.fi.muni.cz.marketplace.order.command.CancelOrderCommand;
 import edu.fi.muni.cz.marketplace.order.command.RefundOrderCommand;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ public class RefundOrderCommandHandler {
         command.getOrderId());
 
     commandGateway.send(
-        new FinishRefundCommand(command.getOrderId(), command.getPaymentIntentId()));
+        new CancelOrderCommand(command.getOrderId(), command.getPaymentIntentId()));
     log.info("Successfully refunded order {} with refund ID: {}", command.getOrderId(), refundId);
   }
 }

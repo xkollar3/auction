@@ -1,11 +1,11 @@
 package edu.fi.muni.cz.marketplace.order.saga;
 
 import edu.fi.muni.cz.marketplace.order.command.CompleteOrderCommand;
-import edu.fi.muni.cz.marketplace.order.command.DeductCommissionCommand;
-import edu.fi.muni.cz.marketplace.order.command.TransferPaymentCommand;
-import edu.fi.muni.cz.marketplace.order.events.CommissionDeductedEvent;
+import edu.fi.muni.cz.marketplace.order.command.TransferPlatformCommissionCommand;
+import edu.fi.muni.cz.marketplace.order.command.TransferSellerPayoutCommand;
+import edu.fi.muni.cz.marketplace.order.events.PlatformCommissionTransferredEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderDeliveredEvent;
-import edu.fi.muni.cz.marketplace.order.events.PaymentTransferredEvent;
+import edu.fi.muni.cz.marketplace.order.events.SellerPayoutTransferredEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.modelling.saga.SagaEventHandler;
@@ -27,15 +27,15 @@ public class FinalizeOrderSaga {
   @SagaEventHandler(associationProperty = "orderId")
   public void handler(OrderDeliveredEvent event) {
     log.info("Order finalization saga started, order id: {}", event.getOrderId());
-    commandGateway.send(new DeductCommissionCommand(event.getOrderId(), event.getCommission()));
+    commandGateway.send(new TransferPlatformCommissionCommand(event.getOrderId(), event.getCommission()));
     commandGateway
         .send(
-            new TransferPaymentCommand(event.getOrderId(), event.getSellerStripeAccountId(),
+            new TransferSellerPayoutCommand(event.getOrderId(), event.getSellerStripeAccountId(),
                 event.getPayoutAmount()));
-  }
+}
 
   @SagaEventHandler(associationProperty = "orderId")
-  public void handler(CommissionDeductedEvent event) {
+  public void handler(PlatformCommissionTransferredEvent event) {
     this.commissionTransferId = event.getTransferId();
     if (this.paymentTransferId != null && !this.paymentTransferId.isEmpty()) {
       commandGateway
@@ -46,7 +46,7 @@ public class FinalizeOrderSaga {
   }
 
   @SagaEventHandler(associationProperty = "orderId")
-  public void handler(PaymentTransferredEvent event) {
+  public void handler(SellerPayoutTransferredEvent event) {
     this.paymentTransferId = event.getTransferId();
     if (this.commissionTransferId != null && !this.commissionTransferId.isEmpty()) {
       commandGateway
