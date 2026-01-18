@@ -153,6 +153,15 @@ Axon's `DeadlineManager` schedules automatic auction closure:
 Projection handlers update read models on events for efficient querying.
 
 ## Auction Settlements Context - adammajzlik
+- This context is responsible for settling closed auctions by selecting a buyer, handling buyer failures, and deciding whether an auction is successfully sold or marked unsuccessful.
+  It orchestrates the post-auction flow between auction bidding and order/payment processing.
+- The settlement logic is event-sourced and implemented using Axon Framework aggregates, commands and events
+- Actions:
+  - Initializes settlement when an auction is closed. 
+  - Selects the highest bidder as the primary buyer. 
+  - Automatically falls back to backup buyers if the primary buyer fails.
+  - Marks auctions as unsuccessful when no valid buyers remain.
+
 ## Order context - xkollar3
 - this context is responsible for managing the orders and financial flows
 - manages payouts in case orders are delivered successfully and manages refunds in case of exception
