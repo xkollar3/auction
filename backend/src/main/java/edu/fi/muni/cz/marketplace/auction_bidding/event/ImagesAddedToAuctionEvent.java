@@ -1,4 +1,4 @@
-package edu.fi.muni.cz.marketplace.auction_item.event;
+package edu.fi.muni.cz.marketplace.auction_bidding.event;
 
 import java.util.List;
 import java.util.UUID;

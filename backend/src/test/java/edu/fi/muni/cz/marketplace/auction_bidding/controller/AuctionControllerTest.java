@@ -15,7 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import edu.fi.muni.cz.marketplace.auction_bidding.command.AddAuctionItemCommand;
 import edu.fi.muni.cz.marketplace.auction_bidding.command.PlaceBidCommand;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.PlaceBidResponse;
-import edu.fi.muni.cz.marketplace.auction_item.service.StorageService;
+import edu.fi.muni.cz.marketplace.auction_bidding.service.StorageService;
 import edu.fi.muni.cz.marketplace.config.SecurityConfig;
 import java.math.BigDecimal;
 import java.time.Instant;

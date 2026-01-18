@@ -1,4 +1,4 @@
-package edu.fi.muni.cz.marketplace.auction_item.service;
+package edu.fi.muni.cz.marketplace.auction_bidding.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

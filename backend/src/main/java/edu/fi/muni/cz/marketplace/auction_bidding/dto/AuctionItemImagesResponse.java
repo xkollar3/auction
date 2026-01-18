@@ -1,4 +1,4 @@
-package edu.fi.muni.cz.marketplace.auction_item.dto;
+package edu.fi.muni.cz.marketplace.auction_bidding.dto;
 
 import java.util.List;
 

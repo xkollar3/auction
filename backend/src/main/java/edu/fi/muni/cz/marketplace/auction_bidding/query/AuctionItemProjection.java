@@ -14,7 +14,7 @@ import edu.fi.muni.cz.marketplace.auction_bidding.aggregate.AuctionStatus;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.AuctionClosedEvent;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.AuctionItemAddedEvent;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.HighestBidSetEvent;
-import edu.fi.muni.cz.marketplace.auction_item.event.ImagesAddedToAuctionEvent;
+import edu.fi.muni.cz.marketplace.auction_bidding.event.ImagesAddedToAuctionEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

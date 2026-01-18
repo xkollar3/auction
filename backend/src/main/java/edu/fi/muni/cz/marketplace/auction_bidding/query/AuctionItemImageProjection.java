@@ -1,14 +1,13 @@
-package edu.fi.muni.cz.marketplace.auction_item.query;
+package edu.fi.muni.cz.marketplace.auction_bidding.query;
 
 import java.util.List;
-import java.util.UUID;
 
 import org.axonframework.config.ProcessingGroup;
 import org.axonframework.eventhandling.EventHandler;
 import org.axonframework.queryhandling.QueryHandler;
 import org.springframework.stereotype.Component;
 
-import edu.fi.muni.cz.marketplace.auction_item.event.ImagesAddedToAuctionEvent;
+import edu.fi.muni.cz.marketplace.auction_bidding.event.ImagesAddedToAuctionEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
