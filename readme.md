@@ -27,7 +27,7 @@ Our business model makes money by taking off a commision (10 % for now) from eac
 3. Modular monolith architecture
     - Context: We need to choose a way to implement the main portion of the application the backend
     - Decision: We will use the modular monolith architecture because the system was analysed with event storming providing us clear boundaries for modules
-    - Rationale: We are building the system based on events, SOA or Monolith make more sense for systems designed designed with strong consistent data in mind, in our case we designed by finding loosely coupled modules which left us to consider Microservices and Modulith. We will go with the modulith because the project is not big enough to warrant microservices (only 4 devs) and a modulith will allow us flexibility to switch to microservices if necessary
+    - Rationale: We are building the system based on events, SOA or Monolith make more sense for systems designed with strong consistent data in mind, in our case we designed by finding loosely coupled modules which left us to consider Microservices and Modulith. We will go with the modulith because the project is not big enough to warrant microservices (only 4 devs) and a modulith will allow us flexibility to switch to microservices if necessary
 
 4. Stripe for management of payment flows
     - Context: Our platform is an ecommerce platform and it requires transferring funds across parties, we don't want to implement this as its a generic domain and requires sensitive data handling
@@ -50,7 +50,10 @@ Our business model makes money by taking off a commision (10 % for now) from eac
     - Context: Users want to upload some images to show off what they are auctioning
     - Decision: Use minio because it implements the S3 protocol making storage accessible via REST
 
-
+9. Module internal architecture
+    - Context: We need to harmonize and implement each module with same principles in mind
+    - Decision: We will follow a architecture best matching axon framework with packages - events/commands/aggregates, the project is simple enough that this should be sufficient
+    - Rationale: We won't use layered architecture because our business logic is contained within aggregates and it is not a good choice for CQRS event sourced application as the business logic lives in command handlers not the services. We won't use clean architecture (or otherwise called ports and adapters or hexagonal or onion) because having to declare ports and implement adapters is an abstraction we don't need and would slow us down
 
 ## User Context - drozdma6
 ## Auction Items Context - eduardmlyn
