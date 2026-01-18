@@ -99,6 +99,59 @@ Shell scripts for testing these flows are located in `docs/scripts`:
 - `remove-user.sh`: script for removing a user from Keycloak/Application.
 
 ## Auction Items Context - eduardmlyn
+This module handles auction creation, bidding, real-time updates, and image management.
+
+### Core Functionality
+- Sellers create time-bound auctions with images
+- Buyers place bids with real-time validation
+- System maintains top 10 bids for settlement (sourced from `HighestBidSetEvent`)
+- Automated deadline handling closes auctions and triggers settlement
+
+### Event-Sourced Architecture
+The `AuctionItem` aggregate emits events to track auction lifecycle:
+- **BidPlacedEvent**: Every bid attempt (for analytics/tracking only)
+- **HighestBidSetEvent**: Valid bid becomes new highest (used to source top 10 bids)
+- **BidRejectedEvent**: Rejected bids (auction closed, amount too low)
+- **AuctionClosedEvent**: Auction deadline reached (triggers settlement)
+
+Top 10 bids are maintained for settlement, with each bidder having only one bid in the list (latest/highest).
+
+### REST API
+- **POST /api/auctions**: Create auction (sellers only)
+- **GET /api/auctions**: Browse with filtering, sorting, pagination
+- **GET /api/auctions/featured**: 8 auctions ending soonest
+- **GET /api/auctions/{id}**: Auction details with recent bids
+- **GET /api/auctions/seller/{sellerId}**: Seller's auctions by status
+- **GET /api/auctions/my-bids**: User's active bids
+- **POST /api/auctions/{id}/bids**: Place a bid
+- **POST /api/auctions/{id}/images**: Upload images (multipart)
+- **GET /api/auctions/{id}/images**: Get image URLs
+
+### WebSocket Integration
+Real-time updates via **STOMP over SockJS**:
+- Clients subscribe to `/topic/auction/{auctionItemId}`
+- Bid updates pushed when `HighestBidSetEvent` occurs
+- Auction closure notifications on `AuctionClosedEvent`
+
+### Image Storage
+**MinIO** (S3-compatible) integration:
+- Multipart upload to `auctions/{auctionItemId}/` folder
+- UUID-prefixed filenames prevent conflicts
+- First image becomes preview in listings
+
+### Deadline Management
+Axon's `DeadlineManager` schedules automatic auction closure:
+- Deadline set when auction created
+- Triggers `CloseAuctionCommand` at expiry
+- Emits `AuctionClosedEvent` with top 10 bids for settlement
+
+### Read Models (PostgreSQL)
+- **AuctionItemReadModel**: Listings with filtering/sorting
+- **BidReadModel**: Bid history for analytics
+- **AuctionItemImageReadModel**: Image URLs
+
+Projection handlers update read models on events for efficient querying.
+
 ## Auction Settlements Context - adammajzlik
 ## Order context - xkollar3
 - this context is responsible for managing the orders and financial flows
