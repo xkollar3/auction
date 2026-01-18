@@ -32,6 +32,7 @@ public class UserProjection {
         null,
         null,
         null,
+        null,
         false);
 
     repository.save(readModel);
@@ -55,6 +56,7 @@ public class UserProjection {
 
     repository.findById(event.getId()).ifPresent(user -> {
       user.setStripeSellerAccountId(event.getStripeSellerAccountId());
+      user.setStripeOnboardingLink(event.getStripeOnboardingLink());
       repository.save(user);
       log.info("Updated Stripe Seller Account ID for aggregate ID: {}", event.getId());
     });
@@ -91,6 +93,7 @@ public class UserProjection {
 
   @QueryHandler
   public UserReadModel handle(FindUserByKeycloakIdQuery query) {
+    log.debug("retrieving user: " + query.getKeycloakUserId());
     return repository.findByKeycloakUserId(query.getKeycloakUserId())
         .orElse(null);
   }

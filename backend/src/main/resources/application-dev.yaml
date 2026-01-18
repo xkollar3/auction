@@ -29,12 +29,12 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-    show-sql: true
+    show-sql: false
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
     enabled: true
@@ -45,7 +45,7 @@ spring:
           issuer-uri: http://localhost:8089/realms/auction-marketplace
           jwk-set-uri: http://localhost:8089/realms/auction-marketplace/protocol/openid-connect/certs
   config:
-    import: optional:.env[.properties]
+    import: .env[.properties]
 
 axon:
   axonserver:
@@ -53,6 +53,10 @@ axon:
     standalone: true
     devmode:
       enabled: true
+  eventhandling:
+    processors:
+      keycloakUserLookup:
+        mode: subscribing
 
 keycloak:
   admin:
@@ -71,3 +75,13 @@ ship24:
   base-url: https://api.ship24.com/public/v1
   api-key: ${SHIP24_API_KEY}
   webhook-secret: ${SHIP24_WEBHOOK_SECRET}
+
+minio:
+  endpoint: http://localhost:9002
+  access-key: minioadmin
+  secret-key: minioadmin
+  bucket: auction-images
+
+logging:
+  level:
+    edu.fi.muni.cz.marketplace: DEBUG

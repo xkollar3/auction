@@ -6,6 +6,7 @@ import edu.fi.muni.cz.marketplace.order.command.AssignFundReservationInformation
 import edu.fi.muni.cz.marketplace.order.command.AssignTrackingNumberToOrderCommand;
 import edu.fi.muni.cz.marketplace.order.command.CancelOrderCommand;
 import edu.fi.muni.cz.marketplace.order.command.CompleteOrderCommand;
+import edu.fi.muni.cz.marketplace.order.command.EnterTrackingNumberCommand;
 import edu.fi.muni.cz.marketplace.order.command.UpdateTrackingStatusCommand;
 import edu.fi.muni.cz.marketplace.order.deadline.ShippingDeadline;
 import edu.fi.muni.cz.marketplace.order.deadline.ShippingDeadlineNotMetPayload;
@@ -15,6 +16,7 @@ import edu.fi.muni.cz.marketplace.order.events.OrderCompletedEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderDeliveredEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderRefundScheduledEvent;
 import edu.fi.muni.cz.marketplace.order.events.TrackingNumberAssignedToOrderEvent;
+import edu.fi.muni.cz.marketplace.order.events.TrackingNumberSubmittedEvent;
 import edu.fi.muni.cz.marketplace.order.events.TrackingStatusUpdatedEvent;
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -35,6 +37,11 @@ import org.axonframework.spring.stereotype.Aggregate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+/**
+ * Aggregate for order management
+ *
+ * @author xkollar3
+ **/
 @Slf4j
 @Getter
 @Aggregate
@@ -68,6 +75,7 @@ public class Order {
       @Autowired DeadlineManager deadlineManager,
       @Autowired Clock clock,
       @Autowired @Value("${policy.refund-deadline-days}") Long refundPeriodDays) {
+    log.debug("Order being created");
     Instant shippingDeadlineTime = clock.instant().plus(refundPeriodDays,
         ChronoUnit.DAYS);
     String deadlineId = deadlineManager.schedule(shippingDeadlineTime,
@@ -76,6 +84,7 @@ public class Order {
 
     apply(new FundReservationInformationAssignedEvent(
         command.getOrderId(),
+        command.getBuyerId(),
         command.getPaymentIntentId(),
         command.getPaymentMethodId(),
         deadlineId,
@@ -92,6 +101,7 @@ public class Order {
     this.status = OrderStatus.FUNDS_RESERVED;
     this.commissionMultiplier = new BigDecimal(commissionPercentage);
     this.fundReservation = new FundReservation(
+        event.getBuyerId(),
         event.getPaymentIntentId(),
         event.getPaymentMethodId(),
         event.getDeadlineId(),
@@ -135,8 +145,30 @@ public class Order {
   }
 
   @CommandHandler
-  public void on(AssignTrackingNumberToOrderCommand command, @Autowired DeadlineManager deadlineManager) {
+  public void on(EnterTrackingNumberCommand command) {
+    if (!this.fundReservation.getSellerId().equals(command.getEnteredByUserId())) {
+      throw new IllegalStateException(
+          "Only the seller can enter tracking number for order " + this.id);
+    }
     if (status != OrderStatus.FUNDS_RESERVED) {
+      throw new IllegalStateException(
+          "Cannot enter tracking info for order " + this.id + " in state: " + status);
+    }
+
+    apply(new TrackingNumberSubmittedEvent(
+        command.getOrderId(),
+        command.getEnteredByUserId(),
+        command.getTrackingNumber()));
+  }
+
+  @EventSourcingHandler
+  public void on(TrackingNumberSubmittedEvent event) {
+    this.status = OrderStatus.TRACKING_PENDING;
+  }
+
+  @CommandHandler
+  public void on(AssignTrackingNumberToOrderCommand command, @Autowired DeadlineManager deadlineManager) {
+    if (status != OrderStatus.TRACKING_PENDING) {
       throw new IllegalStateException(
           "Cannot assign tracking info for order " + this.id + " in state: " + status);
     }

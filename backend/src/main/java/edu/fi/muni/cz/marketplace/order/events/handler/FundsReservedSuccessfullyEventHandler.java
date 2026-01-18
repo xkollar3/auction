@@ -2,6 +2,7 @@ package edu.fi.muni.cz.marketplace.order.events.handler;
 
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.commandhandling.gateway.CommandGateway;
+import org.axonframework.eventhandling.EventHandler;
 import org.springframework.stereotype.Component;
 
 import edu.fi.muni.cz.marketplace.order.command.AssignFundReservationInformationCommand;
@@ -16,11 +17,11 @@ public class FundsReservedSuccessfullyEventHandler {
 
   private final CommandGateway commandGateway;
 
-  @CommandHandler
+  @EventHandler
   public void on(FundsReservedEvent event) {
-
     commandGateway.send(new AssignFundReservationInformationCommand(
         event.getOrderId(),
+        event.getBuyerId(),
         event.getPaymentIntentId(),
         event.getPaymentMethodId(),
         event.getGrossAmount(),

@@ -1,6 +1,7 @@
 package edu.fi.muni.cz.marketplace.auction_bidding.event;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.UUID;
 import lombok.Value;
 
@@ -11,4 +12,5 @@ public class HighestBidSetEvent {
   UUID bidId;
   UUID bidderId;
   BigDecimal bidAmount;
+  Instant placedAt;
 }

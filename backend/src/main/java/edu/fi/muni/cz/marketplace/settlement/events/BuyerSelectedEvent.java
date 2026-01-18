@@ -11,10 +11,13 @@ public class BuyerSelectedEvent {
 
     UUID settlementId;
     UUID auctionItemId;
-    PotentialBuyer selectedPotentialBuyer;
     List<PotentialBuyer> potentialBuyerList;
+    int currentBuyerIndex;
     UUID sellerId;
     String title;
 
+    public PotentialBuyer getSelectedPotentialBuyer() {
+        return potentialBuyerList.get(currentBuyerIndex);
+    }
 
 }

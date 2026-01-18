@@ -9,6 +9,7 @@ import java.util.UUID;
 public class FundsReservedEvent {
 
   UUID orderId;
+  UUID buyerId;
   String paymentIntentId;
   String paymentMethodId;
   BigDecimal grossAmount;

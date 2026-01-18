@@ -20,9 +20,9 @@ import org.junit.jupiter.api.Test;
 
 import edu.fi.muni.cz.marketplace.order.command.AssignFundReservationInformationCommand;
 import edu.fi.muni.cz.marketplace.order.command.AssignTrackingNumberToOrderCommand;
-import edu.fi.muni.cz.marketplace.order.command.EnterTrackingNumberCommand;
-import edu.fi.muni.cz.marketplace.order.command.CompleteOrderCommand;
 import edu.fi.muni.cz.marketplace.order.command.CancelOrderCommand;
+import edu.fi.muni.cz.marketplace.order.command.CompleteOrderCommand;
+import edu.fi.muni.cz.marketplace.order.command.EnterTrackingNumberCommand;
 import edu.fi.muni.cz.marketplace.order.command.UpdateTrackingStatusCommand;
 import edu.fi.muni.cz.marketplace.order.deadline.ShippingDeadline;
 import edu.fi.muni.cz.marketplace.order.deadline.ShippingDeadlineNotMetPayload;
@@ -32,7 +32,7 @@ import edu.fi.muni.cz.marketplace.order.events.OrderCompletedEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderDeliveredEvent;
 import edu.fi.muni.cz.marketplace.order.events.OrderRefundScheduledEvent;
 import edu.fi.muni.cz.marketplace.order.events.TrackingNumberAssignedToOrderEvent;
-import edu.fi.muni.cz.marketplace.order.events.TrackingNumberEnteredEvent;
+import edu.fi.muni.cz.marketplace.order.events.TrackingNumberSubmittedEvent;
 import edu.fi.muni.cz.marketplace.order.events.TrackingStatusUpdatedEvent;
 
 class OrderTest {
@@ -60,11 +60,13 @@ class OrderTest {
     BigDecimal amount = new BigDecimal("100.00");
     Instant reservedAt = Instant.now();
     UUID sellerId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
     String sellerStripeAccountId = "acct_seller123";
 
     fixture.givenCurrentTime(FIXED_TIME)
         .when(new AssignFundReservationInformationCommand(
             orderId,
+            buyerId,
             paymentIntentId,
             paymentMethodId,
             amount,
@@ -101,11 +103,13 @@ class OrderTest {
     BigDecimal amount = new BigDecimal("100.00");
     Instant reservedAt = FIXED_TIME;
     UUID sellerId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
     String sellerStripeAccountId = "acct_seller123";
 
     fixture.givenCurrentTime(FIXED_TIME)
         .andGivenCommands(new AssignFundReservationInformationCommand(
             orderId,
+            buyerId,
             paymentIntentId,
             paymentMethodId,
             amount,
@@ -124,6 +128,7 @@ class OrderTest {
   @Test
   void finishRefund_orderInRefundPendingState_shouldCancelOrderAndEmitEvent() {
     UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
     String paymentIntentId = "pi_test123";
     String paymentMethodId = "pm_test456";
     String deadlineId = "deadline-123";
@@ -136,6 +141,7 @@ class OrderTest {
     fixture.given(
         new FundReservationInformationAssignedEvent(
             orderId,
+            buyerId,
             paymentIntentId,
             paymentMethodId,
             deadlineId,
@@ -163,6 +169,7 @@ class OrderTest {
     BigDecimal amount = new BigDecimal("100.00");
     Instant reservedAt = FIXED_TIME;
     UUID sellerId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
     String ship24TrackerId = "ship24-tracker-789";
     String sellerStripeAccountId = "acct_seller123";
     String trackingNumber = "TRACK123";
@@ -170,6 +177,7 @@ class OrderTest {
     fixture.givenCurrentTime(FIXED_TIME)
         .andGivenCommands(new AssignFundReservationInformationCommand(
             orderId,
+            buyerId,
             paymentIntentId,
             paymentMethodId,
             amount,
@@ -188,6 +196,7 @@ class OrderTest {
   @Test
   void finishRefund_orderNotInRefundPendingState_shouldThrowException() {
     UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
     String paymentIntentId = "pi_test123";
     String paymentMethodId = "pm_test456";
     String deadlineId = "deadline-123";
@@ -200,6 +209,7 @@ class OrderTest {
     fixture.given(
         new FundReservationInformationAssignedEvent(
             orderId,
+            buyerId,
             paymentIntentId,
             paymentMethodId,
             deadlineId,
@@ -213,8 +223,102 @@ class OrderTest {
   }
 
   @Test
-  void assignTrackingInfo_orderInTrackingNumberProvidedState_shouldEmitEventAndUpdateState() {
+  void enterTrackingNumber_validSellerAndState_shouldEmitEventAndTransitionToTrackingPending() {
     UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
+    String paymentIntentId = "pi_test123";
+    String paymentMethodId = "pm_test456";
+    String deadlineId = "deadline-123";
+    BigDecimal amount = new BigDecimal("100.00");
+    Instant reservedAt = FIXED_TIME;
+    UUID sellerId = UUID.randomUUID();
+    String sellerAccountId = "acct_seller123";
+    String trackingNumber = "TRACK123456";
+
+    fixture.given(
+        new FundReservationInformationAssignedEvent(
+            orderId,
+            buyerId,
+            paymentIntentId,
+            paymentMethodId,
+            deadlineId,
+            amount,
+            reservedAt,
+            sellerId,
+            sellerAccountId))
+        .when(new EnterTrackingNumberCommand(orderId, sellerId, trackingNumber))
+        .expectSuccessfulHandlerExecution()
+        .expectEvents(new TrackingNumberSubmittedEvent(orderId, sellerId, trackingNumber))
+        .expectState(order -> {
+          assertEquals(orderId, order.getId());
+          assertEquals(OrderStatus.TRACKING_PENDING, order.getStatus());
+        });
+  }
+
+  @Test
+  void enterTrackingNumber_wrongSeller_shouldThrowException() {
+    UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
+    String paymentIntentId = "pi_test123";
+    String paymentMethodId = "pm_test456";
+    String deadlineId = "deadline-123";
+    BigDecimal amount = new BigDecimal("100.00");
+    Instant reservedAt = FIXED_TIME;
+    UUID sellerId = UUID.randomUUID();
+    UUID wrongUserId = UUID.randomUUID();
+    String sellerAccountId = "acct_seller123";
+    String trackingNumber = "TRACK123456";
+
+    fixture.given(
+        new FundReservationInformationAssignedEvent(
+            orderId,
+            buyerId,
+            paymentIntentId,
+            paymentMethodId,
+            deadlineId,
+            amount,
+            reservedAt,
+            sellerId,
+            sellerAccountId))
+        .when(new EnterTrackingNumberCommand(orderId, wrongUserId, trackingNumber))
+        .expectException(IllegalStateException.class)
+        .expectNoEvents();
+  }
+
+  @Test
+  void enterTrackingNumber_wrongState_shouldThrowException() {
+    UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
+    String paymentIntentId = "pi_test123";
+    String paymentMethodId = "pm_test456";
+    String deadlineId = "deadline-123";
+    BigDecimal amount = new BigDecimal("100.00");
+    Instant reservedAt = FIXED_TIME;
+    UUID sellerId = UUID.randomUUID();
+    String sellerAccountId = "acct_seller123";
+    String trackingNumber = "TRACK123456";
+
+    fixture.given(
+        new FundReservationInformationAssignedEvent(
+            orderId,
+            buyerId,
+            paymentIntentId,
+            paymentMethodId,
+            deadlineId,
+            amount,
+            reservedAt,
+            sellerId,
+            sellerAccountId),
+        new TrackingNumberSubmittedEvent(orderId, sellerId, trackingNumber))
+        .when(new EnterTrackingNumberCommand(orderId, sellerId, trackingNumber))
+        .expectException(IllegalStateException.class)
+        .expectNoEvents();
+  }
+
+  @Test
+  void assignTrackingInfo_orderInTrackingPendingState_shouldEmitEventAndUpdateState() {
+    UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
     String paymentIntentId = "pi_test123";
     String paymentMethodId = "pm_test456";
     String deadlineId = "deadline-123";
@@ -229,14 +333,16 @@ class OrderTest {
     fixture.given(
         new FundReservationInformationAssignedEvent(
             orderId,
+            buyerId,
             paymentIntentId,
             paymentMethodId,
             deadlineId,
             amount,
             reservedAt,
             sellerId,
-            sellerAccountId))
-        .when(new AssignTrackingNumberToOrderCommand(orderId, trackingNumber, ship24TrackerId, enteredAt))
+            sellerAccountId),
+        new TrackingNumberSubmittedEvent(orderId, sellerId, trackingNumber))
+        .when(new AssignTrackingNumberToOrderCommand(orderId, sellerId, trackingNumber, ship24TrackerId, enteredAt))
         .expectSuccessfulHandlerExecution()
         .expectEvents(new TrackingNumberAssignedToOrderEvent(orderId, trackingNumber, ship24TrackerId, enteredAt))
         .expectState(order -> {
@@ -249,8 +355,40 @@ class OrderTest {
   }
 
   @Test
+  void assignTrackingInfo_orderNotInTrackingPendingState_shouldThrowException() {
+    UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
+    String paymentIntentId = "pi_test123";
+    String paymentMethodId = "pm_test456";
+    String deadlineId = "deadline-123";
+    BigDecimal amount = new BigDecimal("100.00");
+    Instant reservedAt = FIXED_TIME;
+    UUID sellerId = UUID.randomUUID();
+    String sellerAccountId = "acct_seller123";
+    String trackingNumber = "TRACK123456";
+    String ship24TrackerId = "ship24-tracker-789";
+    Instant enteredAt = FIXED_TIME.plusSeconds(3600);
+
+    fixture.given(
+        new FundReservationInformationAssignedEvent(
+            orderId,
+            buyerId,
+            paymentIntentId,
+            paymentMethodId,
+            deadlineId,
+            amount,
+            reservedAt,
+            sellerId,
+            sellerAccountId))
+        .when(new AssignTrackingNumberToOrderCommand(orderId, sellerId, trackingNumber, ship24TrackerId, enteredAt))
+        .expectException(IllegalStateException.class)
+        .expectNoEvents();
+  }
+
+  @Test
   void updateTrackingStatus_simpleUpdate_shouldEmitEventAndUpdateState() {
     UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
     String paymentIntentId = "pi_test123";
     String paymentMethodId = "pm_test456";
     String deadlineId = "deadline-123";
@@ -266,8 +404,9 @@ class OrderTest {
 
     fixture.given(
         new FundReservationInformationAssignedEvent(
-            orderId, paymentIntentId, paymentMethodId, deadlineId,
+            orderId, buyerId, paymentIntentId, paymentMethodId, deadlineId,
             amount, reservedAt, sellerId, sellerAccountId),
+        new TrackingNumberSubmittedEvent(orderId, sellerId, trackingNumber),
         new TrackingNumberAssignedToOrderEvent(orderId, trackingNumber, ship24TrackerId, enteredAt))
         .when(new UpdateTrackingStatusCommand(
             orderId, eventId, TrackingStatusMilestone.IN_TRANSIT, "In transit", eventOccurredAt))
@@ -284,6 +423,7 @@ class OrderTest {
   @Test
   void updateTrackingStatus_delivered_shouldEmitEventsAndTransitionToDelivered() {
     UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
     String paymentIntentId = "pi_test123";
     String paymentMethodId = "pm_test456";
     String deadlineId = "deadline-123";
@@ -299,8 +439,9 @@ class OrderTest {
 
     fixture.given(
         new FundReservationInformationAssignedEvent(
-            orderId, paymentIntentId, paymentMethodId, deadlineId,
+            orderId, buyerId, paymentIntentId, paymentMethodId, deadlineId,
             amount, reservedAt, sellerId, sellerAccountId),
+        new TrackingNumberSubmittedEvent(orderId, sellerId, trackingNumber),
         new TrackingNumberAssignedToOrderEvent(orderId, trackingNumber, ship24TrackerId, enteredAt))
         .when(new UpdateTrackingStatusCommand(
             orderId, eventId, TrackingStatusMilestone.DELIVERED, "Delivered", eventOccurredAt))
@@ -322,6 +463,7 @@ class OrderTest {
   @Test
   void updateTrackingStatus_exception_shouldEmitEventsAndScheduleRefund() {
     UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
     String paymentIntentId = "pi_test123";
     String paymentMethodId = "pm_test456";
     String deadlineId = "deadline-123";
@@ -337,8 +479,9 @@ class OrderTest {
 
     fixture.given(
         new FundReservationInformationAssignedEvent(
-            orderId, paymentIntentId, paymentMethodId, deadlineId,
+            orderId, buyerId, paymentIntentId, paymentMethodId, deadlineId,
             amount, reservedAt, sellerId, sellerAccountId),
+        new TrackingNumberSubmittedEvent(orderId, sellerId, trackingNumber),
         new TrackingNumberAssignedToOrderEvent(orderId, trackingNumber, ship24TrackerId, enteredAt))
         .when(new UpdateTrackingStatusCommand(
             orderId, eventId, TrackingStatusMilestone.EXCEPTION, "Delivery exception", eventOccurredAt))
@@ -356,6 +499,7 @@ class OrderTest {
   @Test
   void completeOrder_orderInDeliveredState_shouldEmitEventAndSetCompletionInfo() {
     UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
     String paymentIntentId = "pi_test123";
     String paymentMethodId = "pm_test456";
     String deadlineId = "deadline-123";
@@ -369,7 +513,7 @@ class OrderTest {
 
     fixture.given(
         new FundReservationInformationAssignedEvent(
-            orderId, paymentIntentId, paymentMethodId, deadlineId,
+            orderId, buyerId, paymentIntentId, paymentMethodId, deadlineId,
             amount, reservedAt, sellerId, sellerAccountId),
         new OrderDeliveredEvent(
             orderId, sellerAccountId,
@@ -392,6 +536,7 @@ class OrderTest {
   @Test
   void completeOrder_orderNotInDeliveredState_shouldThrowException() {
     UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
     String paymentIntentId = "pi_test123";
     String paymentMethodId = "pm_test456";
     String deadlineId = "deadline-123";
@@ -404,7 +549,7 @@ class OrderTest {
 
     fixture.given(
         new FundReservationInformationAssignedEvent(
-            orderId, paymentIntentId, paymentMethodId, deadlineId,
+            orderId, buyerId, paymentIntentId, paymentMethodId, deadlineId,
             amount, reservedAt, sellerId, sellerAccountId))
         .when(new CompleteOrderCommand(orderId, paymentTransferId, commissionTransferId))
         .expectException(IllegalStateException.class)

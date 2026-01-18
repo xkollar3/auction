@@ -26,6 +26,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Aggregate for handling user information
+ *
+ * @author drozdma6
+ **/
 @Getter
 @Setter
 @Aggregate
@@ -124,7 +129,8 @@ public class User {
       throw new IllegalStateException(
           String.format("User with id: %s, already has a seller account", command.getId()));
     }
-    apply(new StripeSellerAccountCreatedEvent(command.getId(), command.getStripeSellerAccountId()));
+    apply(new StripeSellerAccountCreatedEvent(command.getId(), command.getStripeSellerAccountId(),
+        command.getStripeOnboardingLink()));
   }
 
   @EventSourcingHandler

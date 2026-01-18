@@ -15,12 +15,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import edu.fi.muni.cz.marketplace.auction_bidding.command.AddAuctionItemCommand;
 import edu.fi.muni.cz.marketplace.auction_bidding.command.PlaceBidCommand;
 import edu.fi.muni.cz.marketplace.auction_bidding.dto.PlaceBidResponse;
+import edu.fi.muni.cz.marketplace.auction_item.service.StorageService;
 import edu.fi.muni.cz.marketplace.config.SecurityConfig;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import org.axonframework.commandhandling.gateway.CommandGateway;
+import org.axonframework.queryhandling.QueryGateway;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -43,6 +45,12 @@ class AuctionControllerTest {
 
   @MockitoBean
   private CommandGateway commandGateway;
+
+  @MockitoBean
+  private QueryGateway queryGateway;
+
+  @MockitoBean
+  private StorageService storageService;
 
   @MockitoBean
   private JwtDecoder jwtDecoder;
@@ -83,7 +91,10 @@ class AuctionControllerTest {
 
     mockMvc.perform(post(AUCTIONS_ENDPOINT)
             .with(csrf())
-            .with(jwt().jwt(builder -> builder.subject(TEST_USER_ID.toString())))
+            .with(jwt().jwt(builder -> builder
+                .subject(TEST_USER_ID.toString())
+                .claim("given_name", "John")
+                .claim("family_name", "Doe")))
             .contentType(MediaType.APPLICATION_JSON)
             .content(payload))
         .andExpect(status().isCreated())
@@ -95,6 +106,8 @@ class AuctionControllerTest {
 
     AddAuctionItemCommand command = commandCaptor.getValue();
     assertEquals(TEST_USER_ID, command.getSellerId());
+    assertEquals("John", command.getSellerFirstName());
+    assertEquals("Doe", command.getSellerLastName());
     assertEquals("Vintage Watch", command.getTitle());
     assertEquals("A beautiful vintage watch from 1960", command.getDescription());
     assertEquals(new BigDecimal("100.00"), command.getStartingPrice());

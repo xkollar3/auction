@@ -10,6 +10,8 @@ public class ReserveFundsCommand {
 
   @TargetAggregateIdentifier
   UUID id;
+  UUID settlementId;
+  UUID buyerId;
   String customerId;
   String paymentMethodId;
   BigDecimal amount;

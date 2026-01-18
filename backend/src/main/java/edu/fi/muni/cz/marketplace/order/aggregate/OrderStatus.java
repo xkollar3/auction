@@ -3,7 +3,9 @@ package edu.fi.muni.cz.marketplace.order.aggregate;
 public enum OrderStatus {
   // funds in customer account are reserved
   FUNDS_RESERVED,
-// order is being tracked and listening for tracking updates
+  // tracking number submitted, waiting for Ship24 registration
+  TRACKING_PENDING,
+  // order is being tracked and listening for tracking updates
   TRACKING_IN_PROGRESS,
   // order has been delivered to the customer
   DELIVERED,

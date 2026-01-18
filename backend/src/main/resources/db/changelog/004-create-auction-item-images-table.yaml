@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-1-create-auction-item-images-table
+      author: system
+      changes:
+        - createTable:
+            tableName: auction_item_images
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: auction_item_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: image_url
+                  type: varchar(1024)
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: auction_item_images
+            indexName: idx_auction_item_images_auction_item_id
+            columns:
+              - column:
+                  name: auction_item_id

@@ -2,7 +2,6 @@ package edu.fi.muni.cz.marketplace.order.events.handler;
 
 import edu.fi.muni.cz.marketplace.order.command.AssignTrackingNumberToOrderCommand;
 import edu.fi.muni.cz.marketplace.order.events.TrackingNumberEnteredEvent;
-import edu.fi.muni.cz.marketplace.order.service.Ship24Service;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,13 +18,13 @@ public class TrackingNumberEventHandler {
 
   @EventHandler
   public void on(TrackingNumberEnteredEvent event) {
-    log.info("Creating Ship24 tracker for order: {}", event.getOrderId());
+    log.info("Assigning tracking number to order: {}", event.getOrderId());
 
     commandGateway.send(new AssignTrackingNumberToOrderCommand(
         event.getOrderId(),
+        event.getEnteredByUserId(),
         event.getTrackingNumber(),
         event.getTrackerId(),
-        Instant.now()
-    ));
+        Instant.now()));
   }
 }

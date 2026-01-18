@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,6 +27,7 @@ import edu.fi.muni.cz.marketplace.user.command.RemoveUserCommand;
 import edu.fi.muni.cz.marketplace.user.dto.AddPaymentMethodRequest;
 import edu.fi.muni.cz.marketplace.user.dto.CreateStripeConnectedAccountResponse;
 import edu.fi.muni.cz.marketplace.user.dto.CreateStripeCustomerRequest;
+import edu.fi.muni.cz.marketplace.user.dto.UserProfileResponse;
 import edu.fi.muni.cz.marketplace.user.dto.UserRegistrationResponse;
 import edu.fi.muni.cz.marketplace.user.query.FindUserByKeycloakIdQuery;
 import edu.fi.muni.cz.marketplace.user.query.UserReadModel;
@@ -57,6 +59,21 @@ public class UserController {
     commandGateway.sendAndWait(new RegisterUserCommand(aggregateId, keycloakUserId));
 
     return ResponseEntity.status(HttpStatus.CREATED).body(new UserRegistrationResponse(aggregateId));
+  }
+
+  @GetMapping("/me")
+  public ResponseEntity<UserProfileResponse> getUserProfile(@AuthenticationPrincipal Jwt jwt) {
+    String keycloakUserId = jwt.getSubject();
+    UserReadModel user = findUserByKeycloakId(keycloakUserId);
+
+    return ResponseEntity.ok(new UserProfileResponse(
+        user.getId(),
+        user.getKeycloakUserId(),
+        user.getStripeCustomerId(),
+        user.getStripeSellerAccountId(),
+        user.getStripeOnboardingLink(),
+        user.getStripePaymentMethodId(),
+        user.isSellerAccountEnabled()));
   }
 
   @PostMapping("/me/create-stripe-customer")
@@ -94,7 +111,7 @@ public class UserController {
   }
 
   @PostMapping("/me/create-seller-account")
-  public ResponseEntity<CreateStripeConnectedAccountResponse> createStripeConnectedAccount(
+  public ResponseEntity<Void> createStripeConnectedAccount(
       @AuthenticationPrincipal Jwt jwt) {
     validateJwtClaims(jwt, "email");
 
@@ -104,14 +121,11 @@ public class UserController {
 
     log.info("Creating Stripe seller account for user aggregate: {}", user.getId());
 
-    CompletableFuture<String> future = commandGateway.send(new CreateStripeConnectedAccountCommand(
+    commandGateway.sendAndWait(new CreateStripeConnectedAccountCommand(
         user.getId(),
         email));
 
-    // We wait for the result to get the onboarding URL
-    String onboardingUrl = future.join();
-
-    return ResponseEntity.status(HttpStatus.CREATED).body(new CreateStripeConnectedAccountResponse(onboardingUrl));
+    return ResponseEntity.status(HttpStatus.CREATED).build();
   }
 
   @PostMapping("/me/setup-payment-intent")

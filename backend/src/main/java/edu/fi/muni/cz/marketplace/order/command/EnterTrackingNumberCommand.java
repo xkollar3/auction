@@ -9,5 +9,6 @@ public class EnterTrackingNumberCommand {
 
   @TargetAggregateIdentifier
   UUID orderId;
+  UUID enteredByUserId;
   String trackingNumber;
 }

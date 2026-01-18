@@ -8,4 +8,5 @@ import java.util.UUID;
 public class StripeConnectedAccountCreatedEvent {
     UUID userId;
     String stripeAccountId;
+    String stripeOnboardingLink;
 }

@@ -11,4 +11,5 @@ public class AssignStripeSellerAccountIdCommand {
     @TargetAggregateIdentifier
     UUID id;
     String stripeSellerAccountId;
+    String stripeOnboardingLink;
 }

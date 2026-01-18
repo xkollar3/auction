@@ -7,6 +7,7 @@ import lombok.Value;
 public class TrackingNumberEnteredEvent {
 
   UUID orderId;
+  UUID enteredByUserId;
   String trackingNumber;
   String trackerId;
 }

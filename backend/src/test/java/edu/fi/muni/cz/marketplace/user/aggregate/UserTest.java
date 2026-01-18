@@ -29,6 +29,7 @@ class UserTest {
     private static final String KEYCLOAK_USER_ID = "keycloak-user-123";
     private static final String STRIPE_CUSTOMER_ID = "cus_123456";
     private static final String STRIPE_SELLER_ACCOUNT_ID = "acct_123456";
+    private static final String STRIPE_ONBOARDING_LINK = "https://connect.stripe.com/setup/s/bogus-link";
     private static final String PAYMENT_METHOD_ID = "pm_123456";
 
     private FixtureConfiguration<User> fixture;
@@ -98,9 +99,9 @@ class UserTest {
     @Test
     void assignStripeSellerAccountId_shouldEmitStripeSellerAccountCreatedEvent() {
         fixture.given(new UserRegisteredEvent(USER_ID, KEYCLOAK_USER_ID))
-                .when(new AssignStripeSellerAccountIdCommand(USER_ID, STRIPE_SELLER_ACCOUNT_ID))
+                .when(new AssignStripeSellerAccountIdCommand(USER_ID, STRIPE_SELLER_ACCOUNT_ID, STRIPE_ONBOARDING_LINK))
                 .expectSuccessfulHandlerExecution()
-                .expectEvents(new StripeSellerAccountCreatedEvent(USER_ID, STRIPE_SELLER_ACCOUNT_ID))
+                .expectEvents(new StripeSellerAccountCreatedEvent(USER_ID, STRIPE_SELLER_ACCOUNT_ID, STRIPE_ONBOARDING_LINK))
                 .expectState(user -> {
                     assertEquals(STRIPE_SELLER_ACCOUNT_ID, user.getStripeSellerAccountId());
                 });
@@ -113,8 +114,8 @@ class UserTest {
 
         fixture.given(
                 new UserRegisteredEvent(USER_ID, KEYCLOAK_USER_ID),
-                new StripeSellerAccountCreatedEvent(USER_ID, existingSellerAccountId))
-                .when(new AssignStripeSellerAccountIdCommand(USER_ID, newSellerAccountId))
+                new StripeSellerAccountCreatedEvent(USER_ID, existingSellerAccountId, STRIPE_ONBOARDING_LINK))
+                .when(new AssignStripeSellerAccountIdCommand(USER_ID, newSellerAccountId, STRIPE_ONBOARDING_LINK))
                 .expectException(IllegalStateException.class)
                 .expectNoEvents();
     }
@@ -123,7 +124,7 @@ class UserTest {
     void updateStripeSellerStatus_shouldEmitStripeSellerStatusUpdatedEvent() {
         fixture.given(
                 new UserRegisteredEvent(USER_ID, KEYCLOAK_USER_ID),
-                new StripeSellerAccountCreatedEvent(USER_ID, STRIPE_SELLER_ACCOUNT_ID))
+                new StripeSellerAccountCreatedEvent(USER_ID, STRIPE_SELLER_ACCOUNT_ID, STRIPE_ONBOARDING_LINK))
                 .when(new UpdateStripeSellerStatusCommand(USER_ID, true))
                 .expectSuccessfulHandlerExecution()
                 .expectEvents(new StripeSellerStatusUpdatedEvent(USER_ID, true))
@@ -136,7 +137,7 @@ class UserTest {
     void updateStripeSellerStatus_statusUnchanged_shouldEmitNoEvents() {
         fixture.given(
                 new UserRegisteredEvent(USER_ID, KEYCLOAK_USER_ID),
-                new StripeSellerAccountCreatedEvent(USER_ID, STRIPE_SELLER_ACCOUNT_ID),
+                new StripeSellerAccountCreatedEvent(USER_ID, STRIPE_SELLER_ACCOUNT_ID, STRIPE_ONBOARDING_LINK),
                 new StripeSellerStatusUpdatedEvent(USER_ID, true))
                 .when(new UpdateStripeSellerStatusCommand(USER_ID, true))
                 .expectSuccessfulHandlerExecution()

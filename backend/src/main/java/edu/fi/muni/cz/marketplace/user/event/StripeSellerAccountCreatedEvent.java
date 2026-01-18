@@ -8,4 +8,5 @@ import lombok.Value;
 public class StripeSellerAccountCreatedEvent {
     UUID id;
     String stripeSellerAccountId;
+    String stripeOnboardingLink;
 }

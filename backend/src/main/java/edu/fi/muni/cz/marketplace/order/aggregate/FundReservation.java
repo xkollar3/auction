@@ -11,6 +11,9 @@ import lombok.Value;
 public class FundReservation {
 
   @Nonnull
+  UUID buyerId;
+
+  @Nonnull
   String paymentIntentId;
 
   @Nonnull

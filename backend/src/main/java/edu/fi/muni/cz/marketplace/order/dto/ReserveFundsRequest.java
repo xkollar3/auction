@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public record ReserveFundsRequest(
+    UUID buyerId,
     String customerId,
     String paymentMethodId,
     BigDecimal amount,

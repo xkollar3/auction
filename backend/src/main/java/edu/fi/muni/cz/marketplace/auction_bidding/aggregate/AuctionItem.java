@@ -11,9 +11,13 @@ import edu.fi.muni.cz.marketplace.auction_bidding.event.AuctionItemAddedEvent;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.BidPlacedEvent;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.BidRejectedEvent;
 import edu.fi.muni.cz.marketplace.auction_bidding.event.HighestBidSetEvent;
+import edu.fi.muni.cz.marketplace.auction_bidding.event.AuctionClosedEvent.WinningBid;
+import edu.fi.muni.cz.marketplace.auction_item.command.AddImagesToAuctionCommand;
+import edu.fi.muni.cz.marketplace.auction_item.event.ImagesAddedToAuctionEvent;
 import jakarta.annotation.Nonnull;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +32,11 @@ import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.modelling.command.AggregateIdentifier;
 import org.axonframework.spring.stereotype.Aggregate;
 
+/**
+ * Aggregate for auctioning
+ *
+ * @author eduardmlyn
+ **/
 @Getter
 @Setter
 @Slf4j
@@ -54,6 +63,8 @@ public class AuctionItem {
   @Nonnull
   private BigDecimal startingPrice;
   @Nonnull
+  private AuctionItemCategory category;
+  @Nonnull
   private Instant auctionEndTime;
   @Nonnull
   private AuctionStatus status;
@@ -65,8 +76,12 @@ public class AuctionItem {
   // List of recent bids (max 10), ordered by recency with highest bids at front
   private List<Bid> allBids = new LinkedList<>();
 
+  // Image URLs for the auction item
+  private List<String> imageUrls = new ArrayList<>();
+
   /**
-   * Command handler for creating a new auction item. Triggered by a Seller after their Stripe Connect account is
+   * Command handler for creating a new auction item. Triggered by a Seller after
+   * their Stripe Connect account is
    * verified.
    */
   @CommandHandler
@@ -81,10 +96,14 @@ public class AuctionItem {
     apply(new AuctionItemAddedEvent(
         command.getAuctionItemId(),
         command.getSellerId(),
+        command.getSellerFirstName(),
+        command.getSellerLastName(),
         command.getTitle(),
         command.getDescription(),
         command.getStartingPrice(),
+        command.getCategory(),
         command.getAuctionEndTime()));
+
     manager.schedule(
         command.getAuctionEndTime(),
         AUCTION_END_DEADLINE,
@@ -99,14 +118,17 @@ public class AuctionItem {
     this.description = event.getDescription();
     this.startingPrice = event.getStartingPrice();
     this.highestBidAmount = event.getStartingPrice();
+    this.category = event.getCategory();
     this.auctionEndTime = event.getAuctionEndTime();
     this.status = AuctionStatus.ACTIVE;
     log.info("Auction item {} created for seller {}", event.getAuctionItemId(), event.getSellerId());
   }
 
   /**
-   * Command handler for placing a bid. Validates the bid and either accepts it (triggering SetHighestBid) or rejects it
-   * (triggering RejectBid). Returns a result indicating whether the bid was accepted or rejected.
+   * Command handler for placing a bid. Validates the bid and either accepts it
+   * (triggering SetHighestBid) or rejects it
+   * (triggering RejectBid). Returns a result indicating whether the bid was
+   * accepted or rejected.
    */
   @CommandHandler
   public PlaceBidResponse handle(PlaceBidCommand command) {
@@ -121,7 +143,8 @@ public class AuctionItem {
           command.getAuctionItemId(),
           command.getBidId(),
           command.getBidderId(),
-          command.getBidAmount()));
+          command.getBidAmount(),
+          Instant.now()));
       return PlaceBidResponse.success();
     }
 
@@ -149,7 +172,8 @@ public class AuctionItem {
         event.getBidderId(),
         event.getBidAmount());
 
-    // Remove the bidder's previous bid if exists (each bidder can only have one bid in top 10)
+    // Remove the bidder's previous bid if exists (each bidder can only have one bid
+    // in top 10)
     allBids.removeIf(bid -> bid.bidderId().equals(event.getBidderId()));
 
     // Add the new highest bid at the front (bids are ordered by recency/amount)
@@ -164,7 +188,6 @@ public class AuctionItem {
         event.getAuctionItemId(), event.getBidderId(), event.getBidAmount(), allBids.size());
   }
 
-
   @EventSourcingHandler
   public void on(BidRejectedEvent event) {
     log.info("Bid rejected for auction item {} of bidder {}: {}",
@@ -176,7 +199,8 @@ public class AuctionItem {
   public void onAuctionEndDeadline(CloseAuctionCommand payload) {
     log.info("Auction end deadline reached for auction item ID: {}", payload.getAuctionItemId());
     if (status != AuctionStatus.CLOSED) {
-      apply(new AuctionClosedEvent(id, sellerId, title, allBids));
+      apply(new AuctionClosedEvent(id, sellerId, title,
+          new ArrayList<>(allBids.stream().map(bid -> new WinningBid(bid)).toList())));
     }
   }
 
@@ -184,5 +208,18 @@ public class AuctionItem {
   public void on(AuctionClosedEvent event) {
     this.status = AuctionStatus.CLOSED;
     log.info("Auction item {} closed", event.getAuctionItemId());
+  }
+
+  @CommandHandler
+  public void handle(AddImagesToAuctionCommand command) {
+    log.info("Adding {} images to auction item {}", command.getImageUrls().size(), command.getAuctionItemId());
+    apply(new ImagesAddedToAuctionEvent(command.getAuctionItemId(), command.getImageUrls()));
+  }
+
+  @EventSourcingHandler
+  public void on(ImagesAddedToAuctionEvent event) {
+    this.imageUrls.addAll(event.getImageUrls());
+    log.info("Added {} images to auction item {}, total images: {}",
+        event.getImageUrls().size(), event.getAuctionItemId(), this.imageUrls.size());
   }
 }
