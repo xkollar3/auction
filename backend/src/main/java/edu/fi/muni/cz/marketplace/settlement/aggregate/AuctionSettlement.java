@@ -23,6 +23,11 @@ import java.util.UUID;
 
 import static org.axonframework.modelling.command.AggregateLifecycle.apply;
 
+/**
+ * Aggregate for settling closed auctions
+ *
+ * @author adammajzlik
+ **/
 @Slf4j
 @Getter
 @Aggregate

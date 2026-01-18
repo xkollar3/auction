@@ -20,7 +20,6 @@ public class CustomAuctionItemReadModelRepositoryImpl implements CustomAuctionIt
   private final EntityManager entityManager;
 
   @Override
-  @SuppressWarnings("unchecked")
   public Page<AuctionItemReadModel> browse(
       AuctionItemCategory category,
       AuctionSortOption sortOption,

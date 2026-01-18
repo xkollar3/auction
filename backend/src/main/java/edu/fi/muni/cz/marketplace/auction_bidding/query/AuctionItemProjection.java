@@ -105,11 +105,6 @@ public class AuctionItemProjection {
   }
 
   @QueryHandler
-  public List<AuctionItemReadModel> handle(SearchAuctionItemsQuery query) {
-    return repository.searchByText(query.getQuery(), query.getLimit());
-  }
-
-  @QueryHandler
   public BrowseAuctionItemsResult handle(BrowseAuctionItemsQuery query) {
     log.info("Browsing auction items: {}", query);
 
@@ -130,7 +125,7 @@ public class AuctionItemProjection {
 
   @QueryHandler
   public List<AuctionItemReadModel> handle(FindSellerAuctionItemsQuery query) {
-    log.debug("Handling seller items query: {}" + query.getKeycloakSellerId());
+    log.debug("Handling seller items query: {}", query.getKeycloakSellerId());
     return repository.findByKeycloakSellerIdAndStatusOrderByAuctionEndTimeAsc(
         query.getKeycloakSellerId(),
         query.getStatus());

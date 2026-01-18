@@ -37,6 +37,11 @@ import org.axonframework.spring.stereotype.Aggregate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+/**
+ * Aggregate for order management
+ *
+ * @author xkollar3
+ **/
 @Slf4j
 @Getter
 @Aggregate

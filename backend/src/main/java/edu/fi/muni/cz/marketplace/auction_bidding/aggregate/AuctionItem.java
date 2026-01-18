@@ -32,6 +32,11 @@ import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.modelling.command.AggregateIdentifier;
 import org.axonframework.spring.stereotype.Aggregate;
 
+/**
+ * Aggregate for auctioning
+ *
+ * @author eduardmlyn
+ **/
 @Getter
 @Setter
 @Slf4j
@@ -194,7 +199,8 @@ public class AuctionItem {
   public void onAuctionEndDeadline(CloseAuctionCommand payload) {
     log.info("Auction end deadline reached for auction item ID: {}", payload.getAuctionItemId());
     if (status != AuctionStatus.CLOSED) {
-      apply(new AuctionClosedEvent(id, sellerId, title, new ArrayList<>(allBids.stream().map(bid -> new WinningBid(bid)).toList())));
+      apply(new AuctionClosedEvent(id, sellerId, title,
+          new ArrayList<>(allBids.stream().map(bid -> new WinningBid(bid)).toList())));
     }
   }
 
