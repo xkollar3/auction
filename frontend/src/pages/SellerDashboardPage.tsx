@@ -270,8 +270,8 @@ export const SellerDashboardPage = () => {
                     <div>
                       <div className="text-sm text-gray-500 mb-1">{auction.bidCount} bids</div>
                       <div className="text-lg font-bold text-gray-900">
-                        {auction.highestBidAmount
-                          ? formatPrice(auction.highestBidAmount)
+                        {auction.bidCount > 0
+                          ? formatPrice(auction.currentPrice)
                           : 'No bids yet'}
                       </div>
                     </div>

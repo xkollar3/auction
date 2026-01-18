@@ -110,10 +110,10 @@ export interface SellerAuctionItemResponse {
   title: string;
   description: string;
   startingPrice: number;
+  currentPrice: number;
   category: AuctionCategory;
   auctionEndTime: string;
   status: AuctionStatus;
-  highestBidAmount: number | null;
   bidCount: number;
   imageUrl: string | null;
 }

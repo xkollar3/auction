@@ -234,7 +234,7 @@ export const MySalesPage = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div>
                           <p className="text-gray-500">Order ID</p>
-                          <p className="font-mono text-gray-900">{order.id.slice(0, 8)}...</p>
+                          <p className="font-mono text-gray-900">{order.id}</p>
                         </div>
                         <div>
                           <p className="text-gray-500">Reserved At</p>

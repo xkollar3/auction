@@ -147,7 +147,7 @@ export const SellerShopPage = () => {
                     <div>
                       <p className="text-xs text-gray-500">Current price</p>
                       <p className="text-lg font-bold text-gray-900">
-                        {formatPrice(auction.highestBidAmount || auction.startingPrice)}
+                        {formatPrice(auction.currentPrice)}
                       </p>
                       <p className="text-xs text-gray-500">{auction.bidCount} bids</p>
                     </div>
