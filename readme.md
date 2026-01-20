@@ -12,7 +12,10 @@ Platform attempts to be compliant with regulations for online payment by integra
 
 Our business model makes money by taking off a commision (10 % for now) from each sale made.
 
+## Event Storming diagram
+Link: https://excalidraw.com/#room=4fe6bf6afedea77f143b,lusr6ZtUe8moWif63Y8Ukg
 
+![Event Storming diagram](event%20storming.png)
 
 ## Architectural decision records
 1. Event sourced architecture
